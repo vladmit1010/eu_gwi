@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Build data/markets.json for Erste GWI countries from data/gwi.json."""
+"""Build slim data/markets.json — names + 1M contribution share only.
+
+Signal / passion data lives in data/gwi.json; this file is just market meta.
+"""
 
 from __future__ import annotations
 
@@ -24,7 +27,6 @@ TARGET = 1_000_000
 
 
 def iter_answers(country_block: dict):
-    """Yield (category, answer, metrics) from nested gwi country node."""
     for category, answers in country_block.items():
         if not isinstance(answers, dict):
             continue
@@ -36,33 +38,13 @@ def iter_answers(country_block: dict):
 
 
 def country_pool(gwi: dict, audience: str, country_key: str) -> int:
+    """Proxy for market size: high-percentile universe in Affluent cut."""
     universes = sorted(
         (m.get("universe") or 0) for _, _, m in iter_answers(gwi[audience][country_key])
     )
     if not universes:
         return 0
     return universes[int(len(universes) * 0.9)]
-
-
-def top_opps(gwi: dict, audience: str, country_key: str, n: int = 3) -> list:
-    ranked = sorted(
-        iter_answers(gwi[audience][country_key]),
-        key=lambda t: (t[2].get("index") or 0),
-        reverse=True,
-    )
-    out = []
-    for category, answer, m in ranked[:n]:
-        col = m.get("col_pct") or 0
-        idx = m.get("index") or 0
-        out.append(
-            {
-                "n": answer[:48],
-                "s": max(1, min(99, round(col))),
-                "e": round(min(10, max(0.5, idx / 10)), 1),
-                "note": f"{category} · Index {idx}",
-            }
-        )
-    return out
 
 
 def main() -> None:
@@ -77,11 +59,6 @@ def main() -> None:
         markets[code] = {
             "name": name,
             "contribution": int(round(TARGET * pools[code] / total)),
-            "opportunities": {
-                "affluent": top_opps(gwi, "Affluent", ck),
-                "genz": top_opps(gwi, "Gen Z", ck),
-                "all": top_opps(gwi, "All Internet Users", ck),
-            },
         }
 
     diff = TARGET - sum(m["contribution"] for m in markets.values())
@@ -96,7 +73,6 @@ def main() -> None:
         "themes": [
             {"id": "affluent", "label": "Affluent"},
             {"id": "genz", "label": "Gen Z"},
-            {"id": "all", "label": "All users"},
         ],
         "markets": markets,
     }

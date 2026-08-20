@@ -1,4 +1,4 @@
-/** App configuration — copy, motion, story. Data lives in /data. */
+/** App configuration — copy & motion. Data lives in /data. */
 export const CONFIG = {
   text: {
     wordmark: "The Million Engine",
@@ -6,22 +6,21 @@ export const CONFIG = {
     lensLabel: "Audience",
     signalPlaceholder: "Select signal…",
     explore: "Explore",
-    scaleLow: "lower",
-    scaleHigh: "higher",
-    legendDefault: "Growth intensity",
-    legendIndex: "Index across markets",
-    potential: "Growth index",
+    scaleLow: "weaker",
+    scaleHigh: "stronger",
+    legendDefault: "Interest across markets",
+    legendIndex: "Interest across markets",
+    potential: "Interest",
     contribution: "Toward 1M",
     share: "Share",
     opportunities: "opportunities",
     engagement: "Engagement",
     years: "Avg age",
-    import: "Data",
-    story: "Story",
-    insights: "Analysis",
-    compare: "Compare",
-    dropzone: "Drop JSON to load markets",
+    insights: "More signals",
     source: "GWI Core · Erste markets",
+    guideTheme: "Pick a theme",
+    guideMap: "Read the map",
+    guideCountry: "Click a country",
   },
 
   motion: {
@@ -29,42 +28,4 @@ export const CONFIG = {
     bubbleStep: 75,
     intro: 50,
   },
-
-  stories: [
-    {
-      themes: ["affluent"],
-      market: null,
-      opportunity: null,
-      kicker: "The promise",
-      line: "One million customers won't come from one big idea — they'll come from millions of intelligent decisions across Erste markets.",
-    },
-    {
-      themes: ["affluent"],
-      market: "AT",
-      opportunity: 0,
-      kicker: "Austria",
-      line: "In Austria Affluent signals stand out — switch audience to Gen Z and the map tells another story.",
-    },
-    {
-      themes: ["genz"],
-      market: "CZ",
-      opportunity: null,
-      kicker: "Czechia",
-      line: "Czechia under Gen Z shows another path: behaviours and interests that shift the acquisition story.",
-    },
-    {
-      themes: ["all"],
-      market: "RO",
-      opportunity: 0,
-      kicker: "Romania",
-      line: "Romania at full-market scale — All users shows the broad base before Affluent and Gen Z sharpen the cut.",
-    },
-    {
-      themes: ["genz"],
-      market: "RS",
-      opportunity: null,
-      kicker: "Serbia",
-      line: "Serbia makes the comparison tangible: switch audiences and the opportunity map changes immediately.",
-    },
-  ],
 };

@@ -1,135 +1,116 @@
-import { $, countTo, formatInt } from "./utils/dom.js";
-import { growthIndex } from "./model.js";
+import { $, countTo, formatInt, formatPeople } from "./utils/dom.js";
 import { CONFIG } from "./config.js";
+import { ISO_TO_GWI } from "./gwi.js";
 import {
-  ISO_TO_GWI,
-  categoriesFor,
-  metricAt,
-  signalsForCountryAudience,
-} from "./gwi.js";
+  coreMetricsForCountry,
+  localPassionsForCountry,
+  audienceSnapshot,
+} from "./passions.js";
 
 function esc(s) {
-  return String(s)
+  return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
 
-function shortCat(text, max = 18) {
-  if (!text || text.length <= max) return text;
-  return `${text.slice(0, max - 1)}…`;
+function barPct(value, max, floor = 8) {
+  if (!max || value == null) return floor;
+  return Math.max(floor, Math.round((value / max) * 100));
 }
 
-export function createPanel({ heat, onClose, onPick, onSignal }) {
+export function createPanel({ onClose, onLocalPassion }) {
   const el = $("panel");
-  let ctx = null; // last render context
-  let filterCat = null; // null = all
-  let sortBy = "index"; // index | reach
-  let lastCode = null;
 
-  function render(data, code, activeThemes, picked, opts = {}) {
+  function render(data, code, activeThemes, _picked, opts = {}) {
     const market = data.markets[code];
     if (!market) return;
 
-    if (lastCode !== code) {
-      filterCat = opts.category || null;
-      lastCode = code;
-    }
-
     const gwi = opts.gwi || null;
     const audienceKey = opts.audienceKey || null;
-    const activeAnswer = opts.answer || null;
-    const activeCategory = opts.category || null;
-
-    ctx = { data, code, activeThemes, picked, gwi, audienceKey, activeAnswer, activeCategory };
-
+    const passionId = opts.passionId || null;
     const themeLabels = data.themes
       .filter((t) => activeThemes.has(t.id))
       .map((t) => t.label)
       .join(" · ");
+
+    const countryKey = ISO_TO_GWI[code];
     const share =
       data.meta.target > 0
         ? ((market.contribution / data.meta.target) * 100).toFixed(1)
         : "0";
 
-    const countryKey = ISO_TO_GWI[code];
-    const cats = audienceKey ? categoriesFor(gwi, audienceKey) : [];
-    if (filterCat && !cats.includes(filterCat)) filterCat = null;
+    const core = coreMetricsForCountry(gwi, audienceKey, countryKey);
+    const local = localPassionsForCountry(gwi, audienceKey, countryKey, {
+      limit: 5,
+      sortBy: "people",
+    });
+    const snap = audienceSnapshot(gwi, audienceKey, countryKey);
+    const coreMax = Math.max(...core.map((c) => c.universe || 0), 1);
+    const localMax = Math.max(...local.map((r) => r.universe || 0), 1);
 
-    const rows =
-      gwi && audienceKey && countryKey
-        ? signalsForCountryAudience(gwi, audienceKey, countryKey, {
-            sortBy,
-            category: filterCat,
-            limit: 12,
-          })
-        : [];
-
-    const activeMetric =
-      gwi && audienceKey && activeCategory && activeAnswer
-        ? metricAt(gwi, audienceKey, code, activeCategory, activeAnswer)
-        : null;
-
-    const catChips = [
-      `<button type="button" class="p-chip${
-        !filterCat ? " on" : ""
-      }" data-cat="">All</button>`,
-      ...cats.map(
-        (c) =>
-          `<button type="button" class="p-chip${
-            filterCat === c ? " on" : ""
-          }" data-cat="${esc(c)}" title="${esc(c)}">${esc(shortCat(c))}</button>`
-      ),
-    ].join("");
-
-    const signalRows = rows.length
-      ? rows
-          .map((r, i) => {
-            const on =
-              activeCategory === r.category && activeAnswer === r.answer ? " sel" : "";
-            const primary =
-              sortBy === "reach"
-                ? `<span class="o-num">${r.col_pct}%</span>`
-                : `<span class="o-num">${r.index}</span>`;
-            const secondary =
-              sortBy === "reach" ? `Index ${r.index}` : `${r.col_pct}% of audience`;
-            const heatVal = Math.min(1, Math.max(0, (r.index - 80) / 120));
-            return `
-        <button type="button" class="opp p-signal${on}" data-i="${i}">
-          <div class="swatch" style="background:${heat(heatVal)}"></div>
-          <div class="o-body">
-            <div class="o-name">${esc(r.answer)}</div>
-            <div class="o-meta">${esc(r.category)} · ${secondary}</div>
+    const coreRows = core
+      .map((p) => {
+        const on = passionId === p.id ? " on" : "";
+        const w = barPct(p.universe, coreMax);
+        return `
+        <div class="dash-core${on}" data-passion="${p.id}">
+          <div class="dash-core-top">
+            <span class="dash-badge global">Global</span>
+            <span class="dash-core-name">${esc(p.label)}</span>
+            <span class="dash-core-reach">${formatPeople(p.universe)}</span>
           </div>
-          ${primary}
-        </button>`;
+          <div class="dash-bar"><span style="width:${w}%"></span></div>
+          <div class="dash-core-meta">
+            <span class="dash-idx-sm">Interest ${p.index ?? "—"}</span>
+            <span>${esc(p.blurb)}</span>
+          </div>
+        </div>`;
+      })
+      .join("");
+
+    const localRows = local.length
+      ? local
+          .map((r, i) => {
+            const w = barPct(r.universe, localMax, 6);
+            return `
+          <button type="button" class="dash-local" data-i="${i}">
+            <span class="dash-badge local">Local</span>
+            <span class="dash-local-main">
+              <span class="dash-local-name">${esc(r.answer)}</span>
+              <span class="dash-local-meta">
+                <span class="dash-idx-sm">Interest ${r.index ?? "—"}</span>
+                · local activation idea
+              </span>
+              <span class="dash-mini-bar" aria-hidden="true"><span style="width:${w}%"></span></span>
+            </span>
+            <span class="dash-local-reach">${formatPeople(r.universe)}</span>
+          </button>`;
           })
           .join("")
-      : `<div class="p-empty">${
-          audienceKey
-            ? "No signals for this filter"
-            : "Choose an audience above to explore GWI signals"
-        }</div>`;
+      : `<div class="p-empty">No local passions for this cut</div>`;
 
-    const focusBlock = activeMetric
-      ? `
-      <div class="p-focus">
-        <div class="p-focus-lab">Selected signal</div>
-        <div class="p-focus-title">${esc(activeAnswer)}</div>
-        <div class="p-focus-meta">${esc(activeCategory)}</div>
-        <div class="p-focus-stats">
-          <div><b>${activeMetric.index ?? "—"}</b><span>Index</span></div>
-          <div><b>${activeMetric.col_pct ?? "—"}%</b><span>of people</span></div>
-        </div>
-      </div>`
-      : "";
+    const snapBlock = (title, rows, empty) => `
+      <div class="dash-snap-block">
+        <div class="dash-snap-title">${esc(title)}</div>
+        ${
+          rows.length
+            ? `<ul class="dash-snap-list">${rows
+                .map(
+                  (r) =>
+                    `<li><span>${esc(r.answer)}</span><b>${formatPeople(r.universe)}</b></li>`
+                )
+                .join("")}</ul>`
+            : `<div class="p-empty">${esc(empty)}</div>`
+        }
+      </div>`;
 
     el.innerHTML = `
       <div class="p-head">
         <div>
           <div class="p-country">${esc(market.name)}</div>
-          <div class="p-theme">${esc(themeLabels || "No audience")} · toward 1M</div>
+          <div class="p-theme">${esc(themeLabels || "—")} · audience snapshot</div>
         </div>
         <button class="x" id="close" type="button" aria-label="Close">&times;</button>
       </div>
@@ -143,95 +124,46 @@ export function createPanel({ heat, onClose, onPick, onSignal }) {
           <div class="contrib-val">${share}%</div>
           <div class="contrib-lab">of target</div>
         </div>
-        <div class="contrib-item">
-          <div class="contrib-val" id="hnum">0.0</div>
-          <div class="contrib-lab">${CONFIG.text.potential}</div>
-        </div>
       </div>
 
-      ${focusBlock}
+      <div class="section-label">Global sponsorships here</div>
+      <div class="dash-core-list">${coreRows}</div>
 
-      <div class="section-label">Explore signals</div>
-      <div class="p-filters">
-        <div class="p-chips">${catChips}</div>
-        <div class="p-sort">
-          <button type="button" class="p-sort-btn${
-            sortBy === "index" ? " on" : ""
-          }" data-sort="index">Index</button>
-          <button type="button" class="p-sort-btn${
-            sortBy === "reach" ? " on" : ""
-          }" data-sort="reach">% people</button>
-        </div>
+      <div class="section-label">Local passion ideas</div>
+      <div class="dash-local-list">${localRows}</div>
+
+      <div class="section-label">Audience snapshot</div>
+      <div class="dash-snap">
+        ${snapBlock("Values that matter", snap.values, "No values data")}
+        ${snapBlock("Character", snap.character, "No character data")}
+        ${snapBlock("Channels", snap.channels, "No channel data")}
       </div>
-      <div class="p-signals">${signalRows}</div>
     `;
 
     el.classList.add("up");
     el.setAttribute("aria-hidden", "false");
-    el.classList.toggle("has-sel", Boolean(activeAnswer) || picked !== null);
 
     $("close").onclick = () => onClose?.();
 
-    el.querySelectorAll("[data-cat]").forEach((btn) => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        filterCat = btn.dataset.cat || null;
-        rerender();
-      };
-    });
-
-    el.querySelectorAll("[data-sort]").forEach((btn) => {
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        sortBy = btn.dataset.sort;
-        rerender();
-      };
-    });
-
-    el.querySelectorAll(".p-signal").forEach((btn) => {
+    el.querySelectorAll(".dash-local").forEach((btn) => {
       btn.onclick = () => {
-        const row = rows[+btn.dataset.i];
-        if (!row) return;
-        onSignal?.({
-          category: row.category,
-          answer: row.answer,
-          code,
-        });
+        const row = local[+btn.dataset.i];
+        if (row) onLocalPassion?.(row);
       };
     });
 
-    countTo($("hnum"), growthIndex(data, code, activeThemes), 1, 750);
     countTo($("contribNum"), market.contribution || 0, 0, 750);
   }
 
-  function rerender() {
-    if (!ctx) return;
-    render(ctx.data, ctx.code, ctx.activeThemes, ctx.picked, {
-      gwi: ctx.gwi,
-      audienceKey: ctx.audienceKey,
-      category: ctx.activeCategory,
-      answer: ctx.activeAnswer,
-    });
-  }
-
-  function showPick(data, code, activeThemes, picked, fromEl) {
-    // Keep compatibility for story bubble picks — light highlight only
-    el.classList.toggle("has-sel", picked !== null);
-    void data;
-    void code;
-    void activeThemes;
-    void fromEl;
-  }
+  function showPick() {}
 
   function hide() {
     el.classList.remove("up", "has-sel");
     el.setAttribute("aria-hidden", "true");
     el.innerHTML = "";
-    ctx = null;
-    lastCode = null;
   }
 
-  return { render, showPick, hide, el, rerender };
+  return { render, showPick, hide, el };
 }
 
 export { formatInt };

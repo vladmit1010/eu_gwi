@@ -5,8 +5,8 @@ import { CONFIG } from "./config.js";
 
 const NS = "http://www.w3.org/2000/svg";
 const heat = createHeat(COLORS);
-const VW = 100;
-const VH = 86;
+const VW = 176;
+const VH = 82;
 
 export async function loadEuropeGeo() {
   const res = await fetch("./data/europe.geojson", { cache: "no-store" });
@@ -69,7 +69,6 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
   const centroids = {};
   let activeThemes = new Set();
   let active = null;
-  let compareCodes = new Set();
   let data = null;
   /** Optional { ISO: number|null } — when set, map heats by these values */
   let metricValues = null;
@@ -87,16 +86,16 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
   }
 
   function fitProjection(features) {
-    /* CEE / Erste footprint — zoomed like regional Erste maps, not all of Europe */
+    /* Target markets fill the screen; rest of Europe continues off the sides */
     projection = d3
       .geoAzimuthalEqualArea()
-      .rotate([-17, -47.5])
+      .rotate([-19, -47])
       .precision(0.2);
     pathGen = d3.geoPath(projection);
     projection.fitExtent(
       [
-        [4, 5],
-        [VW - 4, VH - 5],
+        [6, 4],
+        [VW - 6, VH - 4],
       ],
       { type: "FeatureCollection", features }
     );
@@ -111,11 +110,6 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     return c;
   }
 
-  /** Neighbours drawn as muted context around Erste markets */
-  const CONTEXT = new Set([
-    "DE", "SK", "SI", "BA", "ME", "AL", "MK", "BG", "PL", "IT", "UA", "MD", "CH",
-  ]);
-
   function build(intro = true) {
     if (!geo) throw new Error("GeoJSON not loaded");
     const activeList = codes();
@@ -123,6 +117,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
 
     const activeSet = new Set(activeList);
     const focusFeatures = activeList.map((c) => featureByCode[c]).filter(Boolean);
+    /* Zoom to Erste markets — neighbours still drawn where they fall in frame */
     fitProjection(focusFeatures);
 
     gLand.replaceChildren();
@@ -133,10 +128,9 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     Object.keys(labels).forEach((k) => delete labels[k]);
     Object.keys(centroids).forEach((k) => delete centroids[k]);
 
-    /* Only Erste markets + nearby context (not all of Europe) */
     const drawCodes = geo.features
       .map((f) => f.properties.ISO2)
-      .filter((c) => featureByCode[c] && (activeSet.has(c) || CONTEXT.has(c)));
+      .filter((c) => featureByCode[c]);
 
     const ordered = [...drawCodes].sort((a, b) => {
       const aa = d3.geoArea(featureByCode[a]);
@@ -198,7 +192,6 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     const numeric = vals.filter((v) => v != null && !Number.isNaN(v));
     const lo = numeric.length ? Math.min(...numeric) : 0;
     const hi = numeric.length ? Math.max(...numeric) : 1;
-    const comparing = compareCodes.size > 0;
 
     Object.keys(lands).forEach((c) => {
       const path = lands[c];
@@ -220,10 +213,8 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
         }
       }
       path.style.fill = fill;
-      const isOn = comparing ? compareCodes.has(c) : c === active;
-      const isMute = comparing
-        ? !compareCodes.has(c)
-        : active !== null && c !== active;
+      const isOn = c === active;
+      const isMute = active !== null && c !== active;
       path.classList.toggle("on", isOn);
       path.parentNode?.classList.toggle("mute", isMute);
       if (labels[c]) {
@@ -331,10 +322,6 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     active = code;
   }
 
-  function setCompare(codesList) {
-    compareCodes = new Set(codesList || []);
-  }
-
   function setMetricValues(mapOrNull) {
     metricValues = mapOrNull;
   }
@@ -365,7 +352,6 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     setData,
     setThemes,
     setActive,
-    setCompare,
     setMetricValues,
     bubbleAt,
     highlightBubbles,

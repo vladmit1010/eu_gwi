@@ -2,12 +2,13 @@
   flex: 1;
   position: relative;
   min-width: 0;
+  min-height: 0;
   transition: filter 0.55s var(--ease), transform 0.55s var(--ease);
 }
 
 .mapwrap.dim {
-  filter: saturate(0.7) brightness(0.88);
-  transform: scale(0.985);
+  filter: saturate(0.78) brightness(0.9);
+  transform: none;
 }
 
 .map-atmosphere {
@@ -28,6 +29,7 @@ svg#map {
   height: 100%;
   display: block;
   touch-action: manipulation;
+  overflow: hidden;
 }
 
 .land-group {
@@ -38,7 +40,6 @@ svg#map {
   opacity: 0.22;
 }
 
-.land-group.compare-on .land,
 .land.on {
   stroke: rgba(255, 255, 255, 0.45);
   stroke-width: 0.38;
@@ -62,19 +63,21 @@ svg#map {
 }
 
 .land.cold {
-  fill: #12141a;
+  fill: #1c2028;
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 0.12;
   cursor: default;
   filter: none;
 }
 
 .land.cold.drawn {
-  opacity: 0.5;
+  opacity: 0.85;
 }
 
 .land.cold:hover {
   filter: none;
-  stroke: rgba(11, 12, 14, 0.55);
-  stroke-width: 0.16;
+  stroke: rgba(255, 255, 255, 0.07);
+  stroke-width: 0.12;
 }
 
 .land.live {
@@ -105,8 +108,8 @@ svg#map {
 }
 
 .code {
-  fill: rgba(244, 245, 247, 0.72);
-  font-size: 2.35px;
+  fill: rgba(244, 245, 247, 0.88);
+  font-size: 2.6px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -114,7 +117,7 @@ svg#map {
   letter-spacing: 0.06em;
   transition: fill 0.45s var(--ease), opacity 0.45s;
   paint-order: stroke;
-  stroke: rgba(11, 12, 14, 0.7);
+  stroke: rgba(11, 12, 14, 0.75);
   stroke-width: 0.45px;
 }
 
@@ -190,14 +193,6 @@ svg#map {
   opacity: 0.75;
 }
 
-.legend-title {
-  font-size: 9px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  margin-bottom: 6px;
-}
-
 .peek {
   position: absolute;
   pointer-events: none;
@@ -215,6 +210,31 @@ svg#map {
 
 .peek.on {
   opacity: 1;
+}
+
+.passion-hint {
+  position: absolute;
+  top: 2.5%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  padding: 0.75em 1.2em;
+  border-radius: var(--radius);
+  background: rgba(20, 22, 27, 0.88);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease);
+  white-space: nowrap;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passion-hint.gone {
+  opacity: 0;
 }
 
 .peek b {
@@ -240,49 +260,91 @@ svg#map {
 
 .legend {
   position: absolute;
-  bottom: 18px;
-  left: 20px;
+  bottom: 4%;
+  left: 2.5%;
   z-index: 3;
   pointer-events: none;
-  font-size: 9px;
-  letter-spacing: 0.1em;
+  max-width: min(280px, 42%);
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: rgba(11, 12, 14, 0.78);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.legend-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--overlap);
+  margin-bottom: 4px;
+}
+
+.legend-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ink);
+  line-height: 1.3;
+  margin-bottom: 10px;
 }
 
 .legend-bar {
-  width: 120px;
-  height: 4px;
+  width: 100%;
+  height: 6px;
   border-radius: 999px;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
   background: linear-gradient(
     90deg,
-    var(--land) 0%,
-    var(--land-mid) 35%,
-    var(--land-hi) 55%,
-    var(--red) 78%,
-    var(--yellow) 100%
+    #1b1d24 0%,
+    #3a322c 22%,
+    #8f4a16 48%,
+    #ff5f00 76%,
+    #ffc857 100%
   );
 }
 
 .legend-row {
   display: flex;
   justify-content: space-between;
-  width: 120px;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+.legend-row #scaleMid {
+  color: var(--ink-3);
+  font-weight: 500;
+}
+
+.legend-note {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-3);
 }
 
 .source {
   position: absolute;
-  bottom: 18px;
-  right: 20px;
+  bottom: 4%;
+  right: 2.5%;
   z-index: 3;
-  font-size: 8.5px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   color: var(--ink-3);
   text-align: right;
   pointer-events: none;
   line-height: 1.55;
-  max-width: 220px;
+  max-width: 22%;
 }
 
 .ghost {
@@ -301,12 +363,12 @@ svg#map {
 
 @media (min-width: 900px) {
   .legend {
-    bottom: 26px;
-    left: 32px;
+    bottom: 4.5%;
+    left: 3%;
   }
 
   .source {
-    bottom: 26px;
-    right: 32px;
+    bottom: 4.5%;
+    right: 3%;
   }
 }

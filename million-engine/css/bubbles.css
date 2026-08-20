@@ -1,0 +1,227 @@
+.bubble-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 45%, rgba(255, 95, 0, 0.08), transparent 65%),
+    rgba(11, 12, 14, 0.88);
+  backdrop-filter: blur(6px);
+}
+
+.bubble-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.bubble-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2.5% 3% 0;
+  flex-shrink: 0;
+}
+
+.bubble-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--overlap);
+  margin-bottom: 6px;
+}
+
+.bubble-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.bubble-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.bubble-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 1% 2% 3%;
+}
+
+.bubble-overlay.has-pie .bubble-body {
+  grid-template-columns: minmax(140px, 22%) 1fr;
+  gap: 2%;
+  align-items: center;
+}
+
+.bubble-pie-wrap {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 0 8px;
+}
+
+.bubble-overlay.has-pie .bubble-pie-wrap {
+  display: flex;
+}
+
+.bubble-pie {
+  width: min(160px, 70%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  background: var(--surface-2);
+}
+
+.bubble-pie-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 160px;
+}
+
+.bubble-pie-legend li {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.bubble-pie-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.bubble-pie-legend b {
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.bubble-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 280px;
+}
+
+.bubble-node {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.85);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 95, 0, 0.4);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.14), transparent 50%),
+    rgba(255, 95, 0, 0.16);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px;
+  text-align: center;
+  font: inherit;
+  opacity: 0;
+  animation: bubble-in 0.45s var(--ease-out) forwards;
+  transition: border-color 0.25s var(--ease), background 0.25s var(--ease),
+    box-shadow 0.25s var(--ease);
+}
+
+.bubble-node:hover {
+  border-color: var(--overlap);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), transparent 50%),
+    rgba(255, 95, 0, 0.28);
+  box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
+  z-index: 2;
+}
+
+.bubble-node.bubble-local {
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.1), transparent 50%),
+    rgba(255, 255, 255, 0.06);
+}
+
+.bubble-node.bubble-local:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.14), transparent 50%),
+    rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.bubble-node.bubble-country {
+  border-color: rgba(255, 95, 0, 0.45);
+}
+
+.bubble-reach {
+  font-family: var(--font-display);
+  font-size: clamp(13px, 2.4vw, 20px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.bubble-label {
+  font-size: clamp(10px, 1.5vw, 13px);
+  font-weight: 700;
+  max-width: 90%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bubble-idx {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+}
+
+@keyframes bubble-in {
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@media (max-width: 720px) {
+  .bubble-overlay.has-pie .bubble-body {
+    grid-template-columns: 1fr;
+  }
+
+  .bubble-overlay.has-pie .bubble-pie-wrap {
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .bubble-pie {
+    width: 88px;
+  }
+
+  .bubble-title {
+    font-size: 20px;
+  }
+}

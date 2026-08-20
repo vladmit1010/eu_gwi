@@ -1,8 +1,10 @@
-import { $ } from "./utils/dom.js";
+import { $, formatPeople } from "./utils/dom.js";
 import {
   AUDIENCE_LABELS,
   COUNTRY_LABELS,
   GWI_TO_THEME,
+  EXPLORE_GWI_AUDIENCES,
+  coerceExploreThemeId,
   audiencesIn,
   countriesIn,
   topSignalsForAudience,
@@ -23,15 +25,15 @@ const SORT_COPY = {
     subAudience: "Highest average Index across Erste markets",
     subCountry: "Highest Index in this market",
   },
-  reach: {
-    label: "% of people",
-    subAudience: "Highest share of people (col %) across Erste markets",
-    subCountry: "Highest share of people (col %) in this market",
+  people: {
+    label: "People",
+    subAudience: "Most people (universe) across Erste markets",
+    subCountry: "Most people (universe) in this market",
   },
   balanced: {
     label: "Balanced",
-    subAudience: "Over-index × reach across Erste markets",
-    subCountry: "Where this market stands out vs peers × reach",
+    subAudience: "Over-index × people across Erste markets",
+    subCountry: "Where this market stands out vs peers × people",
   },
 };
 
@@ -40,13 +42,13 @@ export function createInsights({ onApply } = {}) {
   let open = false;
   let gwi = null;
   let lens = "audience"; // audience | country
-  let sortBy = "index"; // index | reach | balanced
+  let sortBy = "index"; // index | people | balanced
   let audienceKey = "Affluent";
   let countryKey = "austria";
 
   function setGwi(next) {
     gwi = next || null;
-    const auds = audiencesIn(gwi);
+    const auds = audiencesIn(gwi).filter((a) => EXPLORE_GWI_AUDIENCES.includes(a));
     const countries = countriesIn(gwi);
     if (auds.length && !auds.includes(audienceKey)) audienceKey = auds[0];
     if (countries.length && !countries.includes(countryKey)) countryKey = countries[0];
@@ -63,9 +65,9 @@ export function createInsights({ onApply } = {}) {
   }
 
   function barWidth(row, rows) {
-    if (sortBy === "reach") {
-      const max = rows[0]?.col_pct || 1;
-      return Math.max(8, Math.round((row.col_pct / max) * 100));
+    if (sortBy === "people") {
+      const max = rows[0]?.universe || 1;
+      return Math.max(8, Math.round((row.universe / max) * 100));
     }
     if (sortBy === "balanced") {
       const max = rows[0]?.score || 1;
@@ -84,7 +86,7 @@ export function createInsights({ onApply } = {}) {
       return;
     }
 
-    const auds = audiencesIn(gwi);
+    const auds = audiencesIn(gwi).filter((a) => EXPLORE_GWI_AUDIENCES.includes(a));
     const countries = countriesIn(gwi);
     const rows = currentRows();
     const copy = SORT_COPY[sortBy];
@@ -108,7 +110,7 @@ export function createInsights({ onApply } = {}) {
             )
             .join("");
 
-    const sortChips = ["index", "reach", "balanced"]
+    const sortChips = ["index", "people", "balanced"]
       .map(
         (key) =>
           `<button type="button" class="an-sort-btn${
@@ -131,9 +133,9 @@ export function createInsights({ onApply } = {}) {
                   }`;
 
             const primary =
-              sortBy === "reach"
-                ? `<span class="an-primary">${r.col_pct}%</span><span class="an-secondary">Index ${r.index}</span>`
-                : `<span class="an-primary">Index ${r.index}</span><span class="an-secondary">${r.col_pct}%</span>`;
+              sortBy === "people"
+                ? `<span class="an-primary">${formatPeople(r.universe)}</span><span class="an-secondary">Index ${r.index}</span>`
+                : `<span class="an-primary">Index ${r.index}</span><span class="an-secondary">${formatPeople(r.universe)}</span>`;
 
             return `
           <button type="button" class="an-row" data-i="${i}">
@@ -214,7 +216,7 @@ export function createInsights({ onApply } = {}) {
         const row = rows[+btn.dataset.i];
         if (!row || !onApply) return;
         onApply({
-          themeId: GWI_TO_THEME[row.audience] || null,
+          themeId: coerceExploreThemeId(GWI_TO_THEME[row.audience]),
           category: row.category,
           answer: row.answer,
         });

@@ -28,9 +28,19 @@ export const THEME_TO_GWI = {
   all: "All Internet Users",
 };
 
+/** Audiences available in Explore Who chips (and Analysis apply). */
+export const EXPLORE_THEME_IDS = ["affluent", "genz"];
+
+export const EXPLORE_GWI_AUDIENCES = EXPLORE_THEME_IDS.map((id) => THEME_TO_GWI[id]);
+
 export const GWI_TO_THEME = Object.fromEntries(
   Object.entries(THEME_TO_GWI).map(([id, key]) => [key, id])
 );
+
+/** Map any GWI theme id to an Explore Who chip (never `all`). */
+export function coerceExploreThemeId(themeId) {
+  return EXPLORE_THEME_IDS.includes(themeId) ? themeId : "affluent";
+}
 
 export const AUDIENCE_LABELS = {
   Affluent: "Affluent",
@@ -92,24 +102,27 @@ function mean(nums) {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-function relevanceScore(index, colPct) {
-  return (index - 100) * Math.sqrt(Math.max(colPct, 0));
+function sum(nums) {
+  return nums.reduce((a, b) => a + b, 0);
+}
+
+function relevanceScore(index, people) {
+  return (index - 100) * Math.sqrt(Math.max(people, 0) / 1000);
 }
 
 function sortRows(rows, sortBy = "index") {
-  if (sortBy === "reach") {
-    return rows.sort((a, b) => b.col_pct - a.col_pct || b.index - a.index);
+  if (sortBy === "people" || sortBy === "reach") {
+    return rows.sort((a, b) => b.universe - a.universe || b.index - a.index);
   }
   if (sortBy === "balanced") {
     return rows.sort((a, b) => b.score - a.score);
   }
-  // index (default)
-  return rows.sort((a, b) => b.index - a.index || b.col_pct - a.col_pct);
+  return rows.sort((a, b) => b.index - a.index || b.universe - a.universe);
 }
 
 /**
  * Top signals for an audience across Erste markets.
- * sortBy: "index" | "reach" | "balanced"
+ * sortBy: "index" | "people" | "balanced"
  */
 export function topSignalsForAudience(gwi, audienceKey, limit = 10, sortBy = "index") {
   if (!gwi?.[audienceKey]) return [];
@@ -123,21 +136,20 @@ export function topSignalsForAudience(gwi, audienceKey, limit = 10, sortBy = "in
         .map((c) => {
           const m = gwi[audienceKey][c]?.[category]?.[answer];
           return m
-            ? { country: c, index: m.index, col_pct: m.col_pct, universe: m.universe }
+            ? { country: c, index: m.index, universe: m.universe ?? 0 }
             : null;
         })
         .filter(Boolean);
 
       if (points.length < 2) continue;
       const avgIndex = mean(points.map((p) => p.index));
-      const avgCol = mean(points.map((p) => p.col_pct));
-      if (avgCol < 1) continue;
-      // Balanced mode only cares about over-index; index/reach show full top
+      const totalPeople = sum(points.map((p) => p.universe));
+      if (totalPeople < 1000) continue;
       if (sortBy === "balanced" && avgIndex <= 100) continue;
 
       const best =
-        sortBy === "reach"
-          ? points.reduce((a, b) => (b.col_pct > a.col_pct ? b : a))
+        sortBy === "people" || sortBy === "reach"
+          ? points.reduce((a, b) => (b.universe > a.universe ? b : a))
           : points.reduce((a, b) => (b.index > a.index ? b : a));
 
       rows.push({
@@ -145,9 +157,9 @@ export function topSignalsForAudience(gwi, audienceKey, limit = 10, sortBy = "in
         audience: audienceKey,
         category,
         answer,
-        score: relevanceScore(avgIndex, avgCol),
+        score: relevanceScore(avgIndex, totalPeople),
         index: Math.round(avgIndex * 10) / 10,
-        col_pct: Math.round(avgCol * 10) / 10,
+        universe: Math.round(totalPeople),
         bestCountry: best.country,
         bestIndex: best.index,
       });
@@ -159,13 +171,13 @@ export function topSignalsForAudience(gwi, audienceKey, limit = 10, sortBy = "in
 
 /**
  * Top signals for a country vs peer Erste markets (all audiences).
- * sortBy: "index" | "reach" | "balanced"
+ * sortBy: "index" | "people" | "balanced"
  */
 export function topSignalsForCountry(gwi, countryKey, limit = 10, sortBy = "index") {
   if (!gwi) return [];
   const rows = [];
 
-  for (const audienceKey of Object.keys(gwi)) {
+  for (const audienceKey of EXPLORE_GWI_AUDIENCES) {
     const block = gwi[audienceKey];
     if (!block?.[countryKey]) continue;
     const peers = Object.keys(block).filter((c) => c !== countryKey);
@@ -173,7 +185,7 @@ export function topSignalsForCountry(gwi, countryKey, limit = 10, sortBy = "inde
 
     for (const [category, answers] of Object.entries(sample)) {
       for (const [answer, mine] of Object.entries(answers)) {
-        if (!mine || mine.col_pct < 1) continue;
+        if (!mine || (mine.universe ?? 0) < 1000) continue;
         const peerIdx = peers
           .map((c) => block[c]?.[category]?.[answer]?.index)
           .filter((v) => v != null);
@@ -188,9 +200,9 @@ export function topSignalsForCountry(gwi, countryKey, limit = 10, sortBy = "inde
           country: countryKey,
           category,
           answer,
-          score: relevanceScore(100 + Math.max(lift, 0), mine.col_pct),
+          score: relevanceScore(100 + Math.max(lift, 0), mine.universe ?? 0),
           index: mine.index,
-          col_pct: mine.col_pct,
+          universe: mine.universe ?? 0,
           peerMean: Math.round(peerMean * 10) / 10,
           lift: Math.round(lift * 10) / 10,
         });
@@ -203,7 +215,7 @@ export function topSignalsForCountry(gwi, countryKey, limit = 10, sortBy = "inde
 
 /**
  * Signals for one audience in one country (country panel explorer).
- * sortBy: "index" | "reach"
+ * sortBy: "index" | "people"
  */
 export function signalsForCountryAudience(
   gwi,
@@ -220,21 +232,20 @@ export function signalsForCountryAudience(
     if (!answers || typeof answers !== "object") continue;
     for (const [answer, m] of Object.entries(answers)) {
       if (!m || m.index == null) continue;
-      if ((m.col_pct ?? 0) < 0.5) continue;
+      if ((m.universe ?? 0) < 500) continue;
       rows.push({
         category: cat,
         answer,
         index: m.index,
-        col_pct: m.col_pct ?? 0,
         universe: m.universe ?? 0,
       });
     }
   }
 
-  if (sortBy === "reach") {
-    rows.sort((a, b) => b.col_pct - a.col_pct || b.index - a.index);
+  if (sortBy === "people" || sortBy === "reach") {
+    rows.sort((a, b) => b.universe - a.universe || b.index - a.index);
   } else {
-    rows.sort((a, b) => b.index - a.index || b.col_pct - a.col_pct);
+    rows.sort((a, b) => b.index - a.index || b.universe - a.universe);
   }
   return rows.slice(0, limit);
 }

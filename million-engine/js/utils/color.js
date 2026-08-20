@@ -7,17 +7,18 @@ export function mix(a, b, t) {
 }
 
 /**
- * Heat scale: restrained greys, then Mastercard red → yellow.
- * Knee keeps most of the map calm so hotspots read clearly.
+ * Brightness scale (intuitive for demos):
+ * darker = lower Interest · brighter orange = higher.
+ * Single warm hue family — no red→yellow “which is more?” confusion.
  */
-export function createHeat(colors, knee = 0.55) {
+export function createHeat(colors) {
+  const stops = [colors.heat0, colors.heat1, colors.heat2, colors.heat3, colors.heat4];
   return (t) => {
     t = Math.max(0, Math.min(1, t));
-    if (t < knee) return mix(colors.land, colors.landHi, t / knee);
-    const u = (t - knee) / (1 - knee);
-    return u < 0.5
-      ? mix(colors.landHi, colors.red, u / 0.5)
-      : mix(colors.red, colors.yellow, (u - 0.5) / 0.5);
+    const n = stops.length - 1;
+    const x = t * n;
+    const i = Math.min(n - 1, Math.floor(x));
+    return mix(stops[i], stops[i + 1], x - i);
   };
 }
 
@@ -31,4 +32,10 @@ export const COLORS = {
   cold: "#12141A",
   /** Erste markets at rest (no lens heat yet) */
   live: "#3A3D48",
+  /** Map Interest ramp — dark → bright */
+  heat0: "#1B1D24",
+  heat1: "#3A322C",
+  heat2: "#8F4A16",
+  heat3: "#FF5F00",
+  heat4: "#FFC857",
 };
