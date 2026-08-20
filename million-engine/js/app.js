@@ -252,12 +252,12 @@ function buildAudiences() {
       map.setActive(null);
       map.clearOverlays();
       $("mapwrap").classList.remove("dim");
+      if (bubbles.open) bubbles.hide();
       syncAudiences();
       map.setThemes(state.activeThemes);
       buildLikedThemes();
       applyMetricToMap();
       syncPassions();
-      openCountryBubbles();
     };
     bar.appendChild(b);
   });
@@ -503,11 +503,18 @@ document.addEventListener("keydown", (e) => {
   } else clear();
 });
 
-Promise.all([loadInitialData(SAMPLE_DATA), loadEuropeGeo(), loadGwi().catch(() => null)])
+Promise.all([
+  loadInitialData(SAMPLE_DATA),
+  loadEuropeGeo().catch((err) => {
+    console.error("Map geography failed to load", err);
+    return null;
+  }),
+  loadGwi().catch(() => null),
+])
   .then(([data, geo, gwi]) => {
     state.gwi = gwi;
     insights.setGwi(gwi);
-    map.setGeo(geo);
+    if (geo) map.setGeo(geo);
     boot(data);
   })
   .catch((err) => console.error(err));

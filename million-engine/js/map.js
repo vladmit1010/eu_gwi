@@ -1,7 +1,12 @@
-import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 import { createHeat, COLORS } from "./utils/color.js";
 import { opportunitiesFor, growthIndex } from "./model.js";
 import { CONFIG } from "./config.js";
+
+/** Local UMD build (js/vendor/d3.min.js) — avoids CDN blocking the whole app. */
+const d3 = globalThis.d3;
+if (!d3) {
+  throw new Error("d3 missing — load js/vendor/d3.min.js before app.js");
+}
 
 const NS = "http://www.w3.org/2000/svg";
 const heat = createHeat(COLORS);
@@ -111,7 +116,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
   }
 
   function build(intro = true) {
-    if (!geo) throw new Error("GeoJSON not loaded");
+    if (!geo) return;
     const activeList = codes();
     if (!activeList.length) throw new Error("No markets with map shapes");
 
