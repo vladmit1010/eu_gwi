@@ -1,0 +1,32 @@
+:root {
+  --font: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --red: #EB001B;
+  --yellow: #F79E1B;
+  --overlap: #FF5F00;
+
+  --bg: #0B0C0E;
+  --bg-soft: #101218;
+  --surface: #14161B;
+  --surface-2: #1A1D24;
+
+  --land: #1C1F27;
+  --land-mid: #2A2E38;
+  --land-hi: #3A3532;
+  --land-stroke: rgba(255, 255, 255, 0.045);
+
+  --line: rgba(255, 255, 255, 0.07);
+  --line-2: rgba(255, 255, 255, 0.14);
+
+  --ink: #F4F5F7;
+  --ink-2: #A8ADB8;
+  --ink-3: #6B7280;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>The Million Engine</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/panel.css">
+  <link rel="stylesheet" href="css/story.css">
+  <link rel="stylesheet" href="css/insights.css">
+  <link rel="stylesheet" href="css/compare.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="topbar">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 26 16" aria-hidden="true">
+            <circle cx="9" cy="8" r="7" fill="var(--red)"/>
+            <circle cx="17" cy="8" r="7" fill="var(--yellow)" style="mix-blend-mode:screen"/>
+          </svg>
+          <div class="brand-text">
+            <span class="wordmark" id="wordmark">The Million Engine</span>
+            <span class="tagline" id="tagline">Mastercard × Erste</span>
+          </div>
+        </div>
+
+        <div class="target-hero" id="targetPill" aria-live="polite">
+          <span class="target-label">Target</span>
+          <span class="target-num" id="targetNum">1,000,000</span>
+          <span class="target-cap">customers</span>
+        </div>
+
+        <button class="data-btn" id="ioBtn" type="button" title="Load JSON data">Data</button>
+        <input type="file" id="file" accept=".json,application/json" hidden>
+      </div>
+
+      <div class="controls">
+        <div class="controls-top">
+          <div class="modebar" role="tablist" aria-label="Views">
+            <button class="mode on" type="button" role="tab" aria-selected="true" data-mode="explore" id="exploreBtn">Explore</button>
+            <button class="mode" type="button" role="tab" aria-selected="false" data-mode="compare" id="compareBtn">Compare</button>
+            <button class="mode" type="button" role="tab" aria-selected="false" data-mode="story" id="storyBtn">Story</button>
+            <button class="mode" type="button" role="tab" aria-selected="false" data-mode="insights" id="insightsBtn">Analysis</button>
+          </div>
+        </div>
+
+        <div class="filter-path" id="filterPath">
+          <div class="filter-step" id="lensRow" data-step="1">
+            <span class="lens-step">1</span>
+            <div class="themes" id="themes" role="toolbar" aria-label="Audiences"></div>
+          </div>
+
+          <span class="filter-sep" id="sepCat" hidden aria-hidden="true">›</span>
+
+          <div class="filter-step" id="filterRow" data-step="2" hidden>
+            <span class="lens-step">2</span>
+            <div class="themes" id="categories" role="toolbar" aria-label="Categories"></div>
+          </div>
+
+          <span class="filter-sep" id="sepSig" hidden aria-hidden="true">›</span>
+
+          <div class="filter-step filter-step-signal" id="answerRow" data-step="3" hidden>
+            <span class="lens-step">3</span>
+            <div class="answer-wrap">
+              <button type="button" class="answer-trigger" id="answerTrigger" disabled>
+                Select signal…
+              </button>
+              <div class="answer-picker" id="answerPicker" hidden>
+                <input type="search" class="answer-search" id="answerSearch" placeholder="Search…" autocomplete="off">
+                <div class="answer-list" id="answerList"></div>
+              </div>
+              <button type="button" class="ghostbtn answer-clear" id="answerClear" hidden>Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div class="mapwrap" id="mapwrap">
+        <div class="map-atmosphere" aria-hidden="true"></div>
+        <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Market map"></svg>
+
+        <div class="peek" id="peek"></div>
+        <div class="legend" id="legend">
+          <div class="legend-title">Growth intensity</div>
+          <div class="legend-bar"></div>
+          <div class="legend-row">
+            <span id="scaleLo">lower</span>
+            <span id="scaleHi">higher</span>
+          </div>
+        </div>
+        <div class="source" id="source">Placeholder data · replace via JSON</div>
+        <div class="story" id="story"></div>
+      </div>
+      <aside class="panel" id="panel" aria-hidden="true"></aside>
+    </main>
+  </div>
+
+  <div class="drop" id="drop" aria-hidden="true">Drop JSON to load markets</div>
+
+  <div class="insights" id="insights" aria-hidden="true">
+    <div class="insights-sheet" role="dialog" aria-labelledby="insightsTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="insights-head">
+        <div>
+          <div class="insights-kicker">GWI analysis</div>
+          <h2 class="insights-title" id="insightsTitle">Signals worth watching</h2>
+          <p class="insights-sub" id="insightsHeadline">Top 10 most relevant questions from the Erste markets data</p>
+        </div>
+        <button class="ghostbtn insights-close" id="insightsClose" type="button">Close</button>
+      </div>
+      <div id="insightsBody"></div>
+    </div>
+  </div>
+
+  <div class="compare" id="compare" aria-hidden="true">
+    <div class="compare-sheet" role="dialog" aria-labelledby="compareTitle">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="compare-head">
+        <div>
+          <div class="compare-kicker">Market comparison</div>
+          <h2 class="compare-title" id="compareTitle">Compare markets</h2>
+          <p class="compare-sub" id="compareHeadline">Add markets to compare side by side</p>
+        </div>
+        <button class="ghostbtn compare-close" id="compareClose" type="button">Close</button>
+      </div>
+      <div id="compareBody"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

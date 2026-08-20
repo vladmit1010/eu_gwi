@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Segmentation Explorer</title>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCHRIFT
+     Läuft ohne Internet mit Systemschriften. Für MarkPro die
+     Font-Dateien neben diese HTML legen, Block einkommentieren
+     und in CONFIG.font.family vorne einsetzen.
+
+     <style>
+     @font-face{font-family:'MarkPro';src:url('./MarkPro-Book.woff2') format('woff2');font-weight:400;font-display:swap}
+     @font-face{font-family:'MarkPro';src:url('./MarkPro-Bold.woff2') format('woff2');font-weight:700;font-display:swap}
+     </style>
+     ══════════════════════════════════════════════════════════════ -->
+
+<style id="tokens"></style>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  font-family:var(--font);background:var(--bg);color:var(--ink);overflow:hidden;
+  font-feature-settings:"tnum";-webkit-font-smoothing:antialiased
+}
+.app{display:flex;flex-direction:column;height:100%}
+
+/* ── Kopf ──────────────────────────────────────────────── */
+header{padding:18px 20px 14px;flex-shrink:0;position:relative;z-index:5}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.mark{width:26px;height:16px;flex-shrink:0}
+.wordmark{font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+.spacer{flex:1}
+.ghostbtn{
+  background:none;border:1px solid var(--line);color:var(--ink-3);
+  border-radius:100px;padding:6px 13px;font-size:9.5px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;cursor:pointer;
+  font-family:inherit;transition:color .4s var(--ease),border-color .4s var(--ease)
+}
+.ghostbtn:hover{color:var(--ink);border-color:var(--ink-3)}
+.ghostbtn.on{color:var(--bg);background:var(--ink);border-color:var(--ink)}
+
+.themes{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px}
+.themes::-webkit-scrollbar{display:none}
+.theme{
+  padding:9px 17px;background:transparent;border:1px solid var(--line);
+  color:var(--ink-2);border-radius:100px;cursor:pointer;font-size:12.5px;
+  font-weight:500;white-space:nowrap;font-family:inherit;flex-shrink:0;
+  transition:color .45s var(--ease),border-color .45s var(--ease),background .45s var(--ease)
+}
+.theme:hover{color:var(--ink);border-color:var(--line-2)}
+.theme.on{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
+.themes.locked{opacity:.35;pointer-events:none;transition:opacity .4s}
+
+/* ── Bühne ─────────────────────────────────────────────── */
+.stage{flex:1;position:relative;min-height:0;display:flex}
+.mapwrap{flex:1;position:relative;min-width:0;transition:filter .6s var(--ease),transform .6s var(--ease)}
+.mapwrap.dim{filter:saturate(.55) brightness(.82);transform:scale(.975)}
+svg#map{width:100%;height:100%;display:block;touch-action:manipulation}
+
+.land{
+  fill:var(--land);stroke:var(--land-line);stroke-width:.4;stroke-linejoin:round;
+  cursor:pointer;transition:fill .6s var(--ease),stroke .35s var(--ease);
+  opacity:0;transform-box:fill-box;transform-origin:center
+}
+.land.drawn{animation:landin .7s var(--ease) forwards}
+@keyframes landin{from{opacity:0;transform:translateY(1.5px) scale(.985)}to{opacity:1;transform:none}}
+.land:hover{stroke:var(--ink-2)}
+.land.on{stroke:var(--ink);stroke-width:1}
+.land.mute{opacity:.34}
+
+.code{
+  fill:var(--ink-3);font-size:2.9px;font-weight:700;text-anchor:middle;
+  pointer-events:none;letter-spacing:.1em;transition:fill .5s var(--ease),opacity .5s
+}
+.code.on{fill:var(--ink)}
+.code.mute{opacity:.3}
+
+.lock{pointer-events:none;opacity:0;transition:opacity .7s var(--ease)}
+.lock.in{opacity:1}
+
+.bub{pointer-events:auto;cursor:pointer;opacity:0}
+.bub.in{animation:rise .7s var(--ease) forwards}
+@keyframes rise{from{opacity:0;transform:translateY(2.5px) scale(.6)}to{opacity:1;transform:none}}
+.bub circle{stroke:var(--bg);stroke-width:.5;transition:stroke .3s,opacity .4s}
+.bub.sel circle{stroke:var(--ink);stroke-width:.9}
+.bub.off circle{opacity:.28}
+.bub.off text{opacity:.28}
+.bub text{
+  fill:var(--bg);font-size:2.4px;font-weight:700;text-anchor:middle;
+  pointer-events:none;letter-spacing:-.02em;transition:opacity .4s
+}
+.tether{stroke:var(--line-2);stroke-width:.3;opacity:.55}
+
+/* ── Overlays auf der Karte ────────────────────────────── */
+.hint{
+  position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+  transition:opacity .5s var(--ease);pointer-events:none;font-weight:600
+}
+.hint.gone{opacity:0}
+
+.peek{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:var(--surface);border:1px solid var(--line-2);border-radius:8px;
+  padding:8px 12px;z-index:6;transform:translate(-50%,-140%)
+}
+.peek.on{opacity:1}
+.peek b{display:block;font-size:12.5px;font-weight:600;letter-spacing:-.01em}
+.peek span{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+@media (hover:none){.peek{display:none}}
+
+.scale{position:absolute;bottom:18px;left:20px;pointer-events:none;
+  font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.scale-bar{width:110px;height:3px;border-radius:2px;margin-bottom:6px;
+  background:linear-gradient(90deg,var(--land) 0%,var(--land-hi) 45%,var(--red) 76%,var(--yellow) 100%)}
+.scale-row{display:flex;justify-content:space-between;width:110px}
+
+.source{
+  position:absolute;bottom:18px;right:20px;font-size:8.5px;letter-spacing:.09em;
+  color:var(--ink-3);text-align:right;pointer-events:none;line-height:1.6
+}
+@media (max-width:899px){.source{display:none}}
+
+/* ── Ghost für den Übergang Blase → Panel ──────────────── */
+.ghost{
+  position:fixed;border-radius:50%;pointer-events:none;z-index:99;
+  transition:transform .62s var(--ease),opacity .62s var(--ease)
+}
+
+/* ── Panel ─────────────────────────────────────────────── */
+.panel{
+  position:absolute;left:0;right:0;bottom:0;z-index:7;
+  background:var(--surface);border-top:1px solid var(--line);
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(102%);transition:transform .6s var(--ease);
+  max-height:58%;overflow-y:auto;-webkit-overflow-scrolling:touch
+}
+.panel.up{transform:none}
+
+.p-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px}
+.p-country{font-size:27px;font-weight:700;letter-spacing:-.025em;line-height:1.02}
+.p-theme{font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin-top:8px;line-height:1.7}
+.x{background:none;border:none;color:var(--ink-3);font-size:26px;line-height:.7;
+  cursor:pointer;padding:2px 4px;font-family:inherit;transition:color .3s}
+.x:hover{color:var(--ink)}
+
+.headline{display:flex;align-items:center;gap:18px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+.h-mark{width:62px;height:40px;flex-shrink:0;transition:opacity .4s var(--ease)}
+.h-dot{width:34px;height:34px;border-radius:50%;flex-shrink:0;display:none}
+.headline.seg .h-mark{display:none}
+.headline.seg .h-dot{display:block}
+.h-num{font-size:42px;font-weight:700;letter-spacing:-.045em;line-height:.92}
+.h-cap{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin-top:8px}
+
+.seg{display:flex;align-items:center;gap:14px;padding:15px 0;
+  border-bottom:1px solid var(--line);cursor:pointer;transition:opacity .4s var(--ease)}
+.seg:last-child{border-bottom:none}
+.panel.has-sel .seg{opacity:.3}
+.panel.has-sel .seg.sel{opacity:1}
+.swatch{width:3px;height:34px;border-radius:2px;flex-shrink:0}
+.s-body{flex:1;min-width:0}
+.s-name{font-size:14.5px;font-weight:600;letter-spacing:-.01em;margin-bottom:5px}
+.s-meta{font-size:10.5px;color:var(--ink-3);letter-spacing:.02em}
+.s-num{font-size:22px;font-weight:700;letter-spacing:-.035em;flex-shrink:0}
+
+/* ── Story-Leiste ──────────────────────────────────────── */
+.story{
+  position:absolute;left:0;right:0;bottom:0;z-index:8;
+  background:linear-gradient(to top,var(--bg) 55%,transparent);
+  padding:44px 20px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .55s var(--ease);pointer-events:none
+}
+.story.up{transform:none;pointer-events:auto}
+.st-kicker{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:9px}
+.st-line{font-size:17px;font-weight:600;letter-spacing:-.02em;line-height:1.35;max-width:560px}
+.st-nav{display:flex;align-items:center;gap:16px;margin-top:18px}
+.st-arrow{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--line-2);
+  background:none;color:var(--ink);cursor:pointer;font-size:14px;font-family:inherit;
+  display:grid;place-items:center;transition:border-color .3s,opacity .3s
+}
+.st-arrow:hover{border-color:var(--ink)}
+.st-arrow:disabled{opacity:.25;cursor:default}
+.st-dots{display:flex;gap:6px}
+.st-dot{width:5px;height:5px;border-radius:50%;background:var(--line-2);transition:background .4s,width .4s}
+.st-dot.on{background:var(--ink);width:16px;border-radius:3px}
+.st-count{font-size:9.5px;letter-spacing:.12em;color:var(--ink-3);margin-left:auto}
+@media (min-width:900px){
+  .story{right:400px;padding:52px 32px 28px}
+  .st-line{font-size:20px}
+}
+
+/* ── Desktop ───────────────────────────────────────────── */
+@media (min-width:900px){
+  header{padding:26px 32px 20px}
+  .brand{margin-bottom:20px}
+  .panel{
+    position:relative;left:auto;right:auto;bottom:auto;width:400px;flex-shrink:0;
+    max-height:none;border-top:none;border-left:1px solid var(--line);
+    transform:translateX(100%);opacity:0;
+    transition:transform .6s var(--ease),opacity .45s var(--ease);padding:30px 32px
+  }
+  .panel.up{transform:none;opacity:1}
+  .p-country{font-size:33px}
+  .h-num{font-size:50px}
+  .hint{top:24px}
+  .scale{bottom:26px;left:32px}
+  .source{bottom:26px;right:32px}
+}
+
+/* ── Import ────────────────────────────────────────────── */
+#file{display:none}
+.drop{position:fixed;inset:0;z-index:99;background:var(--bg);opacity:.94;display:none;
+  place-items:center;font-size:15px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink);border:2px dashed var(--red)}
+.drop.on{display:grid}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 26 16" aria-hidden="true">
+        <circle cx="9" cy="8" r="7" fill="var(--red)"/>
+        <circle cx="17" cy="8" r="7" fill="var(--yellow)" style="mix-blend-mode:screen"/>
+      </svg>
+      <span class="wordmark" id="wordmark"></span>
+      <span class="spacer"></span>
+      <button class="ghostbtn" id="storyBtn"></button>
+      <button class="ghostbtn" id="io"></button>
+      <input type="file" id="file" accept=".json,application/json">
+    </div>
+    <div class="themes" id="themes"></div>
+  </header>
+
+  <div class="stage">
+    <div class="mapwrap" id="mapwrap">
+      <svg id="map" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="hint" id="hint"></div>
+      <div class="peek" id="peek"></div>
+      <div class="scale">
+        <div class="scale-bar"></div>
+        <div class="scale-row"><span id="scaleLo"></span><span id="scaleHi"></span></div>
+      </div>
+      <div class="source" id="source"></div>
+      <div class="story" id="story"></div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+<div class="drop" id="drop"></div>
+
+<script>
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  1 · KONFIGURATION                                           ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+const CONFIG = {
+
+  font:{ family:"-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif" },
+
+  color:{
+    red:"#EB001B", yellow:"#F79E1B", overlap:"#FF5F00",
+    bg:"#0A0A0A", surface:"#111111",
+    land:"#181818", landHi:"#2E2A28", landLine:"#2A2A2A",
+    line:"#1F1F1F", line2:"#333333",
+    ink:"#FAFAFA", ink2:"#A0A0A0", ink3:"#5E5E5E"
+  },
+
+  text:{
+    wordmark:"Segmentation Explorer",
+    hint:"Land wählen",
+    hintNoTheme:"Thema wählen",
+    scaleLow:"gering", scaleHigh:"hoch",
+    potential:"Potenzialindex",
+    share:"Anteil im Markt",
+    segments:"Segmente",
+    engagement:"Engagement",
+    years:"Ø Alter",
+    import:"Daten",
+    story:"Story",
+    dropzone:"JSON hier ablegen",
+    /* Fußzeile — Datenherkunft. Signalisiert Forschungswerkzeug. */
+    source:"Platzhalterdaten · Quelle wird ergänzt"
+  },
+
+  motion:{ ease:"cubic-bezier(.4,0,.2,1)", bubbleStep:80, intro:55 },
+
+  /* ── STORY-MODUS ────────────────────────────────────────
+     Leer lassen = Knopf blendet sich aus.
+     Sobald die echten Daten da sind, hier die Abfolge füllen.
+     Jeder Schritt setzt Themen, Land und optional ein Segment.
+
+       themes  Array von Themennamen (müssen in DATA.themes stehen)
+       country Länderkürzel oder null für Gesamtansicht
+       segment Index im zusammengesetzten Segment-Array, oder null
+       kicker  kleine Zeile darüber
+       line    die Aussage
+     ───────────────────────────────────────────────────────── */
+  stories:[
+    { themes:["Tech Natives"], country:null, segment:null,
+      kicker:"Ausgangslage",
+      line:"Digitale Reife verteilt sich in Europa nicht nach Größe, sondern nach Infrastruktur." },
+    { themes:["Tech Natives"], country:"NL", segment:0,
+      kicker:"Der Vorreitermarkt",
+      line:"In den Niederlanden sind Digital Natives kein Randsegment mehr, sondern die Mehrheit." },
+    { themes:["Tech Natives"], country:"DE", segment:1,
+      kicker:"Der Widerstand",
+      line:"Deutschland bremst nicht aus Trägheit, sondern aus Misstrauen — das ist eine andere Aufgabe." },
+    { themes:["Tech Natives","Financial Wellness"], country:"SE", segment:null,
+      kicker:"Die Überlappung",
+      line:"Wo Digitalisierung und Finanzverhalten zusammenfallen, entsteht der eigentliche Hebel." }
+  ]
+};
+
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  2 · DATEN                                                   ║
+   ║                                                              ║
+   ║  Segment: n Name · s Größe % · e Engagement 0–10 · age Alter  ║
+   ║  Potenzialindex je Land = Summe(s × e) / 100                  ║
+   ║                                                              ║
+   ║  Länder werden über das Kürzel mit SHAPES verbunden.          ║
+   ║  Gezeichnet wird nur, was in names steht — die Bibliothek     ║
+   ║  unten enthält mehr Länder als hier verwendet werden.         ║
+   ║  Länderwechsel heißt also: names + segments anpassen, fertig. ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+let DATA = {
+  themes:["Tech Natives","Sustainability","Premium Culture","Financial Wellness"],
+  names:{DE:"Deutschland",FR:"Frankreich",IT:"Italien",NL:"Niederlande",ES:"Spanien",PL:"Polen",SE:"Schweden",AT:"Österreich"},
+  segments:{
+    "Tech Natives":{
+      DE:[{n:"Mobile Enthusiasts",s:32,e:8.5,age:24},{n:"Privacy Advocates",s:28,e:7.2,age:32},{n:"Mainstream Tech",s:40,e:6.1,age:35}],
+      FR:[{n:"Social Commerce",s:24,e:8.1,age:22},{n:"Tech Skeptics",s:35,e:4.5,age:45},{n:"Pragmatists",s:41,e:6.8,age:38}],
+      IT:[{n:"Fashion Tech",s:28,e:7.9,age:26},{n:"Gaming Natives",s:34,e:8.7,age:20},{n:"Traditionalists",s:38,e:3.2,age:50}],
+      NL:[{n:"Digital Natives",s:45,e:8.9,age:23},{n:"Work-Life Tech",s:32,e:7.1,age:40},{n:"Analog Rest",s:23,e:2.8,age:55}],
+      ES:[{n:"Social First",s:38,e:8.4,age:21},{n:"Corporate Tech",s:35,e:6.5,age:42},{n:"Rural Gap",s:27,e:3.1,age:48}],
+      PL:[{n:"Rising Digital",s:42,e:7.8,age:25},{n:"Early Adopters",s:31,e:8.3,age:28},{n:"Traditional Base",s:27,e:2.9,age:52}],
+      SE:[{n:"Fintech Leaders",s:48,e:8.8,age:24},{n:"Balanced Users",s:32,e:6.9,age:35},{n:"Dropouts",s:20,e:2.5,age:60}],
+      AT:[{n:"Engineering Mind",s:36,e:8.2,age:29},{n:"Late Adopters",s:38,e:5.1,age:48},{n:"Outsiders",s:26,e:2.4,age:58}]
+    },
+    "Sustainability":{
+      DE:[{n:"Eco Warriors",s:35,e:8.8,age:28},{n:"Conscious",s:42,e:6.5,age:35},{n:"Skeptics",s:23,e:3.2,age:52}],
+      FR:[{n:"Green Luxe",s:28,e:7.9,age:34},{n:"Mainstream Green",s:45,e:5.8,age:42},{n:"Deniers",s:27,e:2.1,age:55}],
+      IT:[{n:"Regional Stewards",s:32,e:7.2,age:32},{n:"City Greens",s:38,e:6.1,age:38},{n:"Cost First",s:30,e:3.5,age:45}],
+      NL:[{n:"Sustain Leaders",s:51,e:9.1,age:26},{n:"Corporate ESG",s:34,e:6.2,age:45},{n:"Disengaged",s:15,e:1.8,age:58}],
+      ES:[{n:"Med Green",s:40,e:7.5,age:30},{n:"Pragmatic",s:38,e:4.9,age:43},{n:"Indifferent",s:22,e:2.3,age:50}],
+      PL:[{n:"Emerging Eco",s:36,e:6.8,age:26},{n:"Industrial Past",s:45,e:4.2,age:48},{n:"Future Gen",s:19,e:7.5,age:19}],
+      SE:[{n:"Sustain Norm",s:52,e:8.5,age:28},{n:"Secondary",s:32,e:5.1,age:48},{n:"Complacent",s:16,e:2.9,age:62}],
+      AT:[{n:"Alpine Stewards",s:38,e:7.8,age:30},{n:"Pragmatic",s:40,e:5.2,age:45},{n:"Fossil Comfort",s:22,e:2.1,age:56}]
+    },
+    "Premium Culture":{
+      DE:[{n:"Luxury Seekers",s:28,e:8.3,age:38},{n:"Aspiring Elite",s:36,e:7.1,age:32},{n:"Mass Market",s:36,e:4.2,age:40}],
+      FR:[{n:"Heritage",s:32,e:8.9,age:42},{n:"Fashion Forward",s:40,e:7.8,age:28},{n:"Budget",s:28,e:3.1,age:38}],
+      IT:[{n:"Made in Italy",s:35,e:8.6,age:35},{n:"Design Lovers",s:38,e:7.2,age:30},{n:"Value Hunters",s:27,e:3.8,age:45}],
+      NL:[{n:"Minimal Luxury",s:34,e:7.5,age:40},{n:"Craftsmanship",s:38,e:6.8,age:35},{n:"Practical",s:28,e:2.9,age:50}],
+      ES:[{n:"Med Chic",s:31,e:8.1,age:32},{n:"Urban Setters",s:40,e:7.4,age:26},{n:"Traditional",s:29,e:3.2,age:52}],
+      PL:[{n:"Emerging Luxury",s:25,e:8.7,age:28},{n:"Global Aspirants",s:42,e:7.2,age:32},{n:"Local Pride",s:33,e:4.1,age:45}],
+      SE:[{n:"Scandi Design",s:40,e:8.2,age:38},{n:"Quality Seekers",s:38,e:6.5,age:42},{n:"Anti-Luxury",s:22,e:2.8,age:55}],
+      AT:[{n:"Precision",s:32,e:8.5,age:40},{n:"Cultural Patrons",s:36,e:7.3,age:38},{n:"Everyday Value",s:32,e:3.6,age:48}]
+    },
+    "Financial Wellness":{
+      DE:[{n:"Fintech Pioneers",s:34,e:8.7,age:26},{n:"Savers",s:40,e:6.2,age:45},{n:"Debt Stressed",s:26,e:4.8,age:38}],
+      FR:[{n:"Banking Heritage",s:35,e:5.9,age:50},{n:"Young Investors",s:38,e:7.8,age:25},{n:"Anxious",s:27,e:4.1,age:42}],
+      IT:[{n:"Family Providers",s:38,e:5.5,age:42},{n:"Self-Made",s:32,e:7.4,age:35},{n:"Struggling",s:30,e:3.8,age:45}],
+      NL:[{n:"Wealth Managers",s:36,e:7.2,age:48},{n:"Savers Culture",s:42,e:6.1,age:40},{n:"Crypto Curious",s:22,e:8.5,age:22}],
+      ES:[{n:"Recovery Mode",s:40,e:5.8,age:40},{n:"Euro Believers",s:36,e:5.2,age:50},{n:"Side Hustlers",s:24,e:7.6,age:28}],
+      PL:[{n:"Rising Middle",s:42,e:7.3,age:30},{n:"EU Integration",s:36,e:6.5,age:35},{n:"Cash Economy",s:22,e:3.2,age:52}],
+      SE:[{n:"Nordic Security",s:44,e:6.8,age:45},{n:"Cashless Leaders",s:38,e:8.1,age:28},{n:"Pension Planners",s:18,e:4.5,age:60}],
+      AT:[{n:"Savings Tradition",s:40,e:5.9,age:50},{n:"Digital Investors",s:34,e:7.6,age:32},{n:"Vulnerable",s:26,e:4.2,age:45}]
+    }
+  }
+};
+
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  3 · LÄNDERBIBLIOTHEK                                        ║
+   ║  Mehr Länder als aktuell gebraucht — auf Vorrat, damit der   ║
+   ║  Ländersatz später ohne Codeänderung wechseln kann.          ║
+   ║  Der Kartenausschnitt richtet sich automatisch nach den      ║
+   ║  Ländern, die in DATA.names stehen.                          ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+const SHAPES = {
+  DE:[[7.0,53.5],[8.5,54.9],[9.4,54.8],[10.9,54.4],[13.0,54.4],[14.3,53.8],[14.1,52.9],[14.7,52.1],[14.7,51.1],[14.3,50.9],[12.5,50.4],[12.2,50.2],[13.6,48.9],[13.0,48.3],[12.9,47.7],[13.0,47.5],[10.4,47.3],[10.5,46.9],[9.6,47.5],[8.6,47.8],[7.6,47.6],[7.6,48.3],[8.1,49.0],[6.7,49.2],[6.2,49.5],[6.0,50.8],[5.9,51.8],[6.6,51.9],[7.1,53.1]],
+  FR:[[2.5,51.1],[1.6,50.9],[0.2,49.5],[-1.0,49.3],[-1.9,49.7],[-2.0,48.6],[-4.8,48.6],[-4.4,47.9],[-2.2,47.1],[-1.2,46.0],[-1.4,44.5],[-1.8,43.4],[-0.5,42.8],[1.8,42.5],[3.1,42.5],[3.1,43.1],[4.8,43.4],[6.5,43.1],[7.5,43.7],[7.0,44.3],[6.7,45.0],[7.0,45.5],[6.8,46.0],[6.0,46.3],[6.0,46.7],[7.0,47.5],[7.6,48.3],[8.1,49.0],[6.7,49.2],[6.2,49.5],[5.9,50.0],[4.8,50.0],[4.2,50.7],[3.6,50.4]],
+  IT:[[7.0,45.0],[7.5,45.9],[8.6,46.5],[9.5,46.4],[10.4,46.9],[12.4,46.8],[13.7,46.5],[13.6,45.8],[12.3,45.4],[12.4,44.9],[13.5,43.6],[14.9,42.1],[16.0,41.9],[17.5,41.0],[18.5,40.3],[17.9,39.6],[17.1,39.0],[16.6,38.9],[16.1,37.9],[15.6,38.0],[16.0,38.5],[15.2,38.3],[15.6,39.9],[14.0,40.8],[13.6,41.2],[12.5,41.4],[11.2,42.4],[10.1,43.5],[9.7,44.4],[8.9,44.4],[8.0,43.9],[7.5,43.8]],
+  NL:[[3.4,51.4],[4.3,51.4],[5.0,51.5],[5.8,51.0],[6.0,50.8],[6.2,51.4],[6.8,51.9],[7.1,52.4],[7.2,53.2],[6.9,53.5],[5.5,53.4],[4.7,53.1],[4.5,52.5],[4.1,52.0]],
+  ES:[[-9.0,43.0],[-8.0,43.7],[-6.0,43.6],[-4.0,43.4],[-1.8,43.4],[-0.5,42.8],[0.7,42.7],[1.8,42.5],[3.2,42.4],[3.0,41.9],[0.7,40.7],[0.0,39.9],[-0.3,39.3],[0.0,38.8],[-0.6,38.2],[-1.6,37.4],[-2.9,36.7],[-4.4,36.7],[-5.4,36.0],[-6.3,36.3],[-7.4,37.2],[-7.5,38.5],[-7.0,39.7],[-6.9,41.0],[-8.2,41.9],[-8.9,41.9]],
+  PL:[[14.1,53.9],[16.4,54.5],[18.5,54.6],[19.7,54.4],[22.8,54.4],[23.5,54.0],[23.5,52.6],[23.8,51.6],[24.0,50.8],[22.5,49.5],[21.0,49.4],[19.8,49.2],[19.0,49.4],[17.6,50.0],[16.9,50.5],[15.0,51.0],[14.6,51.8],[14.7,52.6],[14.1,52.9]],
+  SE:[[11.0,58.9],[12.3,60.0],[12.6,61.3],[12.0,61.6],[12.8,64.0],[14.1,66.1],[16.1,67.2],[17.0,68.0],[20.6,69.1],[23.9,68.0],[23.6,66.3],[22.2,65.7],[21.0,64.5],[17.8,63.0],[17.1,61.3],[18.6,60.2],[17.8,58.7],[16.5,57.0],[14.7,56.2],[12.9,55.4],[12.6,56.3],[11.8,57.6]],
+  AT:[[9.5,47.5],[10.4,47.3],[12.1,47.6],[13.0,47.5],[12.9,47.7],[13.0,48.3],[13.6,48.9],[15.0,49.0],[16.9,48.7],[17.1,48.0],[16.0,46.8],[14.6,46.4],[13.7,46.5],[12.4,46.8],[10.4,46.9],[9.6,47.1]],
+
+  /* auf Vorrat */
+  GB:[[-5.2,50.1],[-3.5,50.6],[-1.3,50.7],[0.7,50.8],[1.4,51.4],[0.5,52.9],[0.3,53.6],[-0.2,54.0],[-1.3,54.7],[-1.6,55.6],[-2.0,55.8],[-3.0,56.0],[-2.6,56.5],[-2.0,57.0],[-1.8,57.5],[-3.5,57.9],[-4.0,58.6],[-5.0,58.6],[-5.6,58.2],[-5.3,57.5],[-5.8,56.7],[-5.5,56.0],[-4.8,55.5],[-5.0,54.9],[-3.6,54.5],[-3.0,53.4],[-4.1,53.4],[-4.7,52.8],[-4.1,52.2],[-5.2,51.7],[-4.2,51.6],[-3.0,51.4],[-4.2,50.5]],
+  IE:[[-6.0,52.2],[-6.1,53.4],[-6.3,54.1],[-5.5,54.5],[-5.9,55.0],[-7.3,55.4],[-8.2,55.2],[-8.8,54.7],[-8.5,54.2],[-9.9,54.3],[-10.0,53.6],[-9.5,53.2],[-9.9,52.6],[-10.4,51.8],[-9.0,51.5],[-8.0,51.6],[-6.5,52.0]],
+  PT:[[-8.9,41.9],[-8.2,41.9],[-7.0,41.0],[-6.9,40.2],[-7.0,39.7],[-7.5,38.5],[-7.4,37.2],[-8.9,37.0],[-8.8,38.5],[-9.5,38.7],[-9.2,39.4],[-8.8,40.1],[-8.7,41.0]],
+  BE:[[2.5,51.1],[3.6,51.4],[4.2,51.4],[5.0,51.5],[5.8,51.0],[6.2,50.5],[5.8,49.5],[5.4,49.5],[4.8,49.8],[4.2,49.9],[3.6,50.4]],
+  CH:[[6.0,46.3],[6.0,46.7],[7.0,47.5],[8.6,47.8],[9.6,47.5],[9.5,47.1],[10.5,46.9],[10.4,46.4],[9.0,45.8],[8.6,46.0],[7.0,45.9],[6.8,46.0]],
+  CZ:[[12.2,50.2],[12.5,50.4],[14.3,50.9],[14.7,51.1],[15.0,51.0],[16.9,50.5],[17.6,50.0],[18.6,49.9],[18.8,49.5],[17.9,48.9],[16.9,48.7],[15.0,49.0],[13.6,48.9]],
+  DK:[[8.1,55.0],[8.2,56.7],[9.0,57.7],[10.5,57.5],[10.9,56.5],[10.2,56.0],[9.9,55.0],[9.4,54.8],[8.5,54.9]],
+  NO:[[5.0,58.9],[7.5,58.0],[9.5,58.8],[10.6,59.4],[11.4,59.0],[12.3,60.0],[12.6,61.3],[12.0,61.6],[12.8,64.0],[14.1,66.1],[16.1,67.2],[17.0,68.0],[20.6,69.1],[25.8,69.9],[29.0,69.7],[31.0,69.8],[28.0,71.0],[25.0,71.2],[22.0,70.5],[19.0,69.5],[16.0,68.5],[14.0,67.5],[13.0,66.0],[12.0,64.5],[9.5,63.5],[8.0,62.5],[7.0,61.0],[5.5,59.5]],
+  FI:[[21.5,60.5],[23.0,59.8],[25.0,60.0],[27.8,60.5],[29.5,62.0],[31.5,62.9],[30.0,63.8],[30.0,64.8],[29.5,66.0],[29.0,67.5],[28.0,68.5],[27.0,69.5],[25.8,69.9],[23.9,68.0],[23.6,66.3],[22.2,65.7],[21.0,64.5],[21.4,63.0],[21.0,62.0],[21.5,61.0]],
+  HU:[[16.1,46.9],[16.5,47.7],[17.1,48.0],[18.8,48.6],[20.5,48.6],[21.8,48.4],[22.5,47.5],[21.7,46.3],[20.2,46.1],[19.0,45.8],[17.6,45.9],[16.5,46.4]],
+  RO:[[20.3,45.9],[21.5,46.1],[22.5,47.5],[23.5,48.1],[25.0,47.9],[26.6,48.2],[28.2,46.4],[29.7,45.2],[28.7,44.7],[27.3,44.1],[25.4,43.6],[23.0,43.8],[22.6,44.5],[21.4,44.8],[20.6,45.5]],
+  GR:[[20.0,39.7],[20.8,40.5],[22.0,40.5],[23.0,41.3],[24.5,41.6],[26.3,41.4],[26.6,40.5],[25.0,40.6],[23.7,40.4],[24.0,40.0],[23.3,39.2],[23.0,40.0],[22.5,39.0],[23.0,38.5],[24.0,38.2],[23.2,37.0],[22.5,36.7],[22.0,37.0],[21.5,36.9],[21.7,38.3],[20.8,38.9],[20.6,39.3]]
+};
+
+
+/* ══════════════════════════════════════════════════════════════
+   AB HIER: Logik. Für Daten-, Farb- oder Fontwechsel nicht nötig.
+   ══════════════════════════════════════════════════════════════ */
+
+const T = CONFIG.text, C = CONFIG.color;
+const $ = id => document.getElementById(id);
+
+function applyTokens(){
+  $('tokens').textContent = `:root{
+    --font:${CONFIG.font.family};
+    --red:${C.red};--yellow:${C.yellow};--overlap:${C.overlap};
+    --bg:${C.bg};--surface:${C.surface};--land:${C.land};--land-hi:${C.landHi};
+    --land-line:${C.landLine};--line:${C.line};--line-2:${C.line2};
+    --ink:${C.ink};--ink-2:${C.ink2};--ink-3:${C.ink3};
+    --ease:${CONFIG.motion.ease};}`;
+}
+applyTokens();
+
+$('wordmark').textContent = T.wordmark;
+$('hint').textContent     = T.hint;
+$('scaleLo').textContent  = T.scaleLow;
+$('scaleHi').textContent  = T.scaleHigh;
+$('io').textContent       = T.import;
+$('storyBtn').textContent = T.story;
+$('drop').textContent     = T.dropzone;
+$('source').textContent   = T.source;
+
+/* ── Farbe ─────────────────────────────────────────────── */
+const hex2rgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rgb2hex = r => '#'+r.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('');
+const mix = (a,b,t)=>rgb2hex(hex2rgb(a).map((v,i)=>v+(hex2rgb(b)[i]-v)*t));
+
+/* Zurückhaltung: Farbe erst im oberen Drittel. Darunter Graustufen. */
+const KNEE = .58;
+function heat(t){
+  t = Math.max(0, Math.min(1, t));
+  if(t < KNEE) return mix(C.land, C.landHi, t/KNEE);
+  const u = (t-KNEE)/(1-KNEE);
+  return u < .5 ? mix(C.landHi, C.red, u/.5) : mix(C.red, C.yellow, (u-.5)/.5);
+}
+
+/* ── Projektion, richtet sich nach den aktiven Ländern ──── */
+const merc = ([lng,lat]) => [lng, Math.log(Math.tan(Math.PI/4+lat*Math.PI/360))*(180/Math.PI)];
+let PROJ = null;
+
+function computeProjection(codes){
+  const pts = codes.filter(c=>SHAPES[c]).flatMap(c=>SHAPES[c]).map(merc);
+  const x0=Math.min(...pts.map(p=>p[0])), x1=Math.max(...pts.map(p=>p[0]));
+  const y0=Math.min(...pts.map(p=>p[1])), y1=Math.max(...pts.map(p=>p[1]));
+  const VW=100, VH=Math.max(45, VW*(y1-y0)/(x1-x0)), PAD=6;
+  const fn = pt=>{ const[mx,my]=merc(pt); return [
+    PAD+(mx-x0)/((x1-x0)||1)*(VW-2*PAD),
+    PAD+(y1-my)/((y1-y0)||1)*(VH-2*PAD) ];};
+  return {fn, VW, VH};
+}
+const center = code=>{
+  const p=SHAPES[code].map(PROJ.fn);
+  return [p.reduce((a,q)=>a+q[0],0)/p.length, p.reduce((a,q)=>a+q[1],0)/p.length];
+};
+
+/* ── SVG ───────────────────────────────────────────────── */
+const NS='http://www.w3.org/2000/svg';
+const svg=$('map');
+const gLand=document.createElementNS(NS,'g');
+const gCode=document.createElementNS(NS,'g');
+const gLock=document.createElementNS(NS,'g');
+const gSeg =document.createElementNS(NS,'g');
+svg.append(gLand,gCode,gLock,gSeg);
+
+let activeThemes=new Set(), active=null, picked=null;
+let storyOn=false, storyStep=0;
+const lands={}, codeLabels={};
+
+function segmentsFor(code){
+  const out=[];
+  DATA.themes.forEach(th=>{
+    if(!activeThemes.has(th)) return;
+    (DATA.segments[th]?.[code]||[]).forEach(s=>out.push({...s,theme:th}));
+  });
+  return out;
+}
+const potential = code => segmentsFor(code).reduce((a,s)=>a+s.s*s.e,0)/100;
+
+/* ── Karte aufbauen ────────────────────────────────────── */
+function buildMap(intro){
+  const codes = Object.keys(DATA.names).filter(c=>SHAPES[c]);
+  PROJ = computeProjection(codes);
+  svg.setAttribute('viewBox',`0 0 ${PROJ.VW} ${PROJ.VH}`);
+  gLand.textContent=''; gCode.textContent='';
+  gLock.textContent=''; gSeg.textContent='';
+
+  codes.forEach((code,i)=>{
+    const d = SHAPES[code].map(PROJ.fn)
+      .map(([x,y],k)=>`${k?'L':'M'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ')+' Z';
+    const p=document.createElementNS(NS,'path');
+    p.setAttribute('d',d); p.setAttribute('class','land');
+    p.style.animationDelay = (intro ? i*CONFIG.motion.intro : 0)+'ms';
+    p.addEventListener('click',e=>{e.stopPropagation();select(code);});
+    p.addEventListener('mouseenter',e=>showPeek(code,e));
+    p.addEventListener('mousemove',e=>movePeek(e));
+    p.addEventListener('mouseleave',hidePeek);
+    gLand.appendChild(p); lands[code]=p;
+    requestAnimationFrame(()=>p.classList.add('drawn'));
+
+    const [cx,cy]=center(code);
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',cx); t.setAttribute('y',cy); t.setAttribute('class','code');
+    t.textContent=code; gCode.appendChild(t); codeLabels[code]=t;
+  });
+}
+
+function paint(){
+  const codes=Object.keys(DATA.names).filter(c=>lands[c]);
+  const empty=activeThemes.size===0;
+  const vals=codes.map(potential);
+  const lo=Math.min(...vals), hi=Math.max(...vals);
+  codes.forEach(c=>{
+    const t=(potential(c)-lo)/((hi-lo)||1);
+    lands[c].style.fill = empty ? C.land : heat(t);
+    lands[c].classList.toggle('on', c===active);
+    lands[c].classList.toggle('mute', active!==null && c!==active);
+    codeLabels[c].classList.toggle('on', c===active);
+    codeLabels[c].classList.toggle('mute', active!==null && c!==active);
+  });
+}
+
+/* ── Hover-Vorschau ────────────────────────────────────── */
+function showPeek(code,e){
+  if(activeThemes.size===0 || storyOn) return;
+  const p=$('peek');
+  p.innerHTML=`<b>${DATA.names[code]}</b><span>${T.potential} ${potential(code).toFixed(1)}</span>`;
+  p.classList.add('on'); movePeek(e);
+}
+function movePeek(e){
+  const wrap=$('mapwrap').getBoundingClientRect(), p=$('peek');
+  p.style.left=(e.clientX-wrap.left)+'px';
+  p.style.top =(e.clientY-wrap.top)+'px';
+}
+function hidePeek(){ $('peek').classList.remove('on'); }
+
+/* ── Verschränkte Kreise ───────────────────────────────── */
+function drawLock(code){
+  gLock.textContent='';
+  const codes=Object.keys(DATA.names).filter(c=>lands[c]);
+  const vals=codes.map(potential);
+  const t=(potential(code)-Math.min(...vals))/((Math.max(...vals)-Math.min(...vals))||1);
+  const [cx,cy]=center(code);
+  const r=5+t*2.6, off=r*0.6;
+  const g=document.createElementNS(NS,'g'); g.setAttribute('class','lock');
+  [[-off,C.red],[off,C.yellow]].forEach(([dx,fill])=>{
+    const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',cx+dx); c.setAttribute('cy',cy); c.setAttribute('r',r);
+    c.setAttribute('fill',fill); c.setAttribute('opacity','.88');
+    c.style.mixBlendMode='screen';
+    g.appendChild(c);
+  });
+  gLock.appendChild(g);
+  requestAnimationFrame(()=>g.classList.add('in'));
+}
+
+/* ── Segment-Blasen ────────────────────────────────────── */
+function drawSegments(code){
+  gSeg.textContent='';
+  const segs=segmentsFor(code);
+  if(!segs.length) return;
+  const [cx,cy]=center(code);
+  const maxS=Math.max(...segs.map(s=>s.s));
+  const ring=13+segs.length*0.7;
+
+  segs.forEach((seg,i)=>{
+    const a=(-Math.PI/2)+(i/segs.length)*Math.PI*2;
+    const bx=cx+Math.cos(a)*ring, by=cy+Math.sin(a)*ring*0.82;
+    const r=2.5+Math.sqrt(seg.s/maxS)*3.5;
+
+    const l=document.createElementNS(NS,'line');
+    l.setAttribute('x1',cx);l.setAttribute('y1',cy);
+    l.setAttribute('x2',bx);l.setAttribute('y2',by);
+    l.setAttribute('class','tether'); gSeg.appendChild(l);
+
+    const g=document.createElementNS(NS,'g');
+    g.setAttribute('class','bub');
+    g.dataset.i=i;
+    g.style.animationDelay=(i*CONFIG.motion.bubbleStep)+'ms';
+    g.style.transformOrigin=`${bx}px ${by}px`;
+
+    const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',bx);c.setAttribute('cy',by);c.setAttribute('r',r);
+    c.setAttribute('fill',heat(seg.e/10));
+
+    const t=document.createElementNS(NS,'text');
+    t.setAttribute('x',bx);t.setAttribute('y',by+0.8);
+    t.textContent=seg.s+'%';
+
+    g.append(c,t);
+    g.addEventListener('click',e=>{e.stopPropagation();pick(i,g);});
+    gSeg.appendChild(g);
+    requestAnimationFrame(()=>g.classList.add('in'));
+  });
+}
+
+/* ── Zahlen hochzählen ─────────────────────────────────── */
+function countTo(el,to,dec,dur){
+  const from=parseFloat(el.dataset.v||'0');
+  const t0=performance.now();
+  el.dataset.v=to;
+  (function step(now){
+    const p=Math.min(1,(now-t0)/(dur||600));
+    const e=1-Math.pow(1-p,3);
+    el.textContent=(from+(to-from)*e).toFixed(dec)+(el.dataset.suffix||'');
+    if(p<1) requestAnimationFrame(step);
+  })(t0);
+}
+
+/* ── Ghost: Blase fliegt in die Kopfzeile ──────────────── */
+function fly(fromEl,toEl,color){
+  if(!fromEl||!toEl) return;
+  const a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect();
+  if(!a.width||!b.width) return;
+  const g=document.createElement('div');
+  g.className='ghost';
+  Object.assign(g.style,{
+    left:a.left+'px', top:a.top+'px', width:a.width+'px', height:a.height+'px',
+    background:color, opacity:'.95'
+  });
+  document.body.appendChild(g);
+  requestAnimationFrame(()=>{
+    const dx=(b.left+b.width/2)-(a.left+a.width/2);
+    const dy=(b.top+b.height/2)-(a.top+a.height/2);
+    g.style.transform=`translate(${dx}px,${dy}px) scale(${b.width/a.width})`;
+    g.style.opacity='0';
+  });
+  setTimeout(()=>g.remove(),680);
+}
+
+/* ── Panel ─────────────────────────────────────────────── */
+function drawPanel(code){
+  const el=$('panel');
+  const segs=segmentsFor(code);
+  const chosen=DATA.themes.filter(t=>activeThemes.has(t)).join(' · ');
+
+  el.innerHTML=`
+    <div class="p-head">
+      <div>
+        <div class="p-country">${DATA.names[code]}</div>
+        <div class="p-theme">${chosen} — ${segs.length} ${T.segments}</div>
+      </div>
+      <button class="x" id="close">&times;</button>
+    </div>
+    <div class="headline" id="headline">
+      <svg class="h-mark" viewBox="0 0 62 40" aria-hidden="true">
+        <circle cx="23" cy="20" r="17.5" fill="${C.red}"/>
+        <circle cx="39" cy="20" r="17.5" fill="${C.yellow}" style="mix-blend-mode:screen"/>
+      </svg>
+      <div class="h-dot" id="hdot"></div>
+      <div>
+        <div class="h-num" id="hnum">0.0</div>
+        <div class="h-cap" id="hcap">${T.potential}</div>
+      </div>
+    </div>
+    ${segs.map((s,i)=>`
+      <div class="seg" data-i="${i}">
+        <div class="swatch" style="background:${heat(s.e/10)}"></div>
+        <div class="s-body">
+          <div class="s-name">${s.n}</div>
+          <div class="s-meta">${activeThemes.size>1?s.theme+' · ':''}${T.engagement} ${s.e} · ${T.years} ${s.age}</div>
+        </div>
+        <div class="s-num">${s.s}%</div>
+      </div>`).join('')}
+  `;
+  el.classList.add('up'); el.classList.remove('has-sel');
+  $('mapwrap').classList.add('dim');
+  $('hnum').dataset.suffix='';
+  countTo($('hnum'), potential(code), 1, 750);
+  el.querySelectorAll('.seg').forEach(s=>
+    s.addEventListener('click',()=>{
+      const i=+s.dataset.i;
+      pick(i, gSeg.querySelector(`.bub[data-i="${i}"]`));
+    }));
+  $('close').addEventListener('click',clear);
+}
+
+/* ── Segmentauswahl ────────────────────────────────────── */
+function pick(i,fromEl){
+  const panel=$('panel');
+  const segs=segmentsFor(active);
+  picked = picked===i ? null : i;
+
+  panel.classList.toggle('has-sel', picked!==null);
+  gSeg.querySelectorAll('.bub').forEach(b=>{
+    const j=+b.dataset.i;
+    b.classList.toggle('sel', j===picked);
+    b.classList.toggle('off', picked!==null && j!==picked);
+  });
+  panel.querySelectorAll('.seg').forEach((s,j)=>s.classList.toggle('sel',j===picked));
+
+  const head=$('headline'), num=$('hnum'), cap=$('hcap'), dot=$('hdot');
+  if(!head) return;
+
+  if(picked===null){
+    head.classList.remove('seg');
+    cap.textContent=T.potential;
+    num.dataset.suffix='';
+    countTo(num, potential(active), 1, 550);
+  }else{
+    const s=segs[picked], col=heat(s.e/10);
+    dot.style.background=col;
+    head.classList.add('seg');
+    cap.textContent=s.n;
+    num.dataset.suffix='%';
+    countTo(num, s.s, 0, 550);
+    fly(fromEl, dot, col);
+  }
+}
+
+/* ── Auswahl / Zurücksetzen ────────────────────────────── */
+function select(code){
+  if(activeThemes.size===0) return;
+  active=code; picked=null;
+  hidePeek();
+  $('hint').classList.add('gone');
+  paint(); drawLock(code); drawSegments(code); drawPanel(code);
+}
+
+function clear(){
+  active=null; picked=null;
+  gLock.textContent=''; gSeg.textContent='';
+  $('panel').classList.remove('up','has-sel');
+  $('mapwrap').classList.remove('dim');
+  const h=$('hint');
+  h.textContent = activeThemes.size===0 ? T.hintNoTheme : T.hint;
+  h.classList.remove('gone');
+  paint();
+}
+svg.addEventListener('click',e=>{ if(e.target===svg && !storyOn) clear(); });
+
+/* ── Themenleiste ──────────────────────────────────────── */
+function buildThemes(){
+  const bar=$('themes');
+  bar.textContent='';
+  activeThemes=new Set([DATA.themes[0]]);
+  DATA.themes.forEach(th=>{
+    const b=document.createElement('button');
+    b.className='theme'+(activeThemes.has(th)?' on':'');
+    b.dataset.theme=th;
+    b.textContent=th;
+    b.setAttribute('aria-pressed',activeThemes.has(th));
+    b.onclick=()=>{
+      activeThemes.has(th)?activeThemes.delete(th):activeThemes.add(th);
+      syncThemes(); picked=null;
+      if(activeThemes.size===0){ clear(); return; }
+      paint();
+      if(active){drawLock(active);drawSegments(active);drawPanel(active);}
+    };
+    bar.appendChild(b);
+  });
+}
+function syncThemes(){
+  $('themes').querySelectorAll('.theme').forEach(b=>{
+    const on=activeThemes.has(b.dataset.theme);
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on);
+  });
+}
+
+/* ── Story-Modus ───────────────────────────────────────── */
+function buildStoryBar(){
+  const s=CONFIG.stories||[];
+  $('storyBtn').style.display = s.length ? '' : 'none';
+}
+
+function renderStory(){
+  const s=CONFIG.stories[storyStep];
+  const el=$('story');
+  el.innerHTML=`
+    <div class="st-kicker">${s.kicker||''}</div>
+    <div class="st-line">${s.line||''}</div>
+    <div class="st-nav">
+      <button class="st-arrow" id="stPrev" ${storyStep===0?'disabled':''}>&larr;</button>
+      <button class="st-arrow" id="stNext" ${storyStep===CONFIG.stories.length-1?'disabled':''}>&rarr;</button>
+      <div class="st-dots">${CONFIG.stories.map((_,i)=>
+        `<span class="st-dot${i===storyStep?' on':''}"></span>`).join('')}</div>
+      <span class="st-count">${storyStep+1} / ${CONFIG.stories.length}</span>
+    </div>`;
+  $('stPrev').onclick=()=>gotoStory(storyStep-1);
+  $('stNext').onclick=()=>gotoStory(storyStep+1);
+
+  activeThemes=new Set(s.themes||[]);
+  syncThemes();
+  if(s.country && lands[s.country]){
+    select(s.country);
+    if(s.segment!=null){
+      setTimeout(()=>pick(s.segment, gSeg.querySelector(`.bub[data-i="${s.segment}"]`)), 420);
+    }
+  }else{
+    active=null; picked=null;
+    gLock.textContent=''; gSeg.textContent='';
+    $('panel').classList.remove('up','has-sel');
+    $('mapwrap').classList.remove('dim');
+    $('hint').classList.add('gone');
+    paint();
+  }
+}
+function gotoStory(i){
+  if(i<0||i>=CONFIG.stories.length) return;
+  storyStep=i; renderStory();
+}
+function toggleStory(on){
+  storyOn = on!==undefined ? on : !storyOn;
+  $('storyBtn').classList.toggle('on',storyOn);
+  $('story').classList.toggle('up',storyOn);
+  $('themes').classList.toggle('locked',storyOn);
+  if(storyOn){ storyStep=0; renderStory(); }
+  else{ $('story').innerHTML=''; clear(); }
+}
+$('storyBtn').onclick=()=>toggleStory();
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ storyOn?toggleStory(false):clear(); }
+  if(!storyOn) return;
+  if(e.key==='ArrowRight') gotoStory(storyStep+1);
+  if(e.key==='ArrowLeft')  gotoStory(storyStep-1);
+});
+
+/* ── Import ────────────────────────────────────────────── */
+function loadJSON(text){
+  try{
+    const p=JSON.parse(text);
+    if(!p.themes||!p.segments||!p.names)
+      throw new Error('themes, names und segments werden benötigt');
+    const missing=Object.keys(p.names).filter(c=>!SHAPES[c]);
+    if(missing.length)
+      throw new Error('Kein Umriss vorhanden für: '+missing.join(', '));
+    DATA=p;
+    if(storyOn) toggleStory(false);
+    buildMap(false); buildThemes(); clear();
+  }catch(err){ alert('Datei konnte nicht gelesen werden:\n'+err.message); }
+}
+$('io').onclick=()=>$('file').click();
+$('file').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>loadJSON(r.result); r.readAsText(f);
+});
+const dz=$('drop');
+['dragenter','dragover'].forEach(ev=>document.addEventListener(ev,e=>{
+  e.preventDefault(); dz.classList.add('on');
+}));
+document.addEventListener('dragleave',e=>{ if(e.clientX===0&&e.clientY===0) dz.classList.remove('on'); });
+document.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('on');
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>loadJSON(r.result); r.readAsText(f);
+});
+
+/* ── Start ─────────────────────────────────────────────── */
+buildMap(true); buildThemes(); buildStoryBar(); paint();
+</script>
+</body>
+</html>
