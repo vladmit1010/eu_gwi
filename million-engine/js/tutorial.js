@@ -11,36 +11,37 @@ export const TUTORIAL_STEPS = [
   },
   {
     id: "who",
-    gate: "who",
-    caption: "Who changes the whole view — tap Affluent or Gen Z and watch the map update.",
-    prompt: "Pick Affluent or Gen Z",
+    gate: "next",
+    caption:
+      "Who changes the map — try Affluent or Gen Z if you like, or just press Next.",
   },
   {
     id: "passions",
     gate: "next",
-    caption: "Three global sponsorship passions — shared opportunities across markets.",
+    caption:
+      "Global sponsorships — try F1 / Running / Live music if you like, or Next.",
   },
   {
     id: "f1map",
     gate: "next",
-    caption: "Example: Formula 1 — where Interest sits across the six markets.",
+    caption: "Example: Formula 1 — Interest across the six markets (placeholder fact slide).",
   },
   {
     id: "country",
-    gate: "country",
-    caption: "Click a market to open Potential for that country.",
-    prompt: "Click a country",
+    gate: "next",
+    caption: "Click a market on the map — or Next for a sample country.",
   },
   {
     id: "f1split",
-    gate: "next",
-    caption: "Left: Who for this market. Centre: categories by potential size.",
+    gate: "category",
+    caption: "Click a category circle — it opens the themes inside that area.",
+    prompt: "Click a category",
   },
   {
     id: "local",
-    gate: "passion",
-    caption: "Tap a category, then a theme to colour the map.",
-    prompt: "Tap a category, then a theme",
+    gate: "next",
+    caption:
+      "Themes inside Global — hover to inspect Interest + reach. Next when ready.",
   },
   {
     id: "done",
@@ -82,7 +83,11 @@ export function createTutorial({ onStep, onExit } = {}) {
       captionEl.textContent = s?.caption || "";
     }
 
-    const wait = s?.gate === "country" || s?.gate === "who" || s?.gate === "passion";
+    const wait =
+      s?.gate === "country" ||
+      s?.gate === "who" ||
+      s?.gate === "passion" ||
+      s?.gate === "category";
     const done = s?.gate === "done";
     if (nextBtn) {
       nextBtn.hidden = false;
@@ -94,6 +99,7 @@ export function createTutorial({ onStep, onExit } = {}) {
     document.documentElement.classList.toggle("tutorial-wait-country", s?.gate === "country");
     document.documentElement.classList.toggle("tutorial-wait-who", s?.gate === "who");
     document.documentElement.classList.toggle("tutorial-wait-passion", s?.gate === "passion");
+    document.documentElement.classList.toggle("tutorial-wait-category", s?.gate === "category");
     document.documentElement.classList.remove("tutorial-wait-bubbles");
   }
 
@@ -114,7 +120,13 @@ export function createTutorial({ onStep, onExit } = {}) {
   async function next() {
     if (!active) return;
     const s = step();
-    if (s?.gate === "country" || s?.gate === "who" || s?.gate === "passion") return;
+    if (
+      s?.gate === "country" ||
+      s?.gate === "who" ||
+      s?.gate === "passion" ||
+      s?.gate === "category"
+    )
+      return;
     if (s?.gate === "done") {
       exit();
       return;
@@ -145,7 +157,9 @@ export function createTutorial({ onStep, onExit } = {}) {
       "tutorial-wait-country",
       "tutorial-wait-who",
       "tutorial-wait-passion",
-      "tutorial-wait-bubbles"
+      "tutorial-wait-category",
+      "tutorial-wait-bubbles",
+      "tutorial-step-bubbles"
     );
     syncChrome();
     onExit?.();

@@ -1,6 +1,5 @@
 /* Guided tutorial chrome */
 
-/* Scrim lives inside .app so spotlighted UI can rise above it */
 .app {
   position: relative;
 }
@@ -9,10 +8,12 @@
   position: absolute;
   inset: 0;
   z-index: 40;
-  background: rgba(6, 7, 9, 0.7);
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(8, 9, 12, 0.35), rgba(4, 5, 7, 0.78)),
+    rgba(4, 5, 7, 0.55);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s var(--ease);
+  transition: opacity 0.45s var(--ease);
 }
 
 .tutorial-scrim.on {
@@ -36,7 +37,7 @@ html.tutorial-on .mapwrap:has(.tutorial-spot) {
   left: 50%;
   bottom: max(2.5svh, env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%) translateY(16px);
-  z-index: 50;
+  z-index: 200;
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr) 168px;
   align-items: center;
@@ -46,17 +47,27 @@ html.tutorial-on .mapwrap:has(.tutorial-spot) {
   padding: 14px 16px 14px 18px;
   border-radius: var(--radius);
   background: rgba(16, 18, 22, 0.98);
-  border: 1px solid var(--line-2);
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 95, 0, 0.28);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s var(--ease), transform 0.35s var(--ease-out);
+  transition: opacity 0.35s var(--ease), transform 0.4s var(--ease-out);
 }
 
 .tutorial-bar.open {
   opacity: 1;
   pointer-events: auto;
   transform: translateX(-50%) translateY(0);
+}
+
+.tutorial-bar.open .tutorial-actions,
+.tutorial-bar.open .tutorial-next,
+.tutorial-bar.open .tutorial-skip {
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .tutorial-step {
@@ -116,29 +127,32 @@ html.tutorial-on .mapwrap:has(.tutorial-spot) {
   width: 100px;
   flex-shrink: 0;
   text-align: center;
+  transition: background 0.2s var(--ease), box-shadow 0.25s var(--ease);
 }
 
 .tutorial-next:hover:not(:disabled) {
   background: rgba(255, 95, 0, 0.32);
+  box-shadow: 0 0 20px rgba(255, 95, 0, 0.2);
 }
 
 .tutorial-next:disabled,
 .tutorial-next.is-wait {
   opacity: 0.4;
   cursor: default;
+  box-shadow: none;
 }
 
-/* Spotlight: do NOT force position — absolute overlays (bubbles/map) must keep inset:0 */
+/* Spotlight focus ring + soft lift */
 .tutorial-spot {
   z-index: 43 !important;
-  border-radius: 10px;
+  border-radius: 12px;
   box-shadow:
-    0 0 0 2px rgba(255, 95, 0, 0.9),
-    0 0 24px rgba(255, 95, 0, 0.25);
-  animation: tutorial-spot-in 0.35s var(--ease-out);
+    0 0 0 2px rgba(255, 95, 0, 0.95),
+    0 0 0 6px rgba(255, 95, 0, 0.12),
+    0 0 36px rgba(255, 95, 0, 0.28);
+  animation: tutorial-spot-in 0.45s var(--ease-out);
 }
 
-/* Static chrome needs relative for z-index to take effect */
 .explore-group.tutorial-spot,
 #targetPill.tutorial-spot,
 .passion-chip.tutorial-spot,
@@ -148,35 +162,116 @@ html.tutorial-on .mapwrap:has(.tutorial-spot) {
 }
 
 .bubble-side-block.tutorial-spot {
-  background: rgba(16, 18, 22, 0.96);
-  border-radius: 10px;
-  padding: 8px;
-  margin: -8px;
+  background: rgba(16, 18, 22, 0.98);
+  border-radius: 12px;
+  padding: 10px;
+  margin: -10px;
 }
 
-/* Until the local (passion) gate, don't drill categories — Who explain first */
-html.tutorial-on:not(.tutorial-wait-passion) #bubbleStage,
-html.tutorial-on:not(.tutorial-wait-passion) #bubbleFoot {
+/* Overlay backdrop must not cover the Next bar; stage re-enables for play steps */
+html.tutorial-on #bubbleOverlay.open {
   pointer-events: none;
+}
+
+html.tutorial-on:not(.tutorial-step-bubbles):not(.tutorial-wait-category) #bubbleStage,
+html.tutorial-on:not(.tutorial-step-bubbles):not(.tutorial-wait-category) #bubbleFoot {
+  pointer-events: none;
+  cursor: default;
+}
+
+html.tutorial-on.tutorial-step-bubbles #bubbleStage,
+html.tutorial-on.tutorial-wait-category #bubbleStage,
+html.tutorial-on.tutorial-step-bubbles #bubbleFoot,
+html.tutorial-on.tutorial-wait-category #bubbleFoot {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+html.tutorial-wait-category #bubbleStage .bubble-node:not(.bubble-look) {
+  opacity: 1;
+  border-color: rgba(255, 95, 0, 0.85);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.2), transparent 50%),
+    rgba(255, 95, 0, 0.32);
+  /* Keep bubble-in so nodes don't stay at opacity:0 */
+  animation:
+    bubble-in 0.45s var(--ease-out) forwards,
+    tutorial-bubble-hint 1.5s var(--ease-out) 0.45s infinite;
+  z-index: 2;
+}
+
+html.tutorial-wait-category #bubbleStage .bubble-node:not(.bubble-look):hover {
+  border-color: var(--overlap);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.24), transparent 50%),
+    rgba(255, 95, 0, 0.42);
+}
+
+@keyframes tutorial-bubble-hint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 95, 0, 0.45), 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(255, 95, 0, 0), 0 10px 32px rgba(0, 0, 0, 0.4);
+  }
+}
+
+#bubbleStage .bubble-node.tutorial-spot {
+  position: relative;
+  z-index: 3;
 }
 
 #mapwrap.tutorial-spot,
 #bubbleOverlay.tutorial-spot {
-  border-radius: 12px;
+  border-radius: 14px;
 }
 
 #bubbleOverlay.tutorial-spot.open {
   z-index: 43 !important;
 }
 
+/* Soft zoom when the map is the focus */
+#mapwrap.tutorial-spot-stage {
+  overflow: hidden;
+}
+
+#mapwrap.tutorial-spot-stage svg#map {
+  transform: scale(1.07);
+  transform-origin: 50% 42%;
+  transition: transform 0.75s var(--ease-out);
+}
+
+svg#map {
+  transition: transform 0.55s var(--ease-out);
+}
+
 .explore-group.tutorial-spot {
-  padding: 6px;
-  margin: -6px;
-  background: rgba(16, 18, 22, 0.92);
+  padding: 8px;
+  margin: -8px;
+  background: rgba(16, 18, 22, 0.94);
+  animation: tutorial-spot-in 0.45s var(--ease-out), tutorial-breathe 2.4s var(--ease-out) 0.4s infinite;
 }
 
 #targetPill.tutorial-spot {
-  background: rgba(16, 18, 22, 0.96);
+  background: rgba(16, 18, 22, 0.98);
+  animation: tutorial-spot-in 0.45s var(--ease-out), tutorial-breathe 2.6s var(--ease-out) 0.35s infinite;
+}
+
+.passion-chip.tutorial-spot,
+.aud-chip.tutorial-spot {
+  animation: tutorial-spot-in 0.4s var(--ease-out), tutorial-pulse 1.5s var(--ease-out) infinite;
+}
+
+/* Country pick: normal heat map, no orange frame */
+html.tutorial-step-country #bubbleOverlay {
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
+/* Soft glow while Potential is open in tutorial */
+html.tutorial-on #bubbleOverlay.open #bubbleStage {
+  animation: tutorial-stage-glow 2.2s var(--ease-out) infinite;
 }
 
 .tutorial-panel {
@@ -260,54 +355,111 @@ html.tutorial-on:not(.tutorial-wait-passion) #bubbleFoot {
 }
 
 html.tutorial-on .guide {
-  opacity: 0.25;
+  opacity: 0.22;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease);
+}
+
+html.tutorial-on:not(.tutorial-step-who):not(.tutorial-wait-who) .explore-group-who {
   pointer-events: none;
 }
 
-html.tutorial-on:not(.tutorial-wait-who) .explore-group-who {
-  pointer-events: none;
-}
-
-html.tutorial-on:not(.tutorial-wait-passion) .explore-group-passions,
-html.tutorial-on .explore-group-liked {
-  pointer-events: none;
-}
-
+html.tutorial-on.tutorial-step-who .explore-group-who,
 html.tutorial-wait-who .explore-group-who {
   pointer-events: auto;
 }
 
-html.tutorial-wait-who .explore-group-who.tutorial-spot .aud-chip {
+html.tutorial-on:not(.tutorial-step-passions):not(.tutorial-wait-passion) .explore-group-passions,
+html.tutorial-on .explore-group-liked {
+  pointer-events: none;
+}
+
+html.tutorial-on.tutorial-step-passions .explore-group-passions {
+  pointer-events: auto;
+}
+
+html.tutorial-wait-who .explore-group-who.tutorial-spot .aud-chip,
+html.tutorial-step-who .explore-group-who.tutorial-spot .aud-chip {
   animation: tutorial-pulse 1.4s var(--ease-out) infinite;
 }
 
-html.tutorial-on .aud-chip.tutorial-hl,
-html.tutorial-on .passion-chip.tutorial-hl {
-  animation: tutorial-pulse 1.35s var(--ease-out) 3;
+html.tutorial-step-passions .passion-chip.tutorial-hl {
+  animation: tutorial-pulse 1.35s var(--ease-out) infinite;
 }
 
 @keyframes tutorial-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 95, 0, 0.5);
+    box-shadow: 0 0 0 0 rgba(255, 95, 0, 0.55);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(255, 95, 0, 0);
+    box-shadow: 0 0 0 12px rgba(255, 95, 0, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(255, 95, 0, 0);
   }
 }
 
+@keyframes tutorial-breathe {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px rgba(255, 95, 0, 0.95),
+      0 0 0 6px rgba(255, 95, 0, 0.12),
+      0 0 28px rgba(255, 95, 0, 0.22);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(255, 95, 0, 1),
+      0 0 0 10px rgba(255, 95, 0, 0.18),
+      0 0 44px rgba(255, 95, 0, 0.35);
+  }
+}
+
 @keyframes tutorial-spot-in {
   from {
+    opacity: 0.85;
     box-shadow:
       0 0 0 0 rgba(255, 95, 0, 0),
-      0 0 0 rgba(255, 95, 0, 0);
+      0 0 0 0 rgba(255, 95, 0, 0);
   }
   to {
+    opacity: 1;
     box-shadow:
-      0 0 0 2px rgba(255, 95, 0, 0.9),
-      0 0 24px rgba(255, 95, 0, 0.25);
+      0 0 0 2px rgba(255, 95, 0, 0.95),
+      0 0 0 6px rgba(255, 95, 0, 0.12),
+      0 0 36px rgba(255, 95, 0, 0.28);
+  }
+}
+
+@keyframes tutorial-land-pulse {
+  0%,
+  100% {
+    stroke: rgba(255, 95, 0, 0.35);
+    stroke-width: 0.2px;
+  }
+  50% {
+    stroke: rgba(255, 95, 0, 0.95);
+    stroke-width: 0.45px;
+  }
+}
+
+@keyframes tutorial-land-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes tutorial-stage-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.06);
   }
 }
 
@@ -325,5 +477,9 @@ html.tutorial-on .passion-chip.tutorial-hl {
 
   .tutorial-caption {
     font-size: 14px;
+  }
+
+  #mapwrap.tutorial-spot-stage svg#map {
+    transform: scale(1.04);
   }
 }

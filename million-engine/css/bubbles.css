@@ -346,6 +346,14 @@
   z-index: 2;
 }
 
+.bubble-node.bubble-look {
+  cursor: default;
+}
+
+.bubble-node.bubble-look:hover {
+  cursor: default;
+}
+
 .bubble-node.on {
   border-color: var(--overlap);
   background:

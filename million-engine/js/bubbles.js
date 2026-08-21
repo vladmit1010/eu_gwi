@@ -237,8 +237,8 @@ export function createBubbles({
     showShell({
       title: countryName,
       sub: isAnswers
-        ? `${audienceLabel} · ${categoryLabel || "theme"} · tap a circle = colour the map`
-        : `${audienceLabel} · circle size = potential · tap a category`,
+        ? `${audienceLabel} · ${categoryLabel || "theme"} · hover a circle for Interest + reach`
+        : `${audienceLabel} · click a category circle to open themes inside`,
       showPie: false,
       showSide: true,
       showBack: isAnswers,
@@ -248,7 +248,7 @@ export function createBubbles({
     if ($("bubbleKicker")) {
       $("bubbleKicker").textContent = isAnswers
         ? categoryLabel || "Themes"
-        : "Potential";
+        : "Local activations";
     }
     requestAnimationFrame(() =>
       renderPassionStage(items, selectedAnswer, isAnswers ? "answer" : "category")
@@ -272,27 +272,46 @@ export function createBubbles({
           : b.kind === "category"
             ? "category"
             : "local";
-      btn.className = `bubble-node bubble-${tone}${selected ? " on" : ""}`;
+      const lookOnly = kind === "answer";
+      btn.className = `bubble-node bubble-${tone}${selected ? " on" : ""}${
+        lookOnly ? " bubble-look" : ""
+      }`;
       btn.style.left = `${b.x}px`;
       btn.style.top = `${b.y}px`;
       btn.style.width = `${b.r * 2}px`;
       btn.style.height = `${b.r * 2}px`;
       btn.style.animationDelay = `${Math.min(i * 40, 280)}ms`;
+      if (lookOnly) {
+        btn.tabIndex = -1;
+        btn.setAttribute("aria-disabled", "true");
+      }
 
-      // Potential-first: big reach + short label only
+      // Potential-first: reach + label; answers also show Interest
+      const idxHtml =
+        kind === "answer" && b.index != null
+          ? `<span class="bubble-idx">Interest ${esc(String(b.index))}</span>`
+          : "";
       btn.innerHTML = `
         <span class="bubble-reach">${esc(formatPeople(b.universe))}</span>
         <span class="bubble-label">${esc(b.short || b.label)}</span>
+        ${idxHtml}
       `;
       btn.title =
         kind === "category"
           ? `${b.label} · potential ${formatPeople(b.universe)}`
           : `${b.label} · ${formatPeople(b.universe)} people · Interest ${b.index ?? "—"}`;
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        if (kind === "category") onCategory?.(b);
-        else onPassion?.(b);
-      };
+      if (kind === "category") {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          onCategory?.(b);
+        };
+      } else {
+        // Answer level: hover-only — Interest/reach already on the circle
+        btn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+      }
       stage.appendChild(btn);
     });
   }
