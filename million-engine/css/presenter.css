@@ -1,0 +1,92 @@
+/* Presenter caption strip — drives Explore without a second product surface */
+
+.presenter-bar {
+  position: fixed;
+  left: 50%;
+  bottom: max(2.5svh, env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(12px);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(720px, calc(100% - 32px));
+  padding: 12px 14px 12px 18px;
+  border-radius: var(--radius);
+  background: rgba(20, 22, 27, 0.94);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease), transform 0.35s var(--ease-out);
+}
+
+.presenter-bar.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.presenter-step {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--overlap);
+}
+
+.presenter-caption {
+  flex: 1;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.presenter-nav {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.presenter-nav button {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-2);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.presenter-nav button:hover {
+  border-color: var(--ink-3);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.presenter-on .guide {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+html.presenter-on .explore-bar {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .presenter-caption {
+    font-size: 15px;
+  }
+
+  .presenter-bar {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+}

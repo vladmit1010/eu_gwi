@@ -23,10 +23,23 @@
   --ink-2: #A8ADB8;
   --ink-3: #6B7280;
 
+  --scrim: rgba(11, 12, 14, 0.88);
+  --panel-glass: rgba(11, 12, 14, 0.78);
+  --hint-glass: rgba(20, 22, 27, 0.88);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+
+  /* Map fills (JS reads these) */
+  --map-cold: #12141a;
+  --map-live: #3a3d48;
+  --heat-0: #1b1d24;
+  --heat-1: #3a322c;
+  --heat-2: #8f4a16;
+  --heat-3: #ff5f00;
+  --heat-4: #ffc857;
+
   --radius: 10px;
   --radius-sm: 6px;
 
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }

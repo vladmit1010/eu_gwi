@@ -218,6 +218,184 @@ export function audienceSnapshot(gwi, audienceKey, countryKey) {
   };
 }
 
+/** Friendly labels for GWI category keys (Explore drill-down). */
+export const CATEGORY_META = {
+  "Personal Interests": { label: "Interests", short: "Interests", blurb: "Hobbies & leisure" },
+  "Sports Followed": { label: "Sports", short: "Sports", blurb: "Sports followed" },
+  "Music Genres": { label: "Music", short: "Music", blurb: "Music genres" },
+  "Attitudes: Values": { label: "Values", short: "Values", blurb: "What matters" },
+  "Attitudes: Character": { label: "Character", short: "Character", blurb: "Self-description" },
+  "Named Social Media / Messaging Services Used": {
+    label: "Social",
+    short: "Social",
+    blurb: "Apps & messaging",
+  },
+};
+
+const CATEGORY_ORDER = [
+  "Personal Interests",
+  "Sports Followed",
+  "Music Genres",
+  "Attitudes: Values",
+  "Attitudes: Character",
+  "Named Social Media / Messaging Services Used",
+];
+
+const ANSWER_OTHER = /^Other\b/i;
+
+function cleanAnswerLabel(category, answer) {
+  if (category === "Sports Followed") {
+    return answer.replace(/:\s*Follow\s*$/i, "").trim();
+  }
+  if (category === "Attitudes: Values") {
+    return answer.replace(/:\s*Important to me\s*$/i, "").trim();
+  }
+  if (category === "Attitudes: Character") {
+    return answer.replace(/:\s*Describes me\s*$/i, "").trim();
+  }
+  return answer;
+}
+
+function includeAnswer(category, answer) {
+  if (ANSWER_OTHER.test(answer)) return false;
+  if (category === "Attitudes: Values" && !answer.endsWith(": Important to me")) return false;
+  if (category === "Attitudes: Character" && !answer.endsWith(": Describes me")) return false;
+  return true;
+}
+
+/**
+ * Who split for a country on a lens (Affluent vs Gen Z universe).
+ */
+export function whoSplitForCountry(gwi, countryKey, lens) {
+  const use = lens?.category && lens?.answer ? lens : CORE_PASSIONS[0];
+  const rows = ["Affluent", "Gen Z"].map((aud) => {
+    const m = gwi?.[aud]?.[countryKey]?.[use.category]?.[use.answer];
+    return {
+      key: aud,
+      label: aud,
+      universe: m?.universe ?? 0,
+      index: m?.index ?? null,
+      share: 0,
+    };
+  });
+  const total = rows.reduce((a, r) => a + r.universe, 0) || 1;
+  rows.forEach((r) => {
+    r.share = r.universe / total;
+  });
+  return { lens: use, rows, total };
+}
+
+/**
+ * Category-level bubbles for a country (drill-down level 1).
+ * Includes a Global sponsorships pack + each GWI category.
+ */
+export function categoryBubblesForCountry(gwi, audienceKey, countryKey) {
+  if (!gwi || !audienceKey || !countryKey) return [];
+  const block = gwi[audienceKey]?.[countryKey];
+  if (!block) return [];
+
+  const core = coreMetricsForCountry(gwi, audienceKey, countryKey).filter(
+    (p) => (p.universe ?? 0) > 0
+  );
+  const coreTop = core.reduce(
+    (a, b) => ((b.universe || 0) > (a?.universe || 0) ? b : a),
+    null
+  );
+
+  const items = [];
+  if (coreTop) {
+    items.push({
+      id: "pack:global",
+      kind: "category",
+      pack: "global",
+      label: "Global sponsorships",
+      short: "Global",
+      category: null,
+      universe: coreTop.universe ?? 0,
+      index: coreTop.index,
+      count: core.length,
+    });
+  }
+
+  for (const cat of CATEGORY_ORDER) {
+    const answers = block[cat];
+    if (!answers) continue;
+    const rows = Object.entries(answers)
+      .filter(([answer]) => includeAnswer(cat, answer))
+      .map(([, m]) => ({
+        universe: m?.universe ?? 0,
+        index: m?.index ?? 0,
+      }))
+      .filter((r) => r.universe > 0);
+    if (!rows.length) continue;
+    // Size by largest theme in the category (sum would double-count people)
+    const top = rows.reduce((a, b) => (b.universe > a.universe ? b : a));
+    const universe = top.universe;
+    const index = Math.round(top.index * 10) / 10;
+    const meta = CATEGORY_META[cat] || { label: cat, short: shortLabel(cat, 14) };
+    items.push({
+      id: `cat:${cat}`,
+      kind: "category",
+      pack: null,
+      label: meta.label,
+      short: meta.short,
+      category: cat,
+      universe,
+      index,
+      count: rows.length,
+    });
+  }
+
+  return items.sort((a, b) => b.universe - a.universe);
+}
+
+/**
+ * Answer bubbles inside a category (or global sponsorship pack).
+ */
+export function answerBubblesForCategory(
+  gwi,
+  audienceKey,
+  countryKey,
+  { category = null, pack = null, limit = 14 } = {}
+) {
+  if (pack === "global") {
+    return coreMetricsForCountry(gwi, audienceKey, countryKey)
+      .filter((p) => (p.universe ?? 0) > 0)
+      .map((p) => ({
+        id: p.id,
+        label: p.label,
+        short: p.short,
+        kind: "global",
+        category: p.category,
+        answer: p.answer,
+        universe: p.universe ?? 0,
+        index: p.index,
+      }));
+  }
+
+  const answers = gwi?.[audienceKey]?.[countryKey]?.[category];
+  if (!answers) return [];
+
+  return Object.entries(answers)
+    .filter(([answer]) => includeAnswer(category, answer))
+    .map(([answer, m]) => {
+      const label = cleanAnswerLabel(category, answer);
+      return {
+        id: `answer:${category}:${answer}`,
+        label,
+        short: shortLabel(label, 16),
+        kind: "local",
+        category,
+        answer,
+        universe: m?.universe ?? 0,
+        index: m?.index ?? null,
+      };
+    })
+    .filter((r) => (r.universe ?? 0) > 0)
+    .sort((a, b) => b.universe - a.universe || (b.index || 0) - (a.index || 0))
+    .slice(0, limit);
+}
+
 /**
  * Bubbles for a country: 3 global sponsorships + top local by Universe.
  * @returns {{ id, label, short, kind, category, answer, universe, index }[]}

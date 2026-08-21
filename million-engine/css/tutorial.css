@@ -1,0 +1,329 @@
+/* Guided tutorial chrome */
+
+/* Scrim lives inside .app so spotlighted UI can rise above it */
+.app {
+  position: relative;
+}
+
+.tutorial-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: rgba(6, 7, 9, 0.7);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease);
+}
+
+.tutorial-scrim.on {
+  opacity: 1;
+}
+
+html.tutorial-on .header:has(.tutorial-spot),
+html.tutorial-on .explore-bar:has(.tutorial-spot) {
+  z-index: 42;
+  position: relative;
+}
+
+html.tutorial-on .stage:has(.tutorial-spot),
+html.tutorial-on .mapwrap.tutorial-spot,
+html.tutorial-on .mapwrap:has(.tutorial-spot) {
+  z-index: 42;
+}
+
+.tutorial-bar {
+  position: fixed;
+  left: 50%;
+  bottom: max(2.5svh, env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(16px);
+  z-index: 50;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 168px;
+  align-items: center;
+  gap: 12px 16px;
+  width: min(820px, calc(100% - 28px));
+  min-height: 72px;
+  padding: 14px 16px 14px 18px;
+  border-radius: var(--radius);
+  background: rgba(16, 18, 22, 0.98);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease), transform 0.35s var(--ease-out);
+}
+
+.tutorial-bar.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tutorial-step {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--overlap);
+}
+
+.tutorial-caption {
+  min-width: 0;
+  min-height: 2.7em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+}
+
+.tutorial-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  width: 168px;
+}
+
+.tutorial-skip {
+  border: none;
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 6px;
+  flex-shrink: 0;
+}
+
+.tutorial-skip:hover {
+  color: var(--ink-2);
+}
+
+.tutorial-next {
+  border: 1px solid rgba(255, 95, 0, 0.55);
+  background: rgba(255, 95, 0, 0.2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  padding: 10px 0;
+  cursor: pointer;
+  width: 100px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.tutorial-next:hover:not(:disabled) {
+  background: rgba(255, 95, 0, 0.32);
+}
+
+.tutorial-next:disabled,
+.tutorial-next.is-wait {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Spotlight: do NOT force position — absolute overlays (bubbles/map) must keep inset:0 */
+.tutorial-spot {
+  z-index: 43 !important;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 2px rgba(255, 95, 0, 0.9),
+    0 0 24px rgba(255, 95, 0, 0.25);
+  animation: tutorial-spot-in 0.35s var(--ease-out);
+}
+
+/* Static chrome needs relative for z-index to take effect */
+.explore-group.tutorial-spot,
+#targetPill.tutorial-spot,
+.passion-chip.tutorial-spot,
+.aud-chip.tutorial-spot,
+.bubble-side-block.tutorial-spot {
+  position: relative;
+}
+
+.bubble-side-block.tutorial-spot {
+  background: rgba(16, 18, 22, 0.96);
+  border-radius: 10px;
+  padding: 8px;
+  margin: -8px;
+}
+
+/* Until the local (passion) gate, don't drill categories — Who explain first */
+html.tutorial-on:not(.tutorial-wait-passion) #bubbleStage,
+html.tutorial-on:not(.tutorial-wait-passion) #bubbleFoot {
+  pointer-events: none;
+}
+
+#mapwrap.tutorial-spot,
+#bubbleOverlay.tutorial-spot {
+  border-radius: 12px;
+}
+
+#bubbleOverlay.tutorial-spot.open {
+  z-index: 43 !important;
+}
+
+.explore-group.tutorial-spot {
+  padding: 6px;
+  margin: -6px;
+  background: rgba(16, 18, 22, 0.92);
+}
+
+#targetPill.tutorial-spot {
+  background: rgba(16, 18, 22, 0.96);
+}
+
+.tutorial-panel {
+  position: absolute;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 43;
+  width: min(420px, 88%);
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: rgba(20, 22, 27, 0.98);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease), transform 0.35s var(--ease-out);
+  color: var(--ink);
+}
+
+.tutorial-panel.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.tutorial-panel.dock-start {
+  left: max(16px, 2%);
+  right: auto;
+  top: 50%;
+  transform: translateY(calc(-50% + 8px));
+  width: min(340px, 42%);
+}
+
+.tutorial-panel.dock-start.open {
+  transform: translateY(-50%);
+}
+
+.tutorial-panel.tutorial-spot {
+  z-index: 43 !important;
+}
+
+.tutorial-panel-kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--overlap);
+  margin-bottom: 6px;
+}
+
+.tutorial-panel-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+
+.tutorial-panel-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.tutorial-panel-row:last-child {
+  border-bottom: none;
+}
+
+.tutorial-panel-row b {
+  color: var(--ink);
+}
+
+.tutorial-panel-note {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+html.tutorial-on .guide {
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+html.tutorial-on:not(.tutorial-wait-who) .explore-group-who {
+  pointer-events: none;
+}
+
+html.tutorial-on:not(.tutorial-wait-passion) .explore-group-passions,
+html.tutorial-on .explore-group-liked {
+  pointer-events: none;
+}
+
+html.tutorial-wait-who .explore-group-who {
+  pointer-events: auto;
+}
+
+html.tutorial-wait-who .explore-group-who.tutorial-spot .aud-chip {
+  animation: tutorial-pulse 1.4s var(--ease-out) infinite;
+}
+
+html.tutorial-on .aud-chip.tutorial-hl,
+html.tutorial-on .passion-chip.tutorial-hl {
+  animation: tutorial-pulse 1.35s var(--ease-out) 3;
+}
+
+@keyframes tutorial-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 95, 0, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 95, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 95, 0, 0);
+  }
+}
+
+@keyframes tutorial-spot-in {
+  from {
+    box-shadow:
+      0 0 0 0 rgba(255, 95, 0, 0),
+      0 0 0 rgba(255, 95, 0, 0);
+  }
+  to {
+    box-shadow:
+      0 0 0 2px rgba(255, 95, 0, 0.9),
+      0 0 24px rgba(255, 95, 0, 0.25);
+  }
+}
+
+@media (max-width: 640px) {
+  .tutorial-bar {
+    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+  }
+
+  .tutorial-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .tutorial-caption {
+    font-size: 14px;
+  }
+}

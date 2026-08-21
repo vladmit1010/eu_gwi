@@ -63,8 +63,8 @@ svg#map {
 }
 
 .land.cold {
-  fill: #1c2028;
-  stroke: rgba(255, 255, 255, 0.07);
+  fill: var(--map-cold);
+  stroke: var(--land-stroke);
   stroke-width: 0.12;
   cursor: default;
   filter: none;
@@ -220,7 +220,7 @@ svg#map {
   z-index: 3;
   padding: 0.75em 1.2em;
   border-radius: var(--radius);
-  background: rgba(20, 22, 27, 0.88);
+  background: var(--hint-glass);
   border: 1px solid var(--line-2);
   color: var(--ink);
   font-size: 14px;
@@ -267,7 +267,7 @@ svg#map {
   max-width: min(280px, 42%);
   padding: 12px 14px;
   border-radius: var(--radius);
-  background: rgba(11, 12, 14, 0.78);
+  background: var(--panel-glass);
   border: 1px solid var(--line);
   color: var(--ink-2);
 }
@@ -288,22 +288,30 @@ svg#map {
   text-transform: none;
   color: var(--ink);
   line-height: 1.3;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+}
+
+.legend-scale {
+  display: block;
+  width: 100%;
 }
 
 .legend-bar {
   width: 100%;
-  height: 6px;
+  height: 10px;
   border-radius: 999px;
-  margin-bottom: 8px;
+  margin: 0 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-sizing: border-box;
   background: linear-gradient(
     90deg,
-    #1b1d24 0%,
-    #3a322c 22%,
+    #2a2e38 0%,
+    #5c4030 28%,
     #8f4a16 48%,
-    #ff5f00 76%,
+    #ff5f00 72%,
     #ffc857 100%
   );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .legend-row {

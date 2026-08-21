@@ -1,4 +1,4 @@
-import { createHeat, COLORS } from "./utils/color.js";
+import { createThemeHeat, themeColors, COLORS } from "./utils/color.js";
 import { opportunitiesFor, growthIndex } from "./model.js";
 import { CONFIG } from "./config.js";
 
@@ -9,7 +9,6 @@ if (!d3) {
 }
 
 const NS = "http://www.w3.org/2000/svg";
-const heat = createHeat(COLORS);
 const VW = 176;
 const VH = 82;
 
@@ -81,8 +80,11 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
 
   function setGeo(next) {
     geo = next;
+    Object.keys(featureByCode).forEach((k) => delete featureByCode[k]);
+    if (!geo?.features) return;
     for (const f of geo.features) {
-      featureByCode[f.properties.ISO2] = f;
+      const iso = f?.properties?.ISO2;
+      if (iso) featureByCode[iso] = f;
     }
   }
 
@@ -116,9 +118,18 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
   }
 
   function build(intro = true) {
-    if (!geo) return;
+    if (!geo?.features?.length) {
+      console.warn("Map build skipped — geography not loaded");
+      return false;
+    }
     const activeList = codes();
-    if (!activeList.length) throw new Error("No markets with map shapes");
+    if (!activeList.length) {
+      console.warn("Map build skipped — no Erste markets match geo ISO codes", {
+        markets: Object.keys(data?.markets || {}),
+        geoSample: geo.features.slice(0, 3).map((f) => f.properties?.ISO2),
+      });
+      return false;
+    }
 
     const activeSet = new Set(activeList);
     const focusFeatures = activeList.map((c) => featureByCode[c]).filter(Boolean);
@@ -145,7 +156,13 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
 
     ordered.forEach((code, i) => {
       const feature = featureByCode[code];
-      const d = pathGen(feature);
+      let d;
+      try {
+        d = pathGen(feature);
+      } catch (err) {
+        console.warn("Skip bad feature", code, err);
+        return;
+      }
       if (!d) return;
       const isActive = activeSet.has(code);
 
@@ -185,6 +202,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
         labels[code] = t;
       }
     });
+    return true;
   }
 
   function paint() {
@@ -198,20 +216,23 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     const lo = numeric.length ? Math.min(...numeric) : 0;
     const hi = numeric.length ? Math.max(...numeric) : 1;
 
+    const palette = themeColors();
+    const heat = createThemeHeat();
+
     Object.keys(lands).forEach((c) => {
       const path = lands[c];
       const live = list.includes(c);
       if (!live) {
-        path.style.fill = COLORS.cold;
+        path.style.fill = palette.cold;
         path.classList.remove("on");
         path.parentNode?.classList.remove("mute");
         return;
       }
 
-      let fill = COLORS.live;
+      let fill = palette.live;
       if (!empty) {
         const raw = usingMetric ? metricValues[c] : growthIndex(data, c, activeThemes);
-        if (raw == null) fill = COLORS.live;
+        if (raw == null) fill = palette.live;
         else {
           const t = (raw - lo) / (hi - lo || 1);
           fill = heat(t);
@@ -293,7 +314,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
       c.setAttribute("cx", bx);
       c.setAttribute("cy", by);
       c.setAttribute("r", r);
-      c.setAttribute("fill", heat(seg.e / 10));
+      c.setAttribute("fill", createThemeHeat()(seg.e / 10));
 
       const t = document.createElementNS(NS, "text");
       t.setAttribute("x", bx);
@@ -361,7 +382,6 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     bubbleAt,
     highlightBubbles,
     hasShape,
-    heat,
     get svg() {
       return svg;
     },

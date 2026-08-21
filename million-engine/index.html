@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/panel.css">
   <link rel="stylesheet" href="css/bubbles.css">
   <link rel="stylesheet" href="css/insights.css">
+  <link rel="stylesheet" href="css/tutorial.css">
 </head>
 <body>
   <div class="app">
@@ -33,7 +34,10 @@
           <span class="target-cap">customers</span>
         </div>
 
-        <button class="analysis-link" id="insightsBtn" type="button" title="Optional deep dive">More signals</button>
+        <div class="topbar-actions">
+          <button class="analysis-link" id="tutorialBtn" type="button" title="Guided tutorial">Tutorial</button>
+          <button class="analysis-link" id="insightsBtn" type="button" title="Optional deep dive">More signals</button>
+        </div>
       </div>
 
       <ol class="guide" id="guide" aria-label="How to use">
@@ -70,19 +74,23 @@
         <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Market map"></svg>
 
         <div class="peek" id="peek"></div>
-        <div class="passion-hint" id="passionHint">Start with a sponsorship theme — then click a country</div>
+        <div class="passion-hint" id="passionHint">Pick a sponsorship theme — then click a country</div>
         <div class="legend" id="legend">
           <div class="legend-kicker" id="legendKicker">Map colour</div>
           <div class="legend-title" id="legendTitle">Pick a theme</div>
-          <div class="legend-bar" aria-hidden="true"></div>
-          <div class="legend-row">
-            <span id="scaleLo">—</span>
-            <span id="scaleMid">vs peers</span>
-            <span id="scaleHi">—</span>
+          <div class="legend-scale" aria-hidden="true">
+            <div class="legend-bar"></div>
+            <div class="legend-row">
+              <span id="scaleLo">—</span>
+              <span id="scaleMid">vs peers</span>
+              <span id="scaleHi">—</span>
+            </div>
           </div>
           <div class="legend-note" id="legendNote">Colour = Interest (Index) vs other Erste markets</div>
         </div>
         <div class="source" id="source">GWI Core · Erste markets</div>
+
+        <div class="tutorial-panel" id="tutorialPanel" aria-hidden="true"></div>
 
         <div class="bubble-overlay" id="bubbleOverlay" aria-hidden="true">
           <div class="bubble-head">
@@ -91,19 +99,37 @@
               <h2 class="bubble-title" id="bubbleTitle">—</h2>
               <p class="bubble-sub" id="bubbleSub"></p>
             </div>
-            <button class="ghostbtn" id="bubbleClose" type="button">Close</button>
+            <div class="bubble-head-actions">
+              <button class="ghostbtn" id="bubbleBack" type="button" hidden>Back</button>
+              <button class="ghostbtn" id="bubbleClose" type="button">Close</button>
+            </div>
           </div>
           <div class="bubble-body">
+            <aside class="bubble-side" id="bubbleSide"></aside>
             <div class="bubble-pie-wrap">
               <div class="bubble-pie" id="bubblePie" aria-hidden="true"></div>
               <ul class="bubble-pie-legend" id="bubblePieLegend"></ul>
             </div>
-            <div class="bubble-stage" id="bubbleStage"></div>
+            <div class="bubble-main">
+              <div class="bubble-stage" id="bubbleStage"></div>
+              <div class="bubble-foot" id="bubbleFoot"></div>
+            </div>
           </div>
         </div>
       </div>
       <aside class="panel" id="panel" aria-hidden="true"></aside>
     </main>
+
+    <div class="tutorial-scrim" id="tutorialScrim" aria-hidden="true"></div>
+  </div>
+
+  <div class="tutorial-bar" id="tutorialBar" aria-hidden="true">
+    <span class="tutorial-step" id="tutorialStep">1 / 9</span>
+    <p class="tutorial-caption" id="tutorialCaption"></p>
+    <div class="tutorial-actions">
+      <button type="button" class="tutorial-skip" id="tutorialSkip">Skip</button>
+      <button type="button" class="tutorial-next" id="tutorialNext">Next</button>
+    </div>
   </div>
 
   <div class="insights" id="insights" aria-hidden="true">

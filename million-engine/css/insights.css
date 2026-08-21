@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  background: rgba(11, 12, 14, 0.78);
+  background: var(--scrim);
   backdrop-filter: blur(8px);
   opacity: 0;
   pointer-events: none;
@@ -26,7 +26,7 @@
   padding: 8px 20px calc(28px + env(safe-area-inset-bottom));
   transform: translateY(24px);
   transition: transform 0.4s var(--ease-out);
-  box-shadow: 0 -24px 80px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--shadow);
 }
 
 .insights.open .insights-sheet {
