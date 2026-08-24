@@ -1,0 +1,19 @@
+{
+  "name": "million-engine",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node tests/smoke.mjs",
+    "smoke": "node tests/smoke.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "playwright-core": "^1.49.0"
+  }
+}

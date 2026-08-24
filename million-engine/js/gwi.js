@@ -64,23 +64,6 @@ export function countriesIn(gwi) {
   return first ? Object.keys(first) : [];
 }
 
-export function categoriesFor(gwi, audienceKey) {
-  if (!gwi || !audienceKey) return [];
-  const block = gwi[audienceKey];
-  if (!block) return [];
-  const firstCountry = Object.values(block)[0];
-  return firstCountry ? Object.keys(firstCountry) : [];
-}
-
-export function answersFor(gwi, audienceKey, category) {
-  if (!gwi || !audienceKey || !category) return [];
-  const block = gwi[audienceKey];
-  if (!block) return [];
-  const firstCountry = Object.values(block)[0];
-  const answers = firstCountry?.[category];
-  return answers ? Object.keys(answers).sort((a, b) => a.localeCompare(b)) : [];
-}
-
 export function metricAt(gwi, audienceKey, iso, category, answer) {
   const country = ISO_TO_GWI[iso];
   if (!country) return null;
@@ -211,41 +194,4 @@ export function topSignalsForCountry(gwi, countryKey, limit = 10, sortBy = "inde
   }
 
   return sortRows(rows, sortBy).slice(0, limit);
-}
-
-/**
- * Signals for one audience in one country (country panel explorer).
- * sortBy: "index" | "people"
- */
-export function signalsForCountryAudience(
-  gwi,
-  audienceKey,
-  countryKey,
-  { sortBy = "index", category = null, limit = 12 } = {}
-) {
-  const block = gwi?.[audienceKey]?.[countryKey];
-  if (!block) return [];
-  const rows = [];
-
-  for (const [cat, answers] of Object.entries(block)) {
-    if (category && cat !== category) continue;
-    if (!answers || typeof answers !== "object") continue;
-    for (const [answer, m] of Object.entries(answers)) {
-      if (!m || m.index == null) continue;
-      if ((m.universe ?? 0) < 500) continue;
-      rows.push({
-        category: cat,
-        answer,
-        index: m.index,
-        universe: m.universe ?? 0,
-      });
-    }
-  }
-
-  if (sortBy === "people" || sortBy === "reach") {
-    rows.sort((a, b) => b.universe - a.universe || b.index - a.index);
-  } else {
-    rows.sort((a, b) => b.index - a.index || b.universe - a.universe);
-  }
-  return rows.slice(0, limit);
 }

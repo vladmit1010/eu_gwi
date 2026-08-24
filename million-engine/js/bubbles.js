@@ -19,41 +19,101 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Bubble radius from audience size.
+ * Close values (e.g. 1.6M vs 2.0M) stay visually similar;
+ * wide spreads still get a clear hierarchy.
+ */
 function radiusFor(universe, minU, maxU, rMin, rMax) {
-  if (!maxU || universe <= 0) return rMin;
-  if (maxU <= minU) return (rMin + rMax) * 0.5;
-  const t = Math.sqrt((universe - minU) / (maxU - minU));
-  return rMin + (rMax - rMin) * t;
+  if (universe <= 0 || !maxU) return rMin;
+  if (maxU <= minU) return (rMin + rMax) * 0.55;
+
+  // Size vs the largest in this set (area ~ mildly proportional to people)
+  const relative = Math.max(0.05, Math.min(1, universe / maxU));
+  const t = Math.pow(relative, 0.42);
+
+  // How different are min/max? Small spread → compress visual range
+  const spread = (maxU - minU) / maxU;
+  const compress = Math.max(0.22, Math.min(1, spread * 2.2));
+  const tSoft = 1 - compress + compress * t;
+
+  return rMin + (rMax - rMin) * tSoft;
 }
 
+/** Pack bubbles with less overlap — scales to stage size (incl. 13" laptops). */
 function layoutBubbles(items, W, H, rMin, rMax) {
+  const n = items.length;
+  if (!n) return [];
+
+  const pad = Math.max(10, Math.min(W, H) * 0.04);
+  const area = Math.max(W * H, 1);
+  // Smaller radii when crowded or on a short stage
+  const scale = Math.min(1, Math.sqrt(area / (920 * 420)));
+  const crowd = Math.max(0, n - 4) * 0.06;
+  const rMaxUse = Math.max(22, Math.min(rMax, Math.min(W, H) * 0.22) * scale * (1 - crowd));
+  const rMinUse = Math.max(18, Math.min(rMin, rMaxUse * 0.55));
+
   const universes = items.map((i) => i.universe || 0);
   const maxU = Math.max(...universes, 1);
   const minU = Math.min(...universes.filter((u) => u > 0), maxU);
   const sized = items
     .map((item) => ({
       ...item,
-      r: radiusFor(item.universe || 0, minU, maxU, rMin, rMax),
+      r: radiusFor(item.universe || 0, minU, maxU, rMinUse, rMaxUse),
     }))
     .sort((a, b) => b.universe - a.universe);
 
-  const cx = W * 0.52;
+  const cx = W * 0.5;
   const cy = H * 0.5;
-  if (!sized.length) return [];
-
   const [first, ...rest] = sized;
   const placed = [{ ...first, x: cx, y: cy }];
 
+  const gap = Math.max(8, Math.min(W, H) * 0.02);
   rest.forEach((item, i) => {
-    const n = rest.length;
-    const angle = -Math.PI / 2 + ((i + 0.5) / Math.max(n, 1)) * Math.PI * 2;
-    const ring = Math.min(W, H) * 0.34;
+    const count = rest.length;
+    const angle = -Math.PI / 2 + (i / Math.max(count, 1)) * Math.PI * 2;
+    // Ring clears the center bubble + this bubble + a gap
+    const ring = first.r + item.r + gap + Math.min(W, H) * 0.02;
+    const rx = Math.min(ring, (W / 2) - item.r - pad);
+    const ry = Math.min(ring * 0.92, (H / 2) - item.r - pad);
     placed.push({
       ...item,
-      x: cx + Math.cos(angle) * ring,
-      y: cy + Math.sin(angle) * ring * 0.88,
+      x: cx + Math.cos(angle) * rx,
+      y: cy + Math.sin(angle) * ry,
     });
   });
+
+  // Push apart overlaps (a few iterations)
+  const iterations = 24;
+  for (let iter = 0; iter < iterations; iter++) {
+    for (let i = 0; i < placed.length; i++) {
+      for (let j = i + 1; j < placed.length; j++) {
+        const a = placed[i];
+        const b = placed[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy) || 0.01;
+        const minDist = a.r + b.r + gap * 0.65;
+        if (dist >= minDist) continue;
+        const push = ((minDist - dist) / dist) * 0.5;
+        dx *= push;
+        dy *= push;
+        // Keep the largest (first) more anchored
+        const aW = i === 0 ? 0.15 : 0.5;
+        const bW = i === 0 ? 0.85 : 0.5;
+        a.x -= dx * aW;
+        a.y -= dy * aW;
+        b.x += dx * bW;
+        b.y += dy * bW;
+      }
+    }
+    // Clamp inside stage
+    for (let i = 0; i < placed.length; i++) {
+      const p = placed[i];
+      p.x = Math.min(W - p.r - pad, Math.max(p.r + pad, p.x));
+      p.y = Math.min(H - p.r - pad, Math.max(p.r + pad, p.y));
+    }
+  }
 
   return placed;
 }
@@ -74,6 +134,8 @@ function pieGradient(rows) {
 export function createBubbles({
   onPassion,
   onCategory,
+  onAudience,
+  onThemeField,
   onCountry,
   onBack,
   onClose,
@@ -89,25 +151,35 @@ export function createBubbles({
   const backBtn = $("bubbleBack");
   let open = false;
   let mode = null;
-  let level = "categories"; // categories | answers | countries
+  let level = "audiences"; // audiences | menu | answers | categories | countries
 
   function hide() {
     if (!open) return;
     open = false;
     mode = null;
-    level = "categories";
-    root?.classList.remove("open", "has-pie", "has-side", "level-answers");
+    level = "audiences";
+    root?.classList.remove(
+      "open",
+      "has-pie",
+      "has-side",
+      "level-answers",
+      "level-menu",
+      "level-audiences"
+    );
     root?.setAttribute("aria-hidden", "true");
     if (stage) stage.replaceChildren();
     if (pieEl) pieEl.style.background = "";
     if (legendEl) legendEl.replaceChildren();
-    if (sideEl) sideEl.replaceChildren();
+    if (sideEl) {
+      sideEl.replaceChildren();
+      sideEl.classList.remove("bubble-side-prose");
+    }
     if (footEl) footEl.replaceChildren();
     if (backBtn) backBtn.hidden = true;
     onClose?.();
   }
 
-  function showShell({ title, sub, showPie, showSide, showBack }) {
+  function showShell({ title, sub, showPie, showSide, showBack, levelClass }) {
     open = true;
     root?.classList.add("open");
     root?.setAttribute("aria-hidden", "false");
@@ -115,12 +187,50 @@ export function createBubbles({
     if (subEl) subEl.textContent = sub || "";
     root?.classList.toggle("has-pie", Boolean(showPie));
     root?.classList.toggle("has-side", Boolean(showSide));
-    root?.classList.toggle("level-answers", Boolean(showBack));
+    root?.classList.toggle("level-answers", levelClass === "answers");
+    root?.classList.toggle("level-menu", levelClass === "menu");
+    root?.classList.toggle("level-audiences", levelClass === "audiences");
     if (backBtn) backBtn.hidden = !showBack;
+  }
+
+  function renderProseSide(prose, { highlightAudience = null } = {}) {
+    if (!sideEl) return;
+    sideEl.replaceChildren();
+    sideEl.classList.add("bubble-side-prose");
+
+    const intro = document.createElement("div");
+    intro.className = "bubble-side-block";
+    intro.innerHTML = `<div class="bubble-side-kicker">Cultural snapshot</div>
+      <p class="bubble-prose-intro">From GWI Values &amp; Character — how Affluent and Gen Z tick in this market.</p>`;
+    sideEl.appendChild(intro);
+
+    const sections = [
+      { key: "values", title: "What matters" },
+      { key: "character", title: "How they show up" },
+    ];
+
+    sections.forEach(({ key, title }) => {
+      const block = document.createElement("div");
+      block.className = "bubble-side-block bubble-prose-block";
+      block.innerHTML = `<div class="bubble-side-kicker">${title}</div>`;
+      ["Affluent", "Gen Z"].forEach((aud) => {
+        const text = prose?.[key]?.[aud];
+        if (!text) return;
+        const p = document.createElement("div");
+        p.className =
+          "bubble-prose-chunk" + (highlightAudience === aud ? " on" : "");
+        p.innerHTML = `<div class="bubble-prose-aud">${esc(aud)}</div><p>${esc(
+          text
+        )}</p>`;
+        block.appendChild(p);
+      });
+      sideEl.appendChild(block);
+    });
   }
 
   function renderSide({ who, snapshot, audienceLabel }) {
     if (!sideEl) return;
+    sideEl.classList.remove("bubble-side-prose");
     sideEl.replaceChildren();
 
     const whoBlock = document.createElement("div");
@@ -178,27 +288,12 @@ export function createBubbles({
       block.appendChild(ul);
       sideEl.appendChild(block);
     }
-
-    const channels = (snapshot?.channels || []).slice(0, 4);
-    if (channels.length) {
-      const block = document.createElement("div");
-      block.className = "bubble-side-block";
-      block.innerHTML = `<div class="bubble-side-kicker">Channels</div>`;
-      const ul = document.createElement("ul");
-      ul.className = "bubble-side-list bubble-side-list-soft";
-      channels.forEach((v) => {
-        const li = document.createElement("li");
-        li.innerHTML = `<span>${esc(v.answer)}</span><b>${esc(formatPeople(v.universe))}</b>`;
-        ul.appendChild(li);
-      });
-      block.appendChild(ul);
-      sideEl.appendChild(block);
-    }
   }
 
   function renderFoot(items, kind) {
     if (!footEl) return;
     footEl.replaceChildren();
+    if (kind === "audiences" || kind === "menu") return;
     const kicker = document.createElement("div");
     kicker.className = "bubble-foot-kicker";
     kicker.textContent =
@@ -221,6 +316,158 @@ export function createBubbles({
     footEl.appendChild(row);
   }
 
+  /** Country landing: Affluent + Gen Z circles + Values/Character prose. */
+  function showCountryLanding({ countryName, who, prose }) {
+    mode = "passions";
+    level = "audiences";
+    showShell({
+      title: countryName,
+      sub: "Click to Explore the audiences",
+      showPie: false,
+      showSide: true,
+      showBack: false,
+      levelClass: "audiences",
+    });
+    renderProseSide(prose);
+    renderFoot([], "audiences");
+    if ($("bubbleKicker")) $("bubbleKicker").textContent = "Market";
+    const items = (who?.rows || []).map((r) => ({
+      id: `aud:${r.key}`,
+      key: r.key,
+      label: r.label,
+      short: r.label,
+      universe: r.universe || 0,
+      kind: "audience",
+    }));
+    requestAnimationFrame(() => renderAudienceStage(items));
+  }
+
+  function renderAudienceStage(items, { selectedKey = null, fields = null } = {}) {
+    if (!stage) return;
+    const W = stage.clientWidth || 640;
+    const H = stage.clientHeight || 420;
+    const placed = layoutBubbles(items, W, H, 48, 110);
+    stage.replaceChildren();
+    placed.forEach((b, i) => {
+      const selected = selectedKey && b.key === selectedKey;
+      const dimmed = selectedKey && !selected;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className =
+        "bubble-node bubble-audience" +
+        (selected ? " on" : "") +
+        (dimmed ? " is-dim" : "");
+      btn.style.left = `${b.x}px`;
+      btn.style.top = `${b.y}px`;
+      btn.style.width = `${b.r * 2}px`;
+      btn.style.height = `${b.r * 2}px`;
+      btn.style.animationDelay = `${Math.min(i * 50, 200)}ms`;
+      btn.innerHTML = `
+        <span class="bubble-reach">${esc(formatPeople(b.universe))}</span>
+        <span class="bubble-label">${esc(b.label)}</span>
+      `;
+      btn.title = `${b.label} · ${formatPeople(b.universe)}`;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        onAudience?.(b);
+      };
+      stage.appendChild(btn);
+    });
+
+    if (selectedKey && fields?.length) {
+      const anchor = placed.find((p) => p.key === selectedKey) || placed[0];
+      if (anchor) attachThemeMiniMenu(fields, anchor, W, H);
+    }
+  }
+
+  /** Compact popover next to the selected audience circle. */
+  function attachThemeMiniMenu(fields, anchor, W, H) {
+    const menu = document.createElement("div");
+    menu.className = "bubble-mini-menu";
+    menu.setAttribute("role", "menu");
+
+    const head = document.createElement("div");
+    head.className = "bubble-mini-menu-head";
+    head.textContent = "Passion fields";
+    menu.appendChild(head);
+
+    const list = document.createElement("div");
+    list.className = "bubble-mini-menu-list";
+    (fields || []).forEach((f, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bubble-mini-menu-item";
+      btn.setAttribute("role", "menuitem");
+      btn.style.animationDelay = `${Math.min(80 + i * 35, 280)}ms`;
+      btn.textContent = f.label;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        onThemeField?.(f);
+      };
+      list.appendChild(btn);
+    });
+    menu.appendChild(list);
+    stage.appendChild(menu);
+
+    // Place beside the selected circle; flip if it would clip
+    const menuW = 220;
+    const pad = 12;
+    let left = anchor.x + anchor.r + 18;
+    let top = anchor.y;
+    if (left + menuW > W - pad) {
+      left = anchor.x - anchor.r - 18 - menuW;
+    }
+    left = Math.max(pad, Math.min(W - menuW - pad, left));
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+    // Clamp vertical after measure
+    requestAnimationFrame(() => {
+      const h = menu.offsetHeight || 200;
+      let y = top - h / 2;
+      y = Math.max(pad, Math.min(H - h - pad, y));
+      menu.style.top = `${y}px`;
+      menu.classList.add("is-in");
+    });
+  }
+
+  /** Audience selected → circles stay, mini-menu opens on the circle. */
+  function showThemeMenu({
+    countryName,
+    audienceLabel,
+    audienceKey,
+    fields,
+    prose,
+    who,
+  }) {
+    mode = "passions";
+    level = "menu";
+    showShell({
+      title: countryName,
+      sub: `${audienceLabel} · pick a passion field`,
+      showPie: false,
+      showSide: true,
+      showBack: true,
+      levelClass: "menu",
+    });
+    renderProseSide(prose, { highlightAudience: audienceLabel });
+    renderFoot([], "menu");
+    if ($("bubbleKicker")) $("bubbleKicker").textContent = "Market";
+    const items = (who?.rows || []).map((r) => ({
+      id: `aud:${r.key}`,
+      key: r.key,
+      label: r.label,
+      short: r.label,
+      universe: r.universe || 0,
+      kind: "audience",
+    }));
+    requestAnimationFrame(() =>
+      renderAudienceStage(items, {
+        selectedKey: audienceKey || audienceLabel,
+        fields,
+      })
+    );
+  }
+
   function showPassions({
     countryName,
     audienceLabel,
@@ -230,6 +477,7 @@ export function createBubbles({
     categoryLabel = null,
     who = null,
     snapshot = null,
+    prose = null,
   }) {
     mode = "passions";
     level = nextLevel;
@@ -242,8 +490,10 @@ export function createBubbles({
       showPie: false,
       showSide: true,
       showBack: isAnswers,
+      levelClass: isAnswers ? "answers" : "categories",
     });
-    renderSide({ who, snapshot, audienceLabel });
+    if (prose) renderProseSide(prose, { highlightAudience: audienceLabel });
+    else renderSide({ who, snapshot, audienceLabel });
     renderFoot(items, isAnswers ? "answer" : "category");
     if ($("bubbleKicker")) {
       $("bubbleKicker").textContent = isAnswers
@@ -259,7 +509,12 @@ export function createBubbles({
     if (!stage) return;
     const W = stage.clientWidth || 640;
     const H = stage.clientHeight || 420;
-    const placed = layoutBubbles(items, W, H, 30, 92);
+    const isAnswers = kind === "answer";
+    const rMin = isAnswers ? 26 : 28;
+    const rMax = isAnswers
+      ? Math.min(72, Math.min(W, H) * 0.2)
+      : Math.min(88, Math.min(W, H) * 0.24);
+    const placed = layoutBubbles(items, W, H, rMin, rMax);
 
     stage.replaceChildren();
     placed.forEach((b, i) => {
@@ -286,7 +541,6 @@ export function createBubbles({
         btn.setAttribute("aria-disabled", "true");
       }
 
-      // Potential-first: reach + label; answers also show Interest
       const idxHtml =
         kind === "answer" && b.index != null
           ? `<span class="bubble-idx">Interest ${esc(String(b.index))}</span>`
@@ -306,7 +560,6 @@ export function createBubbles({
           onCategory?.(b);
         };
       } else {
-        // Answer level: hover-only — Interest/reach already on the circle
         btn.onclick = (e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -327,6 +580,7 @@ export function createBubbles({
       showPie: true,
       showSide: false,
       showBack: false,
+      levelClass: null,
     });
     if (footEl) footEl.replaceChildren();
     requestAnimationFrame(() => renderCountryStage(items));
@@ -394,6 +648,8 @@ export function createBubbles({
 
   return {
     showPassions,
+    showCountryLanding,
+    showThemeMenu,
     showCountries,
     hide,
     get open() {

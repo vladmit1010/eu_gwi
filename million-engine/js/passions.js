@@ -9,6 +9,7 @@ export const CORE_PASSIONS = [
     short: "F1",
     kind: "global",
     blurb: "Global sponsorship · motor sport",
+    note: "Map: Interest in motor sports (e.g. Formula 1) across Erste markets",
     category: "Sports Followed",
     answer: "Motor sports (e.g. Formula 1): Follow",
   },
@@ -18,6 +19,7 @@ export const CORE_PASSIONS = [
     short: "Running",
     kind: "global",
     blurb: "Global sponsorship · running / jogging",
+    note: "Map: Interest in fitness & exercise across Erste markets",
     category: "Personal Interests",
     answer: "Fitness & exercise",
   },
@@ -27,33 +29,11 @@ export const CORE_PASSIONS = [
     short: "Live music",
     kind: "global",
     blurb: "Global sponsorship · festivals & live events",
+    note: "Map: Interest in live events & music festivals across Erste markets",
     category: "Personal Interests",
     answer: "Live events (e.g. music festivals)",
   },
 ];
-
-/** Interests treated as local activation ideas (not global must-haves). */
-const LOCAL_INTEREST_BLOCKLIST = new Set([
-  "Live events (e.g. music festivals)",
-  "Fitness & exercise",
-  "Other arts/culture interests",
-  "Other health/fitness/beauty interests",
-  "Other home/lifestyle interests",
-  "Other pop culture/leisure interests",
-  "Other science/tech/nature interests",
-  "Other societal/business interests",
-]);
-
-const CORE_ANSWER_KEYS = new Set(CORE_PASSIONS.map((p) => p.answer));
-
-function mean(nums) {
-  if (!nums.length) return 0;
-  return nums.reduce((a, b) => a + b, 0) / nums.length;
-}
-
-function sum(nums) {
-  return nums.reduce((a, b) => a + b, 0);
-}
 
 function shortLabel(text, max = 18) {
   if (!text || text.length <= max) return text;
@@ -84,55 +64,6 @@ export function resolvePassion(id) {
   return null;
 }
 
-/**
- * Themes people like most for an audience (across Erste markets).
- * sortBy: "people" (universe sum) | "index"
- */
-export function mostLikedInterests(
-  gwi,
-  audienceKey,
-  { limit = 6, sortBy = "people" } = {}
-) {
-  if (!gwi?.[audienceKey]) return [];
-  const countries = Object.keys(gwi[audienceKey]);
-  const sample = gwi[audienceKey][countries[0]]?.["Personal Interests"];
-  if (!sample) return [];
-
-  const rows = [];
-  for (const answer of Object.keys(sample)) {
-    if (LOCAL_INTEREST_BLOCKLIST.has(answer)) continue;
-    if (CORE_ANSWER_KEYS.has(answer)) continue;
-
-    const points = countries
-      .map((c) => gwi[audienceKey][c]?.["Personal Interests"]?.[answer])
-      .filter(Boolean);
-    if (points.length < 2) continue;
-
-    const avgIndex = mean(points.map((p) => p.index));
-    const totalPeople = sum(points.map((p) => p.universe ?? 0));
-    if (totalPeople < 1000) continue;
-
-    rows.push({
-      id: `interest:${answer}`,
-      label: answer,
-      short: shortLabel(answer),
-      kind: "liked",
-      blurb: "Most liked across Erste markets",
-      category: "Personal Interests",
-      answer,
-      index: Math.round(avgIndex * 10) / 10,
-      universe: Math.round(totalPeople),
-    });
-  }
-
-  if (sortBy === "index") {
-    rows.sort((a, b) => b.index - a.index || b.universe - a.universe);
-  } else {
-    rows.sort((a, b) => b.universe - a.universe || b.index - a.index);
-  }
-  return rows.slice(0, limit);
-}
-
 export function coreMetricsForCountry(gwi, audienceKey, countryKey) {
   if (!gwi || !audienceKey || !countryKey) return [];
   return CORE_PASSIONS.map((p) => {
@@ -146,100 +77,85 @@ export function coreMetricsForCountry(gwi, audienceKey, countryKey) {
   });
 }
 
-export function localPassionsForCountry(
-  gwi,
-  audienceKey,
-  countryKey,
-  { limit = 5, sortBy = "index" } = {}
-) {
-  const interests = gwi?.[audienceKey]?.[countryKey]?.["Personal Interests"];
-  if (!interests) return [];
-  const rows = Object.entries(interests)
-    .filter(([answer]) => !LOCAL_INTEREST_BLOCKLIST.has(answer))
-    .map(([answer, m]) => ({
-      answer,
-      category: "Personal Interests",
-      kind: "local",
-      index: m?.index ?? 0,
-      universe: m?.universe ?? 0,
-    }))
-    .filter((r) => r.universe >= 500);
-
-  if (sortBy === "people" || sortBy === "reach") {
-    rows.sort((a, b) => b.universe - a.universe || b.index - a.index);
-  } else {
-    rows.sort((a, b) => b.index - a.index || b.universe - a.universe);
-  }
-  return rows.slice(0, limit);
-}
-
-function topScaled(answers, { suffix, limit = 3, sortBy = "index" }) {
-  if (!answers) return [];
-  const rows = Object.entries(answers)
-    .filter(([k]) => (suffix ? k.endsWith(suffix) : true))
-    .map(([answer, m]) => ({
-      answer: suffix ? answer.replace(suffix, "").replace(/:\s*$/, "").trim() : answer,
-      raw: answer,
-      index: m?.index ?? 0,
-      universe: m?.universe ?? 0,
-    }))
-    .filter((r) => r.universe >= 500);
-
-  if (sortBy === "people" || sortBy === "reach") {
-    rows.sort((a, b) => b.universe - a.universe || b.index - a.index);
-  } else {
-    rows.sort((a, b) => b.index - a.index || b.universe - a.universe);
-  }
-  return rows.slice(0, limit);
-}
-
-/** Audience snapshot for a country: values, character, channels. */
-export function audienceSnapshot(gwi, audienceKey, countryKey) {
-  const block = gwi?.[audienceKey]?.[countryKey];
-  if (!block) {
-    return { values: [], character: [], channels: [] };
-  }
-  return {
-    values: topScaled(block["Attitudes: Values"], {
-      suffix: ": Important to me",
-      limit: 4,
-      sortBy: "index",
-    }),
-    character: topScaled(block["Attitudes: Character"], {
-      suffix: ": Describes me",
-      limit: 3,
-      sortBy: "index",
-    }),
-    channels: topScaled(block["Named Social Media / Messaging Services Used"], {
-      suffix: null,
-      limit: 4,
-      sortBy: "people",
-    }),
-  };
-}
-
 /** Friendly labels for GWI category keys (Explore drill-down). */
 export const CATEGORY_META = {
-  "Personal Interests": { label: "Interests", short: "Interests", blurb: "Hobbies & leisure" },
-  "Sports Followed": { label: "Sports", short: "Sports", blurb: "Sports followed" },
-  "Music Genres": { label: "Music", short: "Music", blurb: "Music genres" },
+  "Personal Interests": {
+    label: "Interests",
+    short: "Interests",
+    blurb: "Hobbies & leisure",
+  },
+  "Sports Followed": {
+    label: "Sports followed",
+    short: "Sports followed",
+    blurb: "Sports followed",
+  },
+  "Music Genres": {
+    label: "Music",
+    short: "Music",
+    blurb: "Music genres",
+  },
   "Attitudes: Values": { label: "Values", short: "Values", blurb: "What matters" },
-  "Attitudes: Character": { label: "Character", short: "Character", blurb: "Self-description" },
+  "Attitudes: Character": {
+    label: "Character",
+    short: "Character",
+    blurb: "Self-description",
+  },
   "Named Social Media / Messaging Services Used": {
-    label: "Social",
-    short: "Social",
+    label: "Social Network usage",
+    short: "Social Network usage",
     blurb: "Apps & messaging",
   },
 };
 
-const CATEGORY_ORDER = [
-  "Personal Interests",
-  "Sports Followed",
-  "Music Genres",
-  "Attitudes: Values",
-  "Attitudes: Character",
-  "Named Social Media / Messaging Services Used",
+/** Passion / touchpoint fields shown after picking Affluent or Gen Z (no Values/Character). */
+export const EXPLORE_THEME_FIELDS = [
+  {
+    id: "field:interests",
+    category: "Personal Interests",
+    pack: null,
+    label: "Interests",
+  },
+  {
+    id: "field:sports",
+    category: "Sports Followed",
+    pack: null,
+    label: "Sports followed",
+  },
+  {
+    id: "field:music",
+    category: "Music Genres",
+    pack: null,
+    label: "Music",
+  },
+  {
+    id: "field:social",
+    category: "Named Social Media / Messaging Services Used",
+    pack: null,
+    label: "Social Network usage",
+  },
+  {
+    id: "field:media",
+    category: "Personal Interests",
+    pack: "media",
+    label: "Media Touchpoints",
+  },
 ];
+
+/** Personal Interests answers treated as media touchpoints. */
+const MEDIA_TOUCHPOINT_ANSWERS = new Set([
+  "Television",
+  "Films / cinema",
+  "Reality TV",
+  "News / current affairs",
+  "Celebrity news / gossip",
+  "Music",
+  "Watching sport",
+  "Esports",
+  "Gaming",
+  "Books / literature",
+  "Radio",
+  "Podcasts",
+]);
 
 const ANSWER_OTHER = /^Other\b/i;
 
@@ -286,77 +202,13 @@ export function whoSplitForCountry(gwi, countryKey, lens) {
 }
 
 /**
- * Category-level bubbles for a country (drill-down level 1).
- * Includes a Global sponsorships pack + each GWI category.
- */
-export function categoryBubblesForCountry(gwi, audienceKey, countryKey) {
-  if (!gwi || !audienceKey || !countryKey) return [];
-  const block = gwi[audienceKey]?.[countryKey];
-  if (!block) return [];
-
-  const core = coreMetricsForCountry(gwi, audienceKey, countryKey).filter(
-    (p) => (p.universe ?? 0) > 0
-  );
-  const coreTop = core.reduce(
-    (a, b) => ((b.universe || 0) > (a?.universe || 0) ? b : a),
-    null
-  );
-
-  const items = [];
-  if (coreTop) {
-    items.push({
-      id: "pack:global",
-      kind: "category",
-      pack: "global",
-      label: "Global sponsorships",
-      short: "Global",
-      category: null,
-      universe: coreTop.universe ?? 0,
-      index: coreTop.index,
-      count: core.length,
-    });
-  }
-
-  for (const cat of CATEGORY_ORDER) {
-    const answers = block[cat];
-    if (!answers) continue;
-    const rows = Object.entries(answers)
-      .filter(([answer]) => includeAnswer(cat, answer))
-      .map(([, m]) => ({
-        universe: m?.universe ?? 0,
-        index: m?.index ?? 0,
-      }))
-      .filter((r) => r.universe > 0);
-    if (!rows.length) continue;
-    // Size by largest theme in the category (sum would double-count people)
-    const top = rows.reduce((a, b) => (b.universe > a.universe ? b : a));
-    const universe = top.universe;
-    const index = Math.round(top.index * 10) / 10;
-    const meta = CATEGORY_META[cat] || { label: cat, short: shortLabel(cat, 14) };
-    items.push({
-      id: `cat:${cat}`,
-      kind: "category",
-      pack: null,
-      label: meta.label,
-      short: meta.short,
-      category: cat,
-      universe,
-      index,
-      count: rows.length,
-    });
-  }
-
-  return items.sort((a, b) => b.universe - a.universe);
-}
-
-/**
- * Answer bubbles inside a category (or global sponsorship pack).
+ * Answer bubbles inside a category (or global / media pack).
  */
 export function answerBubblesForCategory(
   gwi,
   audienceKey,
   countryKey,
-  { category = null, pack = null, limit = 14 } = {}
+  { category = null, pack = null, limit = 7 } = {}
 ) {
   if (pack === "global") {
     return coreMetricsForCountry(gwi, audienceKey, countryKey)
@@ -370,7 +222,32 @@ export function answerBubblesForCategory(
         answer: p.answer,
         universe: p.universe ?? 0,
         index: p.index,
-      }));
+      }))
+      .sort((a, b) => b.universe - a.universe || (b.index || 0) - (a.index || 0))
+      .slice(0, limit);
+  }
+
+  if (pack === "media") {
+    const interests = gwi?.[audienceKey]?.[countryKey]?.["Personal Interests"];
+    if (!interests) return [];
+    return Object.entries(interests)
+      .filter(([answer]) => MEDIA_TOUCHPOINT_ANSWERS.has(answer))
+      .map(([answer, m]) => {
+        const label = cleanAnswerLabel("Personal Interests", answer);
+        return {
+          id: `answer:media:${answer}`,
+          label,
+          short: shortLabel(label, 14),
+          kind: "local",
+          category: "Personal Interests",
+          answer,
+          universe: m?.universe ?? 0,
+          index: m?.index ?? null,
+        };
+      })
+      .filter((r) => (r.universe ?? 0) > 0)
+      .sort((a, b) => b.universe - a.universe || (b.index || 0) - (a.index || 0))
+      .slice(0, limit);
   }
 
   const answers = gwi?.[audienceKey]?.[countryKey]?.[category];
@@ -383,7 +260,7 @@ export function answerBubblesForCategory(
       return {
         id: `answer:${category}:${answer}`,
         label,
-        short: shortLabel(label, 16),
+        short: shortLabel(label, 14),
         kind: "local",
         category,
         answer,
@@ -396,42 +273,16 @@ export function answerBubblesForCategory(
     .slice(0, limit);
 }
 
-/**
- * Bubbles for a country: 3 global sponsorships + top local by Universe.
- * @returns {{ id, label, short, kind, category, answer, universe, index }[]}
- */
-export function passionBubblesForCountry(
-  gwi,
-  audienceKey,
-  countryKey,
-  { localLimit = 5 } = {}
-) {
-  const core = coreMetricsForCountry(gwi, audienceKey, countryKey).map((p) => ({
-    id: p.id,
-    label: p.label,
-    short: p.short,
-    kind: "global",
-    category: p.category,
-    answer: p.answer,
-    universe: p.universe ?? 0,
-    index: p.index,
+/** Theme-field buttons for the audience mini-menu (labels only, no numbers). */
+export function themeFieldsForMenu() {
+  return EXPLORE_THEME_FIELDS.map((f) => ({
+    id: f.id,
+    kind: "theme-field",
+    pack: f.pack,
+    category: f.category,
+    label: f.label,
+    short: f.label,
   }));
-
-  const local = localPassionsForCountry(gwi, audienceKey, countryKey, {
-    limit: localLimit,
-    sortBy: "people",
-  }).map((r) => ({
-    id: `interest:${r.answer}`,
-    label: r.answer,
-    short: shortLabel(r.answer, 16),
-    kind: "local",
-    category: r.category,
-    answer: r.answer,
-    universe: r.universe ?? 0,
-    index: r.index,
-  }));
-
-  return [...core, ...local].filter((b) => (b.universe ?? 0) > 0);
 }
 
 /**

@@ -95,7 +95,3 @@ export function growthIndex(data, code, activeThemeIds) {
   if (!opps.length) return 0;
   return opps.reduce((a, s) => a + s.s * s.e, 0) / 100;
 }
-
-export function totalContribution(data) {
-  return Object.values(data.markets).reduce((a, m) => a + (m.contribution || 0), 0);
-}

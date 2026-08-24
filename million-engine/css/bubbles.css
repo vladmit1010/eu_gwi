@@ -74,7 +74,7 @@
 }
 
 .bubble-overlay.has-side .bubble-body {
-  grid-template-columns: minmax(200px, 26%) 1fr;
+  grid-template-columns: minmax(240px, 30%) 1fr;
   gap: 2%;
   align-items: stretch;
 }
@@ -107,6 +107,143 @@
   text-transform: uppercase;
   color: var(--overlap);
   margin-bottom: 8px;
+}
+
+/* Values / Character flowing prose (country landing) */
+.bubble-side.bubble-side-prose {
+  gap: 22px;
+}
+
+.bubble-prose-intro {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+
+.bubble-prose-block {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bubble-prose-chunk p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  letter-spacing: -0.01em;
+}
+
+.bubble-prose-aud {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 6px;
+}
+
+.bubble-prose-chunk.on .bubble-prose-aud {
+  color: var(--overlap);
+}
+
+.bubble-prose-chunk.on p {
+  color: var(--ink);
+}
+
+.bubble-node.bubble-audience {
+  border-color: rgba(255, 95, 0, 0.55);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), transparent 52%),
+    rgba(255, 95, 0, 0.28);
+}
+
+.bubble-node.bubble-audience .bubble-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Compact mini-menu anchored to the selected audience circle */
+.bubble-mini-menu {
+  position: absolute;
+  z-index: 5;
+  width: 220px;
+  padding: 10px 8px 8px;
+  border-radius: 12px;
+  background: rgba(16, 18, 22, 0.96);
+  border: 1px solid rgba(255, 95, 0, 0.35);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+  opacity: 0;
+  transform: translateY(4px) scale(0.98);
+  transform-origin: left center;
+  transition: opacity 0.22s var(--ease), transform 0.22s var(--ease);
+  pointer-events: auto;
+}
+
+.bubble-mini-menu.is-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.bubble-mini-menu-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--overlap);
+  padding: 2px 10px 8px;
+}
+
+.bubble-mini-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bubble-mini-menu-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0;
+  animation: theme-btn-in 0.3s var(--ease-out) forwards;
+  transition: background 0.15s var(--ease), color 0.15s var(--ease);
+}
+
+.bubble-mini-menu-item:hover {
+  background: rgba(255, 95, 0, 0.18);
+  color: #fff;
+}
+
+.bubble-node.bubble-audience.is-dim {
+  opacity: 0.45;
+  filter: saturate(0.7);
+}
+
+.bubble-node.bubble-audience.on {
+  z-index: 4;
+}
+
+@keyframes theme-btn-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bubble-side-list-soft li {
@@ -171,20 +308,6 @@
   font-weight: 600;
   color: var(--ink-2);
   letter-spacing: -0.01em;
-}
-
-.bubble-side-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ink);
-  margin-bottom: 10px;
-}
-
-.bubble-side-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--ink-3);
-  line-height: 1.35;
 }
 
 .bubble-who-list,
@@ -326,8 +449,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 8px;
+  gap: 4px;
+  padding: 10px;
   text-align: center;
   font: inherit;
   opacity: 0;
@@ -437,7 +560,7 @@
   }
 
   .bubble-overlay.has-side .bubble-side {
-    max-height: 140px;
+    max-height: 120px;
     flex-direction: row;
     flex-wrap: wrap;
     gap: 12px 20px;
@@ -455,5 +578,21 @@
 
   .bubble-title {
     font-size: 20px;
+  }
+
+  .bubble-main {
+    min-height: 240px;
+  }
+
+  .bubble-reach {
+    font-size: clamp(11px, 2.2vw, 16px);
+  }
+
+  .bubble-label {
+    font-size: 10px;
+  }
+
+  .bubble-idx {
+    font-size: 9px;
   }
 }

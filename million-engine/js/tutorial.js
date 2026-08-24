@@ -1,4 +1,4 @@
-/** Guided tutorial — Next for explain steps, wait-gates for real Explore actions. */
+/** Guided tutorial — early steps auto-play; wait-gates for real Explore actions. */
 
 import { $ } from "./utils/dom.js";
 
@@ -6,25 +6,30 @@ export const TUTORIAL_STEPS = [
   {
     id: "intro",
     gate: "next",
+    autoMs: 2800,
     caption:
-      "The Million Engine: connect with people through passions — powered by real GWI data.",
+      "Target: 1,000,000 customers — built from passions across Erste markets.",
   },
   {
     id: "who",
     gate: "next",
+    autoMs: 3200,
     caption:
-      "Who changes the map — try Affluent or Gen Z if you like, or just press Next.",
+      "Who changes the map — Affluent and Gen Z recolour interest.",
   },
   {
     id: "passions",
     gate: "next",
+    autoMs: 3200,
     caption:
-      "Global sponsorships — try F1 / Running / Live music if you like, or Next.",
+      "Global sponsorships — F1 lights the six markets.",
   },
   {
     id: "f1map",
     gate: "next",
-    caption: "Example: Formula 1 — Interest across the six markets (placeholder fact slide).",
+    story: "f1",
+    autoMs: "story",
+    caption: "12,3 Mio. folgen Motorsport — 1 Mio. Ziel. Jede zwölfte Person schaut schon zu.",
   },
   {
     id: "country",
@@ -34,14 +39,15 @@ export const TUTORIAL_STEPS = [
   {
     id: "f1split",
     gate: "category",
-    caption: "Click a category circle — it opens the themes inside that area.",
-    prompt: "Click a category",
+    caption:
+      "Click Affluent or Gen Z — then pick a passion field.",
+    prompt: "Explore audiences",
   },
   {
     id: "local",
     gate: "next",
     caption:
-      "Themes inside Global — hover to inspect Interest + reach. Next when ready.",
+      "Themes inside the field — hover to inspect Interest + reach. Next when ready.",
   },
   {
     id: "done",
@@ -50,7 +56,7 @@ export const TUTORIAL_STEPS = [
   },
 ];
 
-export function createTutorial({ onStep, onExit } = {}) {
+export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = {}) {
   const root = $("tutorialBar");
   const captionEl = $("tutorialCaption");
   const stepEl = $("tutorialStep");
@@ -60,9 +66,45 @@ export function createTutorial({ onStep, onExit } = {}) {
   const panel = $("tutorialPanel");
   let active = false;
   let index = 0;
+  let autoTimer = null;
+  let autoToken = 0;
 
   function step() {
     return TUTORIAL_STEPS[index] || null;
+  }
+
+  function clearAuto() {
+    if (autoTimer != null) {
+      clearTimeout(autoTimer);
+      autoTimer = null;
+    }
+    autoToken += 1;
+    document.documentElement.classList.remove("tutorial-auto");
+  }
+
+  function resolveAutoMs(s) {
+    if (!s?.autoMs) return null;
+    if (s.autoMs === "story") {
+      const ms = onStoryAutoMs?.(s);
+      return typeof ms === "number" && ms > 0 ? ms : 6500;
+    }
+    return typeof s.autoMs === "number" && s.autoMs > 0 ? s.autoMs : null;
+  }
+
+  function scheduleAuto() {
+    clearAuto();
+    if (!active) return;
+    const s = step();
+    const delay = resolveAutoMs(s);
+    if (delay == null) return;
+
+    document.documentElement.classList.add("tutorial-auto");
+    const token = autoToken;
+    autoTimer = setTimeout(() => {
+      autoTimer = null;
+      if (!active || token !== autoToken) return;
+      next({ fromAuto: true });
+    }, delay);
   }
 
   function syncChrome() {
@@ -83,24 +125,18 @@ export function createTutorial({ onStep, onExit } = {}) {
       captionEl.textContent = s?.caption || "";
     }
 
-    const wait =
-      s?.gate === "country" ||
-      s?.gate === "who" ||
-      s?.gate === "passion" ||
-      s?.gate === "category";
+    const wait = s?.gate === "category";
     const done = s?.gate === "done";
+    const autoPlaying = resolveAutoMs(s) != null;
     if (nextBtn) {
       nextBtn.hidden = false;
       nextBtn.disabled = wait;
       nextBtn.textContent = done ? "Done" : "Next";
       nextBtn.classList.toggle("is-wait", wait);
+      nextBtn.classList.toggle("is-auto", autoPlaying);
       nextBtn.setAttribute("aria-disabled", wait ? "true" : "false");
     }
-    document.documentElement.classList.toggle("tutorial-wait-country", s?.gate === "country");
-    document.documentElement.classList.toggle("tutorial-wait-who", s?.gate === "who");
-    document.documentElement.classList.toggle("tutorial-wait-passion", s?.gate === "passion");
-    document.documentElement.classList.toggle("tutorial-wait-category", s?.gate === "category");
-    document.documentElement.classList.remove("tutorial-wait-bubbles");
+    document.documentElement.classList.toggle("tutorial-wait-category", wait);
   }
 
   async function go(i) {
@@ -108,28 +144,35 @@ export function createTutorial({ onStep, onExit } = {}) {
     index = Math.max(0, Math.min(TUTORIAL_STEPS.length - 1, i));
     syncChrome();
     await onStep?.(step(), index);
+    scheduleAuto();
   }
 
   async function start() {
+    clearAuto();
     active = true;
     index = 0;
     syncChrome();
     await onStep?.(step(), 0);
+    scheduleAuto();
   }
 
-  async function next() {
+  async function next({ fromAuto = false } = {}) {
     if (!active) return;
     const s = step();
-    if (
-      s?.gate === "country" ||
-      s?.gate === "who" ||
-      s?.gate === "passion" ||
-      s?.gate === "category"
-    )
-      return;
+    if (s?.gate === "category") return;
     if (s?.gate === "done") {
       exit();
       return;
+    }
+    // Manual Skip during auto: cancel timer, then advance once
+    if (!fromAuto) clearAuto();
+    if (s?.story) {
+      const stayed = await onStoryNext?.(s);
+      if (stayed) {
+        // Beat caption already set by story handler — don't reset via syncChrome
+        scheduleAuto();
+        return;
+      }
     }
     if (index >= TUTORIAL_STEPS.length - 1) {
       exit();
@@ -143,6 +186,7 @@ export function createTutorial({ onStep, onExit } = {}) {
     if (!active) return false;
     const s = step();
     if (s?.gate !== gate) return false;
+    clearAuto();
     if (index >= TUTORIAL_STEPS.length - 1) return true;
     await go(index + 1);
     return true;
@@ -150,16 +194,19 @@ export function createTutorial({ onStep, onExit } = {}) {
 
   function exit() {
     if (!active) return;
+    clearAuto();
     active = false;
     panel?.classList.remove("open");
     if (panel) panel.innerHTML = "";
     document.documentElement.classList.remove(
-      "tutorial-wait-country",
-      "tutorial-wait-who",
-      "tutorial-wait-passion",
       "tutorial-wait-category",
-      "tutorial-wait-bubbles",
-      "tutorial-step-bubbles"
+      "tutorial-step-bubbles",
+      "tutorial-step-who",
+      "tutorial-step-passions",
+      "tutorial-step-f1map",
+      "tutorial-step-country",
+      "tutorial-auto",
+      "tutorial-free"
     );
     syncChrome();
     onExit?.();
@@ -172,8 +219,11 @@ export function createTutorial({ onStep, onExit } = {}) {
   }
 
   function hidePanel() {
-    panel?.classList.remove("open", "dock-start");
-    if (panel) panel.innerHTML = "";
+    panel?.classList.remove("open", "dock-start", "f1-story-panel");
+    if (panel) {
+      panel.innerHTML = "";
+      panel.setAttribute("aria-hidden", "true");
+    }
   }
 
   startBtn?.addEventListener("click", () => {
@@ -189,6 +239,10 @@ export function createTutorial({ onStep, onExit } = {}) {
     exit();
   });
 
+  function setCaption(text) {
+    if (captionEl) captionEl.textContent = text || "";
+  }
+
   return {
     start,
     next,
@@ -197,6 +251,7 @@ export function createTutorial({ onStep, onExit } = {}) {
     go,
     showPanel,
     hidePanel,
+    setCaption,
     get active() {
       return active;
     },

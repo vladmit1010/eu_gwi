@@ -1,15 +1,17 @@
 import { CONFIG } from "./config.js";
 import { SAMPLE_DATA } from "./data/markets.js";
 import { $, formatInt, formatPeople } from "./utils/dom.js";
-import { createMap, loadEuropeGeo } from "./map.js?v=20260821h";
-import { createPanel } from "./panel.js";
+import { createMap, loadEuropeGeo } from "./map.js?v=20260824a";
 import { createInsights } from "./insights.js";
-import { createBubbles } from "./bubbles.js?v=20260821h";
-import { createTutorial } from "./tutorial.js?v=20260821h";
+import { createBubbles } from "./bubbles.js?v=20260824m";
+import { createTutorial } from "./tutorial.js?v=20260824m";
+import { createSplash } from "./splash.js?v=20260824a";
+import { createF1Story } from "./f1-story.js?v=20260824f";
 import { loadInitialData } from "./data-loader.js";
 import {
   loadGwi,
   THEME_TO_GWI,
+  GWI_TO_THEME,
   ISO_TO_GWI,
   metricAt,
   indexByMarket,
@@ -19,14 +21,13 @@ import {
 import {
   CORE_PASSIONS,
   resolvePassion,
-  mostLikedInterests,
-  categoryBubblesForCountry,
   answerBubblesForCategory,
   countryBubblesForAudience,
   whoSplitForCountry,
-  audienceSnapshot,
+  themeFieldsForMenu,
   CATEGORY_META,
-} from "./passions.js";
+} from "./passions.js?v=20260824m";
+import { proseForMarket } from "./market-prose.js?v=20260824k";
 
 /** Explore audiences only — Affluent & Gen Z */
 const EXPLORE_AUDIENCES = EXPLORE_THEME_IDS;
@@ -38,12 +39,13 @@ const state = {
   active: null,
   mode: "explore",
   passionId: null,
-  likedSort: "people",
   localLens: null,
 };
 
 /** Country picked during tutorial country-gate — survives the Who step */
 let tutorialCountry = null;
+/** GWI audience key while drilled into theme menu / answers */
+let bubbleAudienceKey = null;
 
 const map = createMap($("map"), {
   onSelect: (code) => select(code),
@@ -58,12 +60,34 @@ const map = createMap($("map"), {
   onPick: () => {},
 });
 
-const panel = createPanel({
-  onClose: clear,
-  onLocalPassion: (row) => applyLocalLens(row),
+const insights = createInsights({
+  onApply: ({ themeId, category, answer }) => {
+    applyAnalysisSignal(themeId, category, answer);
+  },
 });
 
 const bubbles = createBubbles({
+  onAudience: (item) => {
+    const code = state.active;
+    if (!code || !item?.key) return;
+    const themeId = GWI_TO_THEME[item.key];
+    if (themeId) {
+      state.activeThemes = new Set([themeId]);
+      syncAudiences();
+      map.setThemes(state.activeThemes);
+      applyMetricToMap();
+    }
+    bubbleAudienceKey = item.key;
+    openAudienceThemeMenu(code);
+  },
+  onThemeField: (field) => {
+    const code = state.active;
+    if (!code || !field) return;
+    openAnswerBubbles(code, field);
+    if (tutorial.active && tutorial.gate === "category") {
+      tutorial.notify("category");
+    }
+  },
   onCategory: (item) => {
     const code = state.active;
     if (!code) return;
@@ -102,25 +126,25 @@ const bubbles = createBubbles({
       const name = item.label || item.answer || "Theme";
       sub.textContent = `${name} · ${reach} people · ${idx} vs Erste peers · Close to see the full map`;
     }
-    if (tutorial.active && tutorial.gate === "passion") {
-      tutorial.notify("passion");
-    }
   },
   onCountry: (code) => {
     select(code);
   },
   onBack: () => {
-    if (state.active) openPassionBubbles(state.active);
+    if (!state.active) return;
+    if (bubbles.level === "answers") {
+      openAudienceThemeMenu(state.active);
+    } else {
+      bubbleAudienceKey = null;
+      openPassionBubbles(state.active);
+    }
   },
   onClose: (opts) => {
     if (opts?.phase === "before") {
-      if (
-        tutorial.active &&
-        (tutorial.gate === "passion" || tutorial.gate === "category")
-      )
-        return false;
+      if (tutorial.active && tutorial.gate === "category") return false;
       return;
     }
+    bubbleAudienceKey = null;
     state.active = null;
     map.setActive(null);
     map.clearOverlays();
@@ -130,19 +154,14 @@ const bubbles = createBubbles({
   },
 });
 
-const insights = createInsights({
-  onApply: ({ themeId, category, answer }) => {
-    applyAnalysisSignal(themeId, category, answer);
-  },
-});
-
 function clearTutorialHighlights() {
   document.documentElement.classList.remove(
     "tutorial-step-who",
     "tutorial-step-passions",
     "tutorial-step-f1map",
     "tutorial-step-country",
-    "tutorial-step-bubbles"
+    "tutorial-step-bubbles",
+    "tutorial-free"
   );
   $("targetPill")?.classList.remove("tutorial-focus");
   document.querySelectorAll(".tutorial-spot, .tutorial-spot-stage").forEach((el) => {
@@ -251,6 +270,8 @@ async function applyTutorialStep(step) {
     document.documentElement.classList.add("tutorial-step-f1map");
     const f1Chip = $("passions")?.querySelector('[data-passion="f1"]');
     f1Chip?.classList.add("tutorial-hl");
+    const beat = f1Story.reset();
+    renderF1StoryBeat(beat);
     return;
   }
 
@@ -282,6 +303,7 @@ async function applyTutorialStep(step) {
     }
     if (!code) return;
     tutorialCountry = code;
+    bubbleAudienceKey = null;
     tutorial.hidePanel();
     hidePeek();
     document.documentElement.classList.add("tutorial-step-bubbles");
@@ -293,9 +315,8 @@ async function applyTutorialStep(step) {
     openPassionBubbles(code);
     const sub = $("bubbleSub");
     if (sub) {
-      sub.textContent = `${audienceLabel()} · click a category circle to open themes inside`;
+      sub.textContent = "Click to Explore the audiences";
     }
-    // Orange pulse on category circles via tutorial-wait-category CSS — no scrim/frame
     return;
   }
 
@@ -313,17 +334,28 @@ async function applyTutorialStep(step) {
     map.setActive(code);
     map.clearOverlays();
     map.paint();
-    // Prefer answer level if already drilled; otherwise open Global answers
+    // Prefer answer level if already drilled; otherwise Interests for current audience
     if (bubbles.open && bubbles.level === "answers") {
-      /* keep current answer view from the Global click */
+      /* keep current answer view from the theme-field click */
+    } else if (bubbles.open && bubbles.level === "menu") {
+      openAnswerBubbles(code, {
+        category: "Personal Interests",
+        pack: null,
+        label: "Interests",
+      });
     } else {
-      openAnswerBubbles(code, { category: null, pack: "global", label: "Global" });
+      if (!bubbleAudienceKey) bubbleAudienceKey = gwiAudienceKey() || "Affluent";
+      openAnswerBubbles(code, {
+        category: "Personal Interests",
+        pack: null,
+        label: "Interests",
+      });
     }
     syncPassions();
     $("mapwrap").classList.add("dim");
     const sub = $("bubbleSub");
     if (sub) {
-      sub.textContent = `${audienceLabel()} · hover themes for Interest + reach — Next when ready`;
+      sub.textContent = `${bubbleAudienceKey || audienceLabel()} · hover themes for Interest + reach — Next when ready`;
     }
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -345,16 +377,70 @@ async function applyTutorialStep(step) {
     map.clearOverlays();
     $("mapwrap").classList.remove("dim");
     applyMetricToMap();
+    // Unlock Who + sponsorships while the "done" bar is still visible
+    document.documentElement.classList.add("tutorial-free");
     return;
   }
 }
 
+const f1Story = createF1Story();
+
+function renderF1StoryBeat(beat) {
+  if (!beat) return;
+  const panel = $("tutorialPanel");
+  tutorial.showPanel(`
+    <div class="f1-story">
+      <div class="f1-story-progress">${f1Story.progressLabel()}</div>
+      <div class="tutorial-panel-kicker">${beat.kicker}</div>
+      <div class="tutorial-panel-title">${beat.title}</div>
+      <p class="f1-story-body">${beat.body}</p>
+    </div>
+  `);
+  panel?.classList.add("dock-start", "f1-story-panel");
+  panel?.setAttribute("aria-hidden", "false");
+  tutorial.setCaption(beat.caption);
+
+  if (beat.code && map.hasShape(beat.code)) {
+    state.active = beat.code;
+    map.setActive(beat.code);
+    map.paint();
+  } else {
+    state.active = null;
+    map.setActive(null);
+    map.paint();
+  }
+}
+
+function advanceF1Story() {
+  const moved = f1Story.next();
+  if (!moved) {
+    tutorial.hidePanel();
+    $("tutorialPanel")?.classList.remove("dock-start", "f1-story-panel");
+    state.active = null;
+    map.setActive(null);
+    map.paint();
+    return false;
+  }
+  renderF1StoryBeat(f1Story.beat());
+  return true;
+}
+
 const tutorial = createTutorial({
   onStep: (step) => applyTutorialStep(step),
+  onStoryNext: async (step) => {
+    if (step?.story !== "f1") return false;
+    return advanceF1Story();
+  },
+  onStoryAutoMs: (step) => {
+    if (step?.story !== "f1") return null;
+    return f1Story.beat()?.autoMs ?? 6500;
+  },
   onExit: () => {
     clearTutorialHighlights();
     tutorial.hidePanel();
+    $("tutorialPanel")?.classList.remove("dock-start", "f1-story-panel");
     tutorialCountry = null;
+    bubbleAudienceKey = null;
     // Drop country selection left over from tutorial gates
     if (bubbles.open) bubbles.hide();
     state.active = null;
@@ -365,6 +451,18 @@ const tutorial = createTutorial({
     syncPassions();
     applyMetricToMap();
     map.paint();
+  },
+});
+
+const splash = createSplash({
+  onStartTutorial: async () => {
+    await tutorial.start();
+  },
+  onSkipToExplore: async () => {
+    if (tutorial.active) tutorial.exit();
+    if (!state.passionId && !state.localLens) state.passionId = "f1";
+    syncPassions();
+    applyMetricToMap();
   },
 });
 
@@ -473,43 +571,56 @@ function applyMetricToMap() {
 function openPassionBubbles(code) {
   const market = state.data.markets[code];
   const countryKey = ISO_TO_GWI[code];
-  const aud = gwiAudienceKey();
-  const items = categoryBubblesForCountry(state.gwi, aud, countryKey);
   const lens = activeLens();
-  panel.hide();
-  bubbles.showPassions({
+  bubbleAudienceKey = null;
+  bubbles.showCountryLanding({
     countryName: market?.name || code,
-    audienceLabel: audienceLabel(),
-    items,
-    level: "categories",
     who: whoSplitForCountry(state.gwi, countryKey, lens),
-    snapshot: audienceSnapshot(state.gwi, aud, countryKey),
+    prose: proseForMarket(code),
+  });
+}
+
+function openAudienceThemeMenu(code) {
+  const market = state.data.markets[code];
+  const countryKey = ISO_TO_GWI[code];
+  const aud = bubbleAudienceKey || gwiAudienceKey();
+  const lens = activeLens();
+  bubbles.showThemeMenu({
+    countryName: market?.name || code,
+    audienceLabel: aud || audienceLabel(),
+    audienceKey: aud,
+    fields: themeFieldsForMenu(),
+    prose: proseForMarket(code),
+    who: whoSplitForCountry(state.gwi, countryKey, lens),
   });
 }
 
 function openAnswerBubbles(code, categoryItem) {
   const market = state.data.markets[code];
   const countryKey = ISO_TO_GWI[code];
-  const aud = gwiAudienceKey();
+  const aud = bubbleAudienceKey || gwiAudienceKey();
   const items = answerBubblesForCategory(state.gwi, aud, countryKey, {
     category: categoryItem.category,
     pack: categoryItem.pack,
-    limit: 14,
+    limit: 7,
   });
   const lens = activeLens();
   const categoryLabel =
     categoryItem.pack === "global"
       ? "Global sponsorships"
-      : CATEGORY_META[categoryItem.category]?.label || categoryItem.label;
+      : categoryItem.pack === "media"
+        ? "Media Touchpoints"
+        : categoryItem.label ||
+          CATEGORY_META[categoryItem.category]?.label ||
+          categoryItem.category;
   bubbles.showPassions({
     countryName: market?.name || code,
-    audienceLabel: audienceLabel(),
+    audienceLabel: aud || audienceLabel(),
     items,
     level: "answers",
     categoryLabel,
     selectedAnswer: lens?.answer || null,
-    who: whoSplitForCountry(state.gwi, countryKey, lens),
-    snapshot: audienceSnapshot(state.gwi, aud, countryKey),
+    prose: proseForMarket(code),
   });
 }
 
@@ -521,7 +632,6 @@ function openCountryBubbles() {
     lens,
     state.data.markets
   );
-  panel.hide();
   bubbles.showCountries({
     audienceLabel: audienceLabel(),
     themeLabel: themeLabelForLens(),
@@ -568,7 +678,6 @@ function buildAudiences() {
       if (bubbles.open) bubbles.hide();
       syncAudiences();
       map.setThemes(state.activeThemes);
-      buildLikedThemes();
       applyMetricToMap();
       syncPassions();
       // Optional play on Who step — do not auto-advance
@@ -600,66 +709,20 @@ function buildPassions() {
     bar.appendChild(b);
   });
 
-  buildLikedThemes();
-  wireLikedSort();
   syncPassionsNote();
 }
 
 function syncPassionsNote() {
   const el = $("passionsNote");
   if (!el) return;
-  if (state.passionId === "f1") {
-    el.textContent = "Placeholder for Formula 1";
-    el.hidden = false;
-  } else if (state.passionId === "running") {
-    el.textContent = "Placeholder for Running";
-    el.hidden = false;
-  } else if (state.passionId === "live_music") {
-    el.textContent = "Placeholder for Live music";
+  const p = resolvePassion(state.passionId);
+  if (p?.note) {
+    el.textContent = p.note;
     el.hidden = false;
   } else {
     el.textContent = "";
     el.hidden = true;
   }
-}
-
-function wireLikedSort() {
-  document.querySelectorAll("[data-liked-sort]").forEach((btn) => {
-    btn.onclick = () => {
-      state.likedSort = btn.dataset.likedSort;
-      document.querySelectorAll("[data-liked-sort]").forEach((b) => {
-        b.classList.toggle("on", b.dataset.likedSort === state.likedSort);
-      });
-      buildLikedThemes();
-    };
-  });
-}
-
-function buildLikedThemes() {
-  const bar = $("likedThemes");
-  if (!bar) return;
-  bar.replaceChildren();
-
-  const liked = mostLikedInterests(state.gwi, gwiAudienceKey(), {
-    limit: 5,
-    sortBy: state.likedSort,
-  });
-
-  liked.forEach((p) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "liked-chip" + (state.passionId === p.id ? " on" : "");
-    b.dataset.passion = p.id;
-    const metric =
-      state.likedSort === "index" ? String(p.index) : formatPeople(p.universe);
-    b.innerHTML = `<span class="liked-label">${p.short}</span><span class="liked-metric">${metric}</span>`;
-    b.title =
-      state.likedSort === "index"
-        ? `${p.label} · Interest ${p.index} vs market average (100)`
-        : `${p.label} · ${formatInt(p.universe)} people`;
-    b.onclick = () => selectPassion(p.id);
-    bar.appendChild(b);
-  });
 }
 
 function selectPassion(id) {
@@ -678,23 +741,12 @@ function syncPassions() {
   $("passions")?.querySelectorAll(".passion-chip").forEach((b) => {
     b.classList.toggle("on", b.dataset.passion === state.passionId);
   });
-  $("likedThemes")?.querySelectorAll(".liked-chip").forEach((b) => {
-    b.classList.toggle("on", b.dataset.passion === state.passionId);
-  });
   syncPassionsNote();
   $("passionHint")?.classList.toggle(
     "gone",
     Boolean(state.passionId || state.localLens || state.active || bubbles.open)
   );
   syncGuide();
-}
-
-function applyLocalLens(row) {
-  state.localLens = { category: row.category, answer: row.answer };
-  state.passionId = null;
-  syncPassions();
-  applyMetricToMap();
-  if (bubbles.open && bubbles.mode === "countries") openCountryBubbles();
 }
 
 function applyAnalysisSignal(themeId, category, answer) {
@@ -709,13 +761,11 @@ function applyAnalysisSignal(themeId, category, answer) {
   state.active = null;
 
   syncAudiences();
-  buildLikedThemes();
   syncPassions();
   map.setThemes(state.activeThemes);
   applyMetricToMap();
   map.setActive(null);
   map.clearOverlays();
-  panel.hide();
   $("mapwrap").classList.remove("dim");
   setMode("explore");
   openCountryBubbles();
@@ -757,6 +807,8 @@ let lastCountryPickAt = 0;
 function select(code) {
   if (state.activeThemes.size === 0) return;
   if (!state.data.markets[code] || !map.hasShape(code)) return;
+  // F1 story step: map is narrative, not clickable explore
+  if (document.documentElement.classList.contains("tutorial-step-f1map")) return;
 
   const now = performance.now();
   if (now - lastCountryPickAt < 350) return;
@@ -773,30 +825,20 @@ function select(code) {
   syncPassions();
   $("mapwrap").classList.add("dim");
 
-  if (tutorial.active && (tutorial.gate === "country" || countryPlay)) {
+  if (tutorial.active && countryPlay) {
     tutorialCountry = code;
-    if (tutorial.gate === "country") {
-      tutorial.notify("country");
-    } else {
-      tutorial.next();
-    }
+    tutorial.next();
   }
 }
 
 function clear() {
-  if (
-    tutorial.active &&
-    (tutorial.gate === "country" ||
-      tutorial.gate === "passion" ||
-      tutorial.gate === "category")
-  ) {
+  if (tutorial.active && tutorial.gate === "category") {
     return;
   }
   if (bubbles.open) bubbles.hide();
   state.active = null;
   map.setActive(null);
   map.clearOverlays();
-  panel.hide();
   $("mapwrap").classList.remove("dim");
   map.paint();
   syncPassions();
@@ -824,11 +866,8 @@ function boot(data) {
   setMode("explore");
   clear();
   syncPassions();
-  requestAnimationFrame(() => {
-    const f1 = $("passions")?.querySelector('[data-passion="f1"]');
-    f1?.classList.add("pulse");
-    window.setTimeout(() => f1?.classList.remove("pulse"), 4200);
-  });
+  // Default entry: splash (tilted map + Start the engine)
+  splash.show();
 }
 
 const insightsShow = insights.show.bind(insights);
@@ -882,6 +921,9 @@ document.addEventListener("keydown", (e) => {
   if (insights.open) insights.hide();
   else if (bubbles.open) {
     if (bubbles.level === "answers" && state.active) {
+      openAudienceThemeMenu(state.active);
+    } else if (bubbles.level === "menu" && state.active) {
+      bubbleAudienceKey = null;
       openPassionBubbles(state.active);
     } else {
       bubbles.hide();
@@ -893,8 +935,6 @@ document.addEventListener("keydown", (e) => {
     applyMetricToMap();
   } else clear();
 });
-
-wireLikedSort();
 
 Promise.all([
   loadInitialData(SAMPLE_DATA),

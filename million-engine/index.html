@@ -1,19 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="splash-on">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>The Million Engine</title>
-  <link rel="stylesheet" href="css/tokens.css?v=20260821i">
-  <link rel="stylesheet" href="css/base.css?v=20260821i">
-  <link rel="stylesheet" href="css/layout.css?v=20260821i">
-  <link rel="stylesheet" href="css/map.css?v=20260821i">
-  <link rel="stylesheet" href="css/panel.css?v=20260821i">
-  <link rel="stylesheet" href="css/bubbles.css?v=20260821i">
-  <link rel="stylesheet" href="css/insights.css?v=20260821i">
-  <link rel="stylesheet" href="css/tutorial.css?v=20260821i">
+  <link rel="stylesheet" href="css/tokens.css?v=20260824a">
+  <link rel="stylesheet" href="css/base.css?v=20260824a">
+  <link rel="stylesheet" href="css/layout.css?v=20260824m">
+  <link rel="stylesheet" href="css/map.css?v=20260824b">
+  <link rel="stylesheet" href="css/bubbles.css?v=20260824k">
+  <link rel="stylesheet" href="css/insights.css?v=20260824a">
+  <link rel="stylesheet" href="css/tutorial.css?v=20260824m">
+  <link rel="stylesheet" href="css/splash.css?v=20260824c">
 </head>
 <body>
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="splash-copy">
+      <div class="splash-brand">
+        <svg class="mark" viewBox="0 0 26 16" aria-hidden="true">
+          <circle cx="9" cy="8" r="7" fill="var(--red)"/>
+          <circle cx="17" cy="8" r="7" fill="var(--yellow)" style="mix-blend-mode:screen"/>
+        </svg>
+        <span class="splash-kicker">Mastercard × Erste</span>
+      </div>
+      <h1 class="splash-title">The <em>1 Million</em> Engine</h1>
+      <p class="splash-sub">Connect with people through passions — powered by real GWI data across Erste markets.</p>
+      <div class="splash-actions">
+        <button type="button" class="splash-start" id="splashStart">Start the engine</button>
+        <button type="button" class="splash-skip" id="splashSkip">Skip to explore</button>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
     <header class="header">
       <div class="topbar">
@@ -54,17 +72,7 @@
         <div class="explore-group explore-group-passions">
           <span class="explore-kicker">Global sponsorships</span>
           <div class="passion-row" id="passions" role="toolbar" aria-label="Core passions"></div>
-          <p class="explore-note" id="passionsNote">Placeholder for Formula 1</p>
-        </div>
-        <div class="explore-group explore-group-liked">
-          <div class="explore-kicker-row">
-            <span class="explore-kicker">Also popular</span>
-            <div class="liked-sort" role="tablist" aria-label="Rank popular themes">
-              <button type="button" class="liked-sort-btn on" data-liked-sort="people" id="likedSortReach" title="How many people">Audience size</button>
-              <button type="button" class="liked-sort-btn" data-liked-sort="index" id="likedSortIndex" title="Interest vs market average">Interest</button>
-            </div>
-          </div>
-          <div class="liked-row" id="likedThemes" role="toolbar" aria-label="Popular themes"></div>
+          <p class="explore-note" id="passionsNote">Map: Interest in motor sports (e.g. Formula 1) across Erste markets</p>
         </div>
       </div>
     </header>
@@ -118,8 +126,7 @@
           </div>
         </div>
       </div>
-      <aside class="panel" id="panel" aria-hidden="true"></aside>
-    </main>
+      </main>
 
     <div class="tutorial-scrim" id="tutorialScrim" aria-hidden="true"></div>
   </div>
@@ -149,6 +156,6 @@
   </div>
 
   <script src="js/vendor/d3.min.js"></script>
-  <script type="module" src="js/app.js?v=20260821h"></script>
+  <script type="module" src="js/app.js?v=20260824m"></script>
 </body>
 </html>
