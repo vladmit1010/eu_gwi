@@ -215,8 +215,9 @@ svg#map {
 .passion-hint {
   position: absolute;
   top: 2.5%;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 2.5%;
+  right: auto;
+  transform: none;
   z-index: 3;
   padding: 0.75em 1.2em;
   border-radius: var(--radius);
@@ -228,9 +229,10 @@ svg#map {
   pointer-events: none;
   transition: opacity 0.35s var(--ease);
   white-space: nowrap;
-  max-width: 90%;
+  max-width: min(420px, 70%);
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: left;
 }
 
 .passion-hint.gone {
@@ -361,6 +363,120 @@ svg#map {
   pointer-events: none;
   z-index: 99;
   transition: transform 0.62s var(--ease), opacity 0.62s var(--ease);
+}
+
+/* Distribution donuts on map */
+.dist-pie-halo {
+  fill: rgba(246, 245, 242, 0.96);
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 0.35;
+}
+
+.dist-pie-core {
+  fill: rgba(14, 16, 20, 0.92);
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 0.2;
+}
+
+.dist-pie-slice {
+  stroke: rgba(14, 16, 20, 0.35);
+  stroke-width: 0.15;
+}
+
+.dist-pie-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+
+.dist-pie.is-hot .dist-pie-halo {
+  stroke: rgba(255, 95, 0, 0.65);
+  stroke-width: 0.55;
+}
+
+.dist-pie.is-hot .dist-pie-core {
+  fill: rgba(20, 22, 28, 0.98);
+}
+
+.mapwrap.has-pies .code {
+  opacity: 0.55;
+}
+
+.dist-tip {
+  position: absolute;
+  z-index: 8;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(12, 13, 16, 0.96);
+  border: 1px solid rgba(255, 95, 0, 0.35);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -110%);
+  transition: opacity 0.15s var(--ease);
+}
+
+.dist-tip.on {
+  opacity: 1;
+}
+
+.dist-tip-title {
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--ink);
+}
+
+.dist-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-2);
+  padding: 3px 0;
+}
+
+.dist-tip-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dist-tip-row b {
+  margin-left: auto;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.mode-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.mode-legend:empty {
+  display: none;
+}
+
+.mode-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.mode-chip i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 @media (max-width: 899px) {

@@ -15,7 +15,6 @@ const CHROME =
 const require = createRequire(import.meta.url);
 let chromiumLaunch = chromium;
 try {
-  // Prefer local node_modules if present
   chromiumLaunch = require("playwright-core").chromium;
 } catch {
   /* use import */
@@ -46,109 +45,113 @@ async function main() {
   await page.goto(BASE, { waitUntil: "networkidle", timeout: 45000 });
   ok("boot loads", await page.title().then((t) => /Million Engine/i.test(t)));
 
-  // Splash → explore
   await page.click("#splashSkip");
   await page.waitForTimeout(1200);
   const afterSplash = await page.evaluate(() => ({
     splashOn: document.documentElement.classList.contains("splash-on"),
-    whoPe: getComputedStyle(document.querySelector(".explore-group-who")).pointerEvents,
-    hit: (() => {
-      const chip = document.querySelector('.aud-chip[data-theme="genz"]');
-      const r = chip.getBoundingClientRect();
-      return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.className;
-    })(),
+    compare: document.documentElement.classList.contains("map-view-compare"),
+    explore: !!document.getElementById("exploreBar"),
+    who: document.querySelectorAll("#audiences .aud-chip").length,
+    passions: document.querySelectorAll("#passions .passion-chip").length,
+    pies: document.querySelectorAll(".dist-pie").length,
   }));
   ok("splash dismissed", !afterSplash.splashOn);
-  ok("Who not blocked by splash", afterSplash.whoPe === "auto" && String(afterSplash.hit).includes("aud-chip"), afterSplash.hit);
+  ok("Compare mode default", afterSplash.compare === true);
+  ok("Explore Who + Sponsorships", afterSplash.explore && afterSplash.who >= 2 && afterSplash.passions >= 3, `who=${afterSplash.who} passions=${afterSplash.passions}`);
+  ok("No mix pies in Compare", afterSplash.pies === 0, `pies=${afterSplash.pies}`);
 
-  await page.click('.aud-chip[data-theme="genz"]');
-  await page.waitForTimeout(200);
-  const whoOn = await page.evaluate(() =>
-    document.querySelector('.aud-chip[data-theme="genz"]')?.classList.contains("on")
-  );
-  ok("Who Gen Z clickable", whoOn === true);
-
-  await page.click('.passion-chip[data-passion="running"]');
-  await page.waitForTimeout(200);
-  const passion = await page.evaluate(() => ({
-    on: document.querySelector('.passion-chip[data-passion="running"]')?.classList.contains("on"),
-    note: document.getElementById("passionsNote")?.textContent || "",
+  await page.click('[data-view="mix"]');
+  await page.waitForTimeout(400);
+  const mix = await page.evaluate(() => ({
+    on: document.documentElement.classList.contains("map-view-mix"),
+    pies: document.querySelectorAll(".dist-pie").length,
   }));
-  ok("Running sponsorship clickable", passion.on === true);
+  ok("Mix mode selectable", mix.on === true);
+  ok("Distribution pies on map", mix.pies >= 6, `pies=${mix.pies}`);
+
+  await page.click('[data-lens="social"]');
+  await page.waitForTimeout(300);
+  const social = await page.evaluate(() => ({
+    on: document.querySelector('[data-lens="social"]')?.classList.contains("on"),
+    chips: document.getElementById("modeLegend")?.querySelectorAll(".mode-chip").length || 0,
+  }));
+  ok("Social lens selectable", social.on === true);
+  ok("Social legend chips", social.chips >= 4, `chips=${social.chips}`);
+
+  await page.click('[data-aud="genz"]');
+  await page.waitForTimeout(300);
   ok(
-    "Sponsorship note is not placeholder",
-    passion.note.length > 0 && !/placeholder/i.test(passion.note),
-    passion.note.slice(0, 60)
+    "Gen Z audience selectable",
+    await page.evaluate(() =>
+      document.querySelector('[data-aud="genz"]')?.classList.contains("on")
+    )
   );
 
-  await page.click('.passion-chip[data-passion="f1"]');
-  await page.waitForTimeout(300);
+  await page.click('[data-view="compare"]');
+  await page.waitForTimeout(200);
+  await page.click('[data-passion="f1"]');
+  await page.waitForTimeout(200);
+
   const lands = await page.locator("path.land.live").count();
   ok("Map has live markets", lands >= 6, `lands=${lands}`);
 
-  // Country → landing
   await page.locator('path.land.live[data-code="RO"]').click({ force: true });
   await page.waitForTimeout(600);
   const landing = await page.evaluate(() => ({
     open: document.getElementById("bubbleOverlay")?.classList.contains("open"),
     title: document.getElementById("bubbleTitle")?.textContent,
-    snapshot: /Cultural snapshot|What matters|How they show up/i.test(
-      document.getElementById("bubbleSide")?.innerText || ""
-    ),
-    placeholder: /Placeholder —/i.test(document.getElementById("bubbleSide")?.innerText || ""),
     audiences: document.querySelectorAll(".bubble-audience").length,
-    sideLen: (document.getElementById("bubbleSide")?.innerText || "").length,
+    total: document.querySelector(".bubble-total-num")?.textContent || "",
+    piesHidden: document.querySelectorAll(".dist-pie").length === 0,
   }));
   ok("Country opens overlay", landing.open === true, landing.title);
-  ok("Cultural snapshot visible", landing.snapshot === true, `sideLen=${landing.sideLen}`);
-  ok("No Placeholder — in prose", landing.placeholder === false);
   ok("Affluent + Gen Z circles", landing.audiences === 2, `n=${landing.audiences}`);
+  ok("Total people shown", /^\d/.test(landing.total.replace(",", "")), landing.total);
+  ok("Pies hide while in country", landing.piesHidden === true);
 
-  // Mini-menu
   await page.locator(".bubble-audience").filter({ hasText: "Gen Z" }).click();
-  await page.waitForTimeout(400);
+  await page.waitForTimeout(450);
   const menu = await page.evaluate(() => ({
-    items: [...document.querySelectorAll(".bubble-mini-menu-item")].map((b) => b.textContent.trim()),
-    head: document.querySelector(".bubble-mini-menu-head")?.textContent,
+    sponsors: document.querySelectorAll(".bubble-sponsor").length,
+    fields: document.querySelectorAll(".bubble-field").length,
   }));
-  ok("Mini-menu opens", menu.items.length >= 5, menu.items.join(" | "));
-  ok(
-    "Theme labels present",
-    ["Interests", "Sports followed", "Music", "Social Network usage", "Media Touchpoints"].every((l) =>
-      menu.items.includes(l)
-    )
-  );
+  ok("Sponsorship circles open", menu.sponsors === 3, `n=${menu.sponsors}`);
+  ok("Field circles open", menu.fields >= 5, `n=${menu.fields}`);
 
-  await page.locator(".bubble-mini-menu-item", { hasText: "Interests" }).click();
+  await page.locator(".bubble-field", { hasText: "Interests" }).click();
   await page.waitForTimeout(500);
-  const answers = await page.evaluate(() => ({
-    level: document.getElementById("bubbleOverlay")?.classList.contains("level-answers"),
-    nodes: document.querySelectorAll("#bubbleStage .bubble-node").length,
-  }));
-  ok("Theme drills to answer bubbles", answers.nodes >= 3, `nodes=${answers.nodes}`);
+  const answers = await page.evaluate(
+    () => document.querySelectorAll("#bubbleStage .bubble-node").length
+  );
+  ok("Theme drills to answer bubbles", answers >= 3, `nodes=${answers}`);
 
   await page.click("#bubbleClose");
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
+  await page.click('[data-view="mix"]');
+  await page.waitForTimeout(400);
+  const afterClose = await page.evaluate(
+    () => document.querySelectorAll(".dist-pie").length
+  );
+  ok("Pies return in Mix after close", afterClose >= 6, `pies=${afterClose}`);
 
-  // Tutorial exit unlocks
   await page.click("#tutorialBtn");
   await page.waitForTimeout(400);
-  const tutOn = await page.evaluate(() => document.documentElement.classList.contains("tutorial-on"));
-  ok("Tutorial starts", tutOn === true);
+  ok(
+    "Tutorial starts",
+    await page.evaluate(() => document.documentElement.classList.contains("tutorial-on"))
+  );
   await page.click("#tutorialSkip");
   await page.waitForTimeout(400);
-  const afterTut = await page.evaluate(() => ({
-    on: document.documentElement.classList.contains("tutorial-on"),
-    whoPe: getComputedStyle(document.querySelector(".explore-group-who")).pointerEvents,
-    passPe: getComputedStyle(document.querySelector(".explore-group-passions")).pointerEvents,
-  }));
-  ok("Tutorial exit clears tutorial-on", afterTut.on === false);
-  ok("Who/passions clickable after tutorial", afterTut.whoPe === "auto" && afterTut.passPe === "auto");
+  ok(
+    "Tutorial exit clears tutorial-on",
+    await page.evaluate(() => !document.documentElement.classList.contains("tutorial-on"))
+  );
 
   ok("No page JS errors", pageErrors.length === 0, pageErrors.slice(0, 3).join(" | "));
   ok(
     "No critical request failures",
-    failed.filter((f) => /gwi|markets|geojson|app\.js|tutorial/i.test(f)).length === 0,
+    failed.filter((f) => /gwi|markets|geojson|app\.js|distributions|tutorial/i.test(f)).length ===
+      0,
     failed.slice(0, 3).join(" | ")
   );
 

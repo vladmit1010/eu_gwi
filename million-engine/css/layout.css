@@ -134,58 +134,112 @@
   text-decoration-color: var(--overlap);
 }
 
-/* ── 3-step guide ──────────────────────────────────────── */
-.guide {
-  list-style: none;
+.topbar-actions {
   display: flex;
+  align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 18px;
-  margin: 0 0 12px;
-  padding: 0;
+  justify-content: flex-end;
 }
 
-.guide-step {
+.view-toggle {
   display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-3);
-  letter-spacing: 0.01em;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  gap: 2px;
 }
 
-.guide-step b {
-  display: inline-grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  font-size: 11px;
+.view-toggle-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 12px;
   font-weight: 700;
-  color: var(--ink-3);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
 }
 
-.guide-step.on {
+.view-toggle-btn:hover {
   color: var(--ink);
 }
 
-.guide-step.on b {
-  background: var(--overlap);
-  border-color: var(--overlap);
-  color: #fff;
+.view-toggle-btn.on {
+  color: var(--ink);
+  background: rgba(255, 95, 0, 0.22);
 }
 
-.guide-step.done {
-  color: var(--ink-2);
+html.map-view-compare .map-filter {
+  display: none !important;
 }
 
-.guide-step.done b {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--line-2);
+html.map-view-mix .explore-bar {
+  display: none !important;
+}
+
+html.map-view-compare .mode-legend {
+  display: none !important;
+}
+
+/* ── Map filter (lens + audience) — Mix mode ─ */
+.map-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 14px 28px;
+  padding: 4px 0 2px;
+}
+
+.map-filter-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.map-filter-kicker {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+
+.map-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.map-filter-btn {
+  appearance: none;
+  border: 1px solid var(--line-2);
+  background: transparent;
   color: var(--ink-2);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.map-filter-btn:hover {
+  color: var(--ink);
+  border-color: rgba(255, 95, 0, 0.35);
+}
+
+.map-filter-btn.on {
+  color: var(--ink);
+  border-color: rgba(255, 95, 0, 0.55);
+  background: rgba(255, 95, 0, 0.18);
 }
 
 /* ── Explore bar — compact, content-sized (no empty stretch) ─ */
@@ -395,15 +449,6 @@
 
   .wordmark {
     font-size: 13px;
-  }
-
-  .guide {
-    gap: 6px 12px;
-    margin-bottom: 10px;
-  }
-
-  .guide-step {
-    font-size: 12px;
   }
 }
 

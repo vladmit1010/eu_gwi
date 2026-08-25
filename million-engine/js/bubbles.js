@@ -40,6 +40,49 @@ function radiusFor(universe, minU, maxU, rMin, rMax) {
   return rMin + (rMax - rMin) * tSoft;
 }
 
+/**
+ * Place items on a regular polygon (no center bubble).
+ * startAngle = -90° puts a vertex on top (triangle / pentagon tip up).
+ */
+function layoutPolygon(items, W, H, rMin, rMax, { startAngle = -Math.PI / 2 } = {}) {
+  const n = items.length;
+  if (!n) return [];
+
+  const pad = Math.max(10, Math.min(W, H) * 0.06);
+  const universes = items.map((i) => i.universe || 0);
+  const maxU = Math.max(...universes, 1);
+  const minU = Math.min(...universes.filter((u) => u > 0), maxU);
+  const area = Math.max(W * H, 1);
+  const scale = Math.min(1, Math.sqrt(area / (640 * 280)));
+  const rMaxUse = Math.max(22, Math.min(rMax, Math.min(W, H) * 0.28) * scale);
+  const rMinUse = Math.max(18, Math.min(rMin, rMaxUse * 0.58));
+
+  const sized = items.map((item) => ({
+    ...item,
+    r: radiusFor(item.universe || 0, minU, maxU, rMinUse, rMaxUse),
+  }));
+
+  const maxR = Math.max(...sized.map((s) => s.r), rMinUse);
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  // Ring large enough that neighbours barely kiss
+  const chordGap = 10;
+  let ring = maxR / Math.sin(Math.PI / Math.max(n, 2)) + chordGap;
+  const maxRingX = W / 2 - maxR - pad;
+  const maxRingY = H / 2 - maxR - pad;
+  ring = Math.min(ring, maxRingX, maxRingY * 1.05);
+  ring = Math.max(ring, maxR * 1.35);
+
+  return sized.map((item, i) => {
+    const a = startAngle + (i / n) * Math.PI * 2;
+    return {
+      ...item,
+      x: cx + Math.cos(a) * ring,
+      y: cy + Math.sin(a) * ring * 0.92,
+    };
+  });
+}
+
 /** Pack bubbles with less overlap — scales to stage size (incl. 13" laptops). */
 function layoutBubbles(items, W, H, rMin, rMax) {
   const n = items.length;
@@ -136,6 +179,7 @@ export function createBubbles({
   onCategory,
   onAudience,
   onThemeField,
+  onSponsor,
   onCountry,
   onBack,
   onClose,
@@ -193,39 +237,78 @@ export function createBubbles({
     if (backBtn) backBtn.hidden = !showBack;
   }
 
-  function renderProseSide(prose, { highlightAudience = null } = {}) {
+  function renderProseSide(prose, { onlyAudience = null, sponsors = null } = {}) {
     if (!sideEl) return;
     sideEl.replaceChildren();
     sideEl.classList.add("bubble-side-prose");
 
     const intro = document.createElement("div");
     intro.className = "bubble-side-block";
+    const focus = onlyAudience || null;
     intro.innerHTML = `<div class="bubble-side-kicker">Cultural snapshot</div>
-      <p class="bubble-prose-intro">From GWI Values &amp; Character — how Affluent and Gen Z tick in this market.</p>`;
+      <p class="bubble-prose-intro">${
+        focus
+          ? `From GWI Values &amp; Character — how <strong>${esc(
+              focus
+            )}</strong> tick in this market.`
+          : "From GWI Values &amp; Character — how Affluent and Gen Z tick in this market."
+      }</p>`;
     sideEl.appendChild(intro);
 
     const sections = [
       { key: "values", title: "What matters" },
       { key: "character", title: "How they show up" },
     ];
+    const auds = focus ? [focus] : ["Affluent", "Gen Z"];
 
     sections.forEach(({ key, title }) => {
       const block = document.createElement("div");
       block.className = "bubble-side-block bubble-prose-block";
       block.innerHTML = `<div class="bubble-side-kicker">${title}</div>`;
-      ["Affluent", "Gen Z"].forEach((aud) => {
+      let any = false;
+      auds.forEach((aud) => {
         const text = prose?.[key]?.[aud];
         if (!text) return;
+        any = true;
         const p = document.createElement("div");
-        p.className =
-          "bubble-prose-chunk" + (highlightAudience === aud ? " on" : "");
-        p.innerHTML = `<div class="bubble-prose-aud">${esc(aud)}</div><p>${esc(
-          text
-        )}</p>`;
+        p.className = "bubble-prose-chunk" + (focus ? " on" : "");
+        p.innerHTML = focus
+          ? `<p>${esc(text)}</p>`
+          : `<div class="bubble-prose-aud">${esc(aud)}</div><p>${esc(text)}</p>`;
         block.appendChild(p);
       });
-      sideEl.appendChild(block);
+      if (any) sideEl.appendChild(block);
     });
+
+    // After audience pick: fill the freed space with sponsorship briefing
+    if (focus) {
+      const sponsorText = prose?.sponsor?.[focus];
+      const block = document.createElement("div");
+      block.className = "bubble-side-block bubble-prose-block bubble-sponsor-brief";
+      block.innerHTML = `<div class="bubble-side-kicker">Global sponsorships</div>`;
+
+      if (Array.isArray(sponsors) && sponsors.length) {
+        const ul = document.createElement("ul");
+        ul.className = "bubble-sponsor-stats";
+        sponsors.forEach((s) => {
+          const li = document.createElement("li");
+          li.innerHTML = `<b>${esc(s.short || s.label)}</b><span>${esc(
+            formatPeople(s.universe)
+          )}${s.index != null ? ` · Idx ${esc(String(s.index))}` : ""}</span>`;
+          ul.appendChild(li);
+        });
+        block.appendChild(ul);
+      }
+
+      if (sponsorText) {
+        const p = document.createElement("div");
+        p.className = "bubble-prose-chunk on";
+        p.innerHTML = `<p>${esc(sponsorText)}</p>`;
+        block.appendChild(p);
+      }
+
+      sideEl.appendChild(block);
+    }
   }
 
   function renderSide({ who, snapshot, audienceLabel }) {
@@ -316,13 +399,14 @@ export function createBubbles({
     footEl.appendChild(row);
   }
 
-  /** Country landing: Affluent + Gen Z circles + Values/Character prose. */
-  function showCountryLanding({ countryName, who, prose }) {
+  /** Country landing: Affluent + Gen Z + total people. */
+  function showCountryLanding({ countryName, who, prose, lensNote = null }) {
     mode = "passions";
     level = "audiences";
+    const total = who?.total || 0;
     showShell({
       title: countryName,
-      sub: "Click to Explore the audiences",
+      sub: lensNote || "Click Affluent or Gen Z to explore",
       showPie: false,
       showSide: true,
       showBack: false,
@@ -330,142 +414,187 @@ export function createBubbles({
     });
     renderProseSide(prose);
     renderFoot([], "audiences");
-    if ($("bubbleKicker")) $("bubbleKicker").textContent = "Market";
+    if ($("bubbleKicker")) {
+      $("bubbleKicker").textContent = total
+        ? `${formatPeople(total)} people`
+        : "Who";
+    }
     const items = (who?.rows || []).map((r) => ({
       id: `aud:${r.key}`,
       key: r.key,
       label: r.label,
       short: r.label,
-      universe: r.universe || 0,
+      universe: r.universe || 1,
       kind: "audience",
     }));
-    requestAnimationFrame(() => renderAudienceStage(items));
+    requestAnimationFrame(() => renderAudienceStage(items, { total }));
   }
 
-  function renderAudienceStage(items, { selectedKey = null, fields = null } = {}) {
+  function renderAudienceStage(items, { total = 0 } = {}) {
     if (!stage) return;
     const W = stage.clientWidth || 640;
     const H = stage.clientHeight || 420;
-    const placed = layoutBubbles(items, W, H, 48, 110);
     stage.replaceChildren();
+
+    if (total > 0) {
+      const banner = document.createElement("div");
+      banner.className = "bubble-total";
+      banner.innerHTML = `<span class="bubble-total-num">${esc(
+        formatPeople(total)
+      )}</span><span class="bubble-total-cap">people in this market</span>`;
+      stage.appendChild(banner);
+    }
+
+    const bandTop = total > 0 ? 56 : 12;
+    const placed = layoutBubbles(
+      items.map((i) => ({ ...i, universe: Math.max(i.universe || 1, 1) })),
+      W,
+      Math.max(120, H - bandTop),
+      52,
+      78
+    );
     placed.forEach((b, i) => {
-      const selected = selectedKey && b.key === selectedKey;
-      const dimmed = selectedKey && !selected;
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className =
-        "bubble-node bubble-audience" +
-        (selected ? " on" : "") +
-        (dimmed ? " is-dim" : "");
+      btn.className = "bubble-node bubble-audience";
       btn.style.left = `${b.x}px`;
-      btn.style.top = `${b.y}px`;
+      btn.style.top = `${b.y + bandTop}px`;
       btn.style.width = `${b.r * 2}px`;
       btn.style.height = `${b.r * 2}px`;
       btn.style.animationDelay = `${Math.min(i * 50, 200)}ms`;
-      btn.innerHTML = `
-        <span class="bubble-reach">${esc(formatPeople(b.universe))}</span>
-        <span class="bubble-label">${esc(b.label)}</span>
-      `;
-      btn.title = `${b.label} · ${formatPeople(b.universe)}`;
+      const reach =
+        b.universe > 1
+          ? `<span class="bubble-reach">${esc(formatPeople(b.universe))}</span>`
+          : "";
+      btn.innerHTML = `${reach}<span class="bubble-label">${esc(b.label)}</span>`;
+      btn.title = `Explore as ${b.label}${
+        b.universe > 1 ? ` · ${formatPeople(b.universe)}` : ""
+      }`;
       btn.onclick = (e) => {
         e.stopPropagation();
         onAudience?.(b);
       };
       stage.appendChild(btn);
     });
-
-    if (selectedKey && fields?.length) {
-      const anchor = placed.find((p) => p.key === selectedKey) || placed[0];
-      if (anchor) attachThemeMiniMenu(fields, anchor, W, H);
-    }
   }
 
-  /** Compact popover next to the selected audience circle. */
-  function attachThemeMiniMenu(fields, anchor, W, H) {
-    const menu = document.createElement("div");
-    menu.className = "bubble-mini-menu";
-    menu.setAttribute("role", "menu");
-
-    const head = document.createElement("div");
-    head.className = "bubble-mini-menu-head";
-    head.textContent = "Passion fields";
-    menu.appendChild(head);
-
-    const list = document.createElement("div");
-    list.className = "bubble-mini-menu-list";
-    (fields || []).forEach((f, i) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "bubble-mini-menu-item";
-      btn.setAttribute("role", "menuitem");
-      btn.style.animationDelay = `${Math.min(80 + i * 35, 280)}ms`;
-      btn.textContent = f.label;
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        onThemeField?.(f);
-      };
-      list.appendChild(btn);
-    });
-    menu.appendChild(list);
-    stage.appendChild(menu);
-
-    // Place beside the selected circle; flip if it would clip
-    const menuW = 220;
-    const pad = 12;
-    let left = anchor.x + anchor.r + 18;
-    let top = anchor.y;
-    if (left + menuW > W - pad) {
-      left = anchor.x - anchor.r - 18 - menuW;
-    }
-    left = Math.max(pad, Math.min(W - menuW - pad, left));
-    menu.style.left = `${left}px`;
-    menu.style.top = `${top}px`;
-    // Clamp vertical after measure
-    requestAnimationFrame(() => {
-      const h = menu.offsetHeight || 200;
-      let y = top - h / 2;
-      y = Math.max(pad, Math.min(H - h - pad, y));
-      menu.style.top = `${y}px`;
-      menu.classList.add("is-in");
-    });
-  }
-
-  /** Audience selected → circles stay, mini-menu opens on the circle. */
+  /** Audience selected → sponsorships (top) + passion fields (bottom). */
   function showThemeMenu({
     countryName,
     audienceLabel,
-    audienceKey,
-    fields,
+    sponsors = [],
+    fields = [],
     prose,
-    who,
+    lensNote = null,
   }) {
     mode = "passions";
     level = "menu";
+    const path = [audienceLabel].filter(Boolean).join(" · ");
     showShell({
       title: countryName,
-      sub: `${audienceLabel} · pick a passion field`,
+      sub: lensNote
+        ? `${path} · ${lensNote}`
+        : `${path} · sponsorships above · passion fields below`,
       showPie: false,
       showSide: true,
       showBack: true,
       levelClass: "menu",
     });
-    renderProseSide(prose, { highlightAudience: audienceLabel });
+    renderProseSide(prose, { onlyAudience: audienceLabel, sponsors });
     renderFoot([], "menu");
-    if ($("bubbleKicker")) $("bubbleKicker").textContent = "Market";
-    const items = (who?.rows || []).map((r) => ({
-      id: `aud:${r.key}`,
-      key: r.key,
-      label: r.label,
-      short: r.label,
-      universe: r.universe || 0,
-      kind: "audience",
-    }));
+    if ($("bubbleKicker")) $("bubbleKicker").textContent = path || "Explore";
     requestAnimationFrame(() =>
-      renderAudienceStage(items, {
-        selectedKey: audienceKey || audienceLabel,
-        fields,
-      })
+      renderExploreMenuStage({ sponsors, fields, audienceLabel })
     );
+  }
+
+  function renderExploreMenuStage({ sponsors, fields }) {
+    if (!stage) return;
+    const W = stage.clientWidth || 640;
+    const H = stage.clientHeight || 420;
+    stage.replaceChildren();
+
+    const mid = Math.round(H * 0.42);
+    const topH = Math.max(120, mid - 8);
+    const botY = mid + 8;
+    const botH = Math.max(140, H - botY - 8);
+
+    const headTop = document.createElement("div");
+    headTop.className = "bubble-band-label";
+    headTop.style.top = "6px";
+    headTop.textContent = "Global sponsorships";
+    stage.appendChild(headTop);
+
+    const headBot = document.createElement("div");
+    headBot.className = "bubble-band-label";
+    headBot.style.top = `${botY}px`;
+    headBot.textContent = "Passion fields";
+    stage.appendChild(headBot);
+
+    const sponsorPlaced = layoutPolygon(
+      (sponsors || []).map((s) => ({
+        ...s,
+        universe: Math.max(s.universe || 1, 1),
+      })),
+      W,
+      topH - 22,
+      38,
+      58,
+      { startAngle: -Math.PI / 2 }
+    );
+    sponsorPlaced.forEach((b, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bubble-node bubble-sponsor";
+      btn.style.left = `${b.x}px`;
+      btn.style.top = `${b.y + 22}px`;
+      btn.style.width = `${b.r * 2}px`;
+      btn.style.height = `${b.r * 2}px`;
+      btn.style.animationDelay = `${Math.min(i * 40, 200)}ms`;
+      btn.innerHTML = `
+        <span class="bubble-reach">${esc(formatPeople(b.universe))}</span>
+        <span class="bubble-label">${esc(b.short || b.label)}</span>
+      `;
+      btn.title = `${b.label} · ${formatPeople(b.universe)} people · Interest ${
+        b.index ?? "—"
+      }`;
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        onSponsor?.(b);
+      };
+      stage.appendChild(btn);
+    });
+
+    const fieldPlaced = layoutPolygon(
+      (fields || []).map((f) => ({
+        ...f,
+        universe: Math.max(f.universe || 1, 1),
+      })),
+      W,
+      botH - 22,
+      30,
+      46,
+      { startAngle: -Math.PI / 2 }
+    );
+    fieldPlaced.forEach((b, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bubble-node bubble-field";
+      btn.style.left = `${b.x}px`;
+      btn.style.top = `${b.y + botY + 22}px`;
+      btn.style.width = `${b.r * 2}px`;
+      btn.style.height = `${b.r * 2}px`;
+      btn.style.animationDelay = `${Math.min(80 + i * 35, 280)}ms`;
+      btn.innerHTML = `
+        <span class="bubble-label">${esc(b.short || b.label)}</span>
+      `;
+      btn.title = b.label || b.short || "Passion field";
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        onThemeField?.(b.field || b);
+      };
+      stage.appendChild(btn);
+    });
   }
 
   function showPassions({
@@ -482,23 +611,24 @@ export function createBubbles({
     mode = "passions";
     level = nextLevel;
     const isAnswers = nextLevel === "answers";
+    const path = [audienceLabel, isAnswers ? categoryLabel : null]
+      .filter(Boolean)
+      .join(" · ");
     showShell({
       title: countryName,
       sub: isAnswers
-        ? `${audienceLabel} · ${categoryLabel || "theme"} · hover a circle for Interest + reach`
-        : `${audienceLabel} · click a category circle to open themes inside`,
+        ? `${path} · hover a circle for Interest + reach`
+        : `${path || audienceLabel} · click a category circle to open themes inside`,
       showPie: false,
       showSide: true,
       showBack: isAnswers,
       levelClass: isAnswers ? "answers" : "categories",
     });
-    if (prose) renderProseSide(prose, { highlightAudience: audienceLabel });
+    if (prose) renderProseSide(prose, { onlyAudience: audienceLabel });
     else renderSide({ who, snapshot, audienceLabel });
     renderFoot(items, isAnswers ? "answer" : "category");
     if ($("bubbleKicker")) {
-      $("bubbleKicker").textContent = isAnswers
-        ? categoryLabel || "Themes"
-        : "Local activations";
+      $("bubbleKicker").textContent = path || (isAnswers ? "Themes" : "Local activations");
     }
     requestAnimationFrame(() =>
       renderPassionStage(items, selectedAnswer, isAnswers ? "answer" : "category")

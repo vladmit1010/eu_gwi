@@ -18,9 +18,6 @@ export const CONFIG = {
     years: "Avg age",
     insights: "More signals",
     source: "GWI Core · Erste markets",
-    guideTheme: "Pick a theme",
-    guideMap: "Read the map",
-    guideCountry: "Click a country",
   },
 
   motion: {

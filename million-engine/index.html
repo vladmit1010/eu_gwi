@@ -6,12 +6,12 @@
   <title>The Million Engine</title>
   <link rel="stylesheet" href="css/tokens.css?v=20260824a">
   <link rel="stylesheet" href="css/base.css?v=20260824a">
-  <link rel="stylesheet" href="css/layout.css?v=20260824m">
-  <link rel="stylesheet" href="css/map.css?v=20260824b">
-  <link rel="stylesheet" href="css/bubbles.css?v=20260824k">
+  <link rel="stylesheet" href="css/layout.css?v=20260825c">
+  <link rel="stylesheet" href="css/map.css?v=20260825b">
+  <link rel="stylesheet" href="css/bubbles.css?v=20260825h">
   <link rel="stylesheet" href="css/insights.css?v=20260824a">
-  <link rel="stylesheet" href="css/tutorial.css?v=20260824m">
-  <link rel="stylesheet" href="css/splash.css?v=20260824c">
+  <link rel="stylesheet" href="css/tutorial.css?v=20260825o">
+  <link rel="stylesheet" href="css/splash.css?v=20260824d">
 </head>
 <body>
   <div class="splash" id="splash" aria-hidden="true">
@@ -53,16 +53,14 @@
         </div>
 
         <div class="topbar-actions">
+          <div class="view-toggle" id="viewToggle" role="toolbar" aria-label="Map mode">
+            <button type="button" class="view-toggle-btn on" data-view="compare" title="Colour markets by Interest">Compare</button>
+            <button type="button" class="view-toggle-btn" data-view="mix" title="Distribution mix on markets">Mix</button>
+          </div>
           <button class="analysis-link" id="tutorialBtn" type="button" title="Guided tutorial">Tutorial</button>
           <button class="analysis-link" id="insightsBtn" type="button" title="Optional deep dive">More signals</button>
         </div>
       </div>
-
-      <ol class="guide" id="guide" aria-label="How to use">
-        <li class="guide-step on" data-step="theme"><b>1</b> Pick a theme</li>
-        <li class="guide-step" data-step="map"><b>2</b> Read the map</li>
-        <li class="guide-step" data-step="country"><b>3</b> Click a country</li>
-      </ol>
 
       <div class="explore-bar" id="exploreBar">
         <div class="explore-group explore-group-who">
@@ -75,6 +73,24 @@
           <p class="explore-note" id="passionsNote">Map: Interest in motor sports (e.g. Formula 1) across Erste markets</p>
         </div>
       </div>
+
+      <div class="map-filter" id="mapFilter">
+        <div class="map-filter-block">
+          <span class="map-filter-kicker">Lens</span>
+          <div class="map-filter-row" id="lensFilter" role="toolbar" aria-label="Map lens">
+            <button type="button" class="map-filter-btn on" data-lens="sponsors">Global sponsorships</button>
+            <button type="button" class="map-filter-btn" data-lens="social">Social media</button>
+          </div>
+        </div>
+        <div class="map-filter-block">
+          <span class="map-filter-kicker">Who</span>
+          <div class="map-filter-row" id="audFilter" role="toolbar" aria-label="Audience">
+            <button type="button" class="map-filter-btn on" data-aud="all">All</button>
+            <button type="button" class="map-filter-btn" data-aud="affluent">Affluent</button>
+            <button type="button" class="map-filter-btn" data-aud="genz">Gen Z</button>
+          </div>
+        </div>
+      </div>
     </header>
 
     <main class="stage">
@@ -85,8 +101,8 @@
         <div class="peek" id="peek"></div>
         <div class="passion-hint" id="passionHint">Pick a sponsorship theme — then click a country</div>
         <div class="legend" id="legend">
-          <div class="legend-kicker" id="legendKicker">Map colour</div>
-          <div class="legend-title" id="legendTitle">Pick a theme</div>
+          <div class="legend-kicker" id="legendKicker">Interest (Index)</div>
+          <div class="legend-title" id="legendTitle">Motor sports (e.g. Formula 1): Follow</div>
           <div class="legend-scale" aria-hidden="true">
             <div class="legend-bar"></div>
             <div class="legend-row">
@@ -96,10 +112,20 @@
             </div>
           </div>
           <div class="legend-note" id="legendNote">Colour = Interest (Index) vs other Erste markets</div>
+          <div class="mode-legend" id="modeLegend" hidden></div>
         </div>
+        <div class="dist-tip" id="distTip" aria-hidden="true"></div>
         <div class="source" id="source">GWI Core · Erste markets</div>
 
-        <div class="tutorial-panel" id="tutorialPanel" aria-hidden="true"></div>
+        <div class="tutorial-panel tutorial-reader" id="tutorialPanel" aria-hidden="true">
+          <div class="tutorial-reader-inner">
+            <div class="tutorial-reader-scroll" id="tutorialPanelBody"></div>
+            <div class="tutorial-reader-actions">
+              <button type="button" class="tutorial-skip" id="tutorialSkip">Skip tutorial</button>
+              <button type="button" class="tutorial-next" id="tutorialNext">Next</button>
+            </div>
+          </div>
+        </div>
 
         <div class="bubble-overlay" id="bubbleOverlay" aria-hidden="true">
           <div class="bubble-head">
@@ -131,15 +157,6 @@
     <div class="tutorial-scrim" id="tutorialScrim" aria-hidden="true"></div>
   </div>
 
-  <div class="tutorial-bar" id="tutorialBar" aria-hidden="true">
-    <span class="tutorial-step" id="tutorialStep">1 / 9</span>
-    <p class="tutorial-caption" id="tutorialCaption"></p>
-    <div class="tutorial-actions">
-      <button type="button" class="tutorial-skip" id="tutorialSkip">Skip</button>
-      <button type="button" class="tutorial-next" id="tutorialNext">Next</button>
-    </div>
-  </div>
-
   <div class="insights" id="insights" aria-hidden="true">
     <div class="insights-sheet" role="dialog" aria-labelledby="insightsTitle">
       <div class="sheet-handle" aria-hidden="true"></div>
@@ -156,6 +173,6 @@
   </div>
 
   <script src="js/vendor/d3.min.js"></script>
-  <script type="module" src="js/app.js?v=20260824m"></script>
+  <script type="module" src="js/app.js?v=20260825ad"></script>
 </body>
 </html>

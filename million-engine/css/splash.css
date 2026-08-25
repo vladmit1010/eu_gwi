@@ -5,7 +5,6 @@ html.splash-on {
 }
 
 html.splash-on .header,
-html.splash-on .guide,
 html.splash-on .explore-bar,
 html.splash-on .legend,
 html.splash-on .passion-hint,
@@ -250,7 +249,6 @@ html.splash-on #mapwrap .land.live.drawn {
 
 /* Chrome reveal after splash */
 html.splash-reveal .header,
-html.splash-reveal .guide,
 html.splash-reveal .explore-bar,
 html.splash-reveal .legend,
 html.splash-reveal .passion-hint,
@@ -309,7 +307,6 @@ html.splash-reveal .source {
   html.splash-on #mapwrap,
   html.splash-leaving #mapwrap,
   html.splash-reveal .header,
-  html.splash-reveal .guide,
   html.splash-reveal .explore-bar {
     animation: none !important;
     transition: none !important;

@@ -60,10 +60,12 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
   const gCode = document.createElementNS(NS, "g");
   const gLock = document.createElementNS(NS, "g");
   const gSeg = document.createElementNS(NS, "g");
+  const gPies = document.createElementNS(NS, "g");
+  gPies.setAttribute("class", "dist-pies");
 
   svg.replaceChildren();
   svg.append(defs, gRoot);
-  gRoot.append(ocean, gLand, gCode, gLock, gSeg);
+  gRoot.append(ocean, gLand, gCode, gLock, gSeg, gPies);
 
   let geo = null;
   let pathGen = null;
@@ -140,6 +142,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     gCode.replaceChildren();
     gLock.replaceChildren();
     gSeg.replaceChildren();
+    gPies.replaceChildren();
     Object.keys(lands).forEach((k) => delete lands[k]);
     Object.keys(labels).forEach((k) => delete labels[k]);
     Object.keys(centroids).forEach((k) => delete centroids[k]);
@@ -336,6 +339,116 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     gSeg.replaceChildren();
   }
 
+  function clearDistributionPies() {
+    gPies.replaceChildren();
+  }
+
+  /** Donut pies on country centroids — prettier distribution rings. */
+  function drawDistributionPies(byCode, { onHover, onLeave } = {}) {
+    gPies.replaceChildren();
+    if (!byCode) return;
+
+    if (!defs.querySelector("#pieSoft")) {
+      const f = document.createElementNS(NS, "filter");
+      f.setAttribute("id", "pieSoft");
+      f.setAttribute("x", "-40%");
+      f.setAttribute("y", "-40%");
+      f.setAttribute("width", "180%");
+      f.setAttribute("height", "180%");
+      f.innerHTML = `
+        <feDropShadow dx="0" dy="0.35" stdDeviation="0.55" flood-color="#000" flood-opacity="0.45"/>
+      `;
+      defs.appendChild(f);
+    }
+
+    const R = 6.8;
+    const R_IN = 3.1;
+    const GAP = 0.06; // radians between slices
+
+    Object.entries(byCode).forEach(([code, slices]) => {
+      if (!slices?.length || !featureByCode[code]) return;
+      const [cx, cy] = centroidOf(code);
+      const g = document.createElementNS(NS, "g");
+      g.setAttribute("class", "dist-pie");
+      g.dataset.code = code;
+      g.setAttribute("filter", "url(#pieSoft)");
+
+      const halo = document.createElementNS(NS, "circle");
+      halo.setAttribute("class", "dist-pie-halo");
+      halo.setAttribute("cx", cx);
+      halo.setAttribute("cy", cy);
+      halo.setAttribute("r", R + 0.55);
+      g.appendChild(halo);
+
+      const total = slices.reduce((a, s) => a + (s.share || 0), 0) || 1;
+      let angle = -Math.PI / 2;
+      slices.forEach((s) => {
+        const sweep = ((s.share || 0) / total) * Math.PI * 2;
+        if (sweep <= 0.001) return;
+        const a0 = angle + GAP / 2;
+        const a1 = angle + sweep - GAP / 2;
+        if (a1 > a0) {
+          const path = document.createElementNS(NS, "path");
+          path.setAttribute("class", "dist-pie-slice");
+          path.setAttribute("fill", s.color || "#ff5f00");
+          path.setAttribute("d", donutSlice(cx, cy, R, R_IN, a0, a1));
+          path.setAttribute("pointer-events", "none");
+          g.appendChild(path);
+        }
+        angle += sweep;
+      });
+
+      const core = document.createElementNS(NS, "circle");
+      core.setAttribute("class", "dist-pie-core");
+      core.setAttribute("cx", cx);
+      core.setAttribute("cy", cy);
+      core.setAttribute("r", R_IN - 0.15);
+      core.setAttribute("pointer-events", "none");
+      g.appendChild(core);
+
+      const hit = document.createElementNS(NS, "circle");
+      hit.setAttribute("class", "dist-pie-hit");
+      hit.setAttribute("cx", cx);
+      hit.setAttribute("cy", cy);
+      hit.setAttribute("r", R + 1.2);
+      hit.addEventListener("mouseenter", (e) => {
+        e.stopPropagation();
+        g.classList.add("is-hot");
+        onHover?.(code, slices, { cx, cy, clientX: e.clientX, clientY: e.clientY });
+      });
+      hit.addEventListener("mouseleave", () => {
+        g.classList.remove("is-hot");
+        onLeave?.(code);
+      });
+      hit.addEventListener("click", (e) => {
+        e.stopPropagation();
+        onSelect?.(code);
+      });
+      g.appendChild(hit);
+
+      gPies.appendChild(g);
+    });
+  }
+
+  function donutSlice(cx, cy, rOut, rIn, a0, a1) {
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    const x0 = cx + rOut * Math.cos(a0);
+    const y0 = cy + rOut * Math.sin(a0);
+    const x1 = cx + rOut * Math.cos(a1);
+    const y1 = cy + rOut * Math.sin(a1);
+    const x2 = cx + rIn * Math.cos(a1);
+    const y2 = cy + rIn * Math.sin(a1);
+    const x3 = cx + rIn * Math.cos(a0);
+    const y3 = cy + rIn * Math.sin(a0);
+    return [
+      `M ${x0} ${y0}`,
+      `A ${rOut} ${rOut} 0 ${large} 1 ${x1} ${y1}`,
+      `L ${x2} ${y2}`,
+      `A ${rIn} ${rIn} 0 ${large} 0 ${x3} ${y3}`,
+      "Z",
+    ].join(" ");
+  }
+
   function setData(next) {
     data = next;
   }
@@ -375,6 +488,8 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     drawLock,
     drawOpportunities,
     clearOverlays,
+    clearDistributionPies,
+    drawDistributionPies,
     setData,
     setThemes,
     setActive,
@@ -382,6 +497,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     bubbleAt,
     highlightBubbles,
     hasShape,
+    centroidOf,
     get svg() {
       return svg;
     },

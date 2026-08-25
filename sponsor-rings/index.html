@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Distributions · Erste markets</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">Mastercard × Erste</div>
+      <div class="aud" id="audFilter" role="group" aria-label="Audience">
+        <button type="button" class="aud-btn on" data-aud="all">All</button>
+        <button type="button" class="aud-btn" data-aud="affluent">Affluent</button>
+        <button type="button" class="aud-btn" data-aud="genz">Gen Z</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="btns">
+        <button type="button" class="btn" id="btnSponsors">Global sponsorships</button>
+        <button type="button" class="btn" id="btnSocial">Social media</button>
+      </div>
+    </header>
+    <div class="stage rings-hidden" id="stage">
+      <svg id="map" aria-label="Erste markets map"></svg>
+      <div class="legend" id="legend">
+        <div class="legend-kicker">Interest (Index)</div>
+        <div class="legend-title">Motor sports (e.g. Formula 1): Follow</div>
+        <div class="legend-bar"></div>
+        <div class="legend-row">
+          <span id="lo">Lower</span>
+          <span id="hi">Higher</span>
+        </div>
+        <div class="mode-legend" id="modeLegend"></div>
+      </div>
+      <div class="note" id="note">GWI · Erste markets (AT, HR, CZ, HU, RO, RS)</div>
+      <div class="tip" id="tip" aria-hidden="true"></div>
+    </div>
+  </div>
+  <script src="d3.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

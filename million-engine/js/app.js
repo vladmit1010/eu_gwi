@@ -1,12 +1,12 @@
 import { CONFIG } from "./config.js";
 import { SAMPLE_DATA } from "./data/markets.js";
 import { $, formatInt, formatPeople } from "./utils/dom.js";
-import { createMap, loadEuropeGeo } from "./map.js?v=20260824a";
+import { createMap, loadEuropeGeo } from "./map.js?v=20260825b";
 import { createInsights } from "./insights.js";
-import { createBubbles } from "./bubbles.js?v=20260824m";
-import { createTutorial } from "./tutorial.js?v=20260824m";
+import { createBubbles } from "./bubbles.js?v=20260825g";
+import { createTutorial } from "./tutorial.js?v=20260825k";
 import { createSplash } from "./splash.js?v=20260824a";
-import { createF1Story } from "./f1-story.js?v=20260824f";
+import { createSponsorStory } from "./sponsor-stories.js?v=20260825b";
 import { loadInitialData } from "./data-loader.js";
 import {
   loadGwi,
@@ -24,10 +24,18 @@ import {
   answerBubblesForCategory,
   countryBubblesForAudience,
   whoSplitForCountry,
-  themeFieldsForMenu,
+  fieldMetricsForCountry,
+  coreMetricsForCountry,
   CATEGORY_META,
-} from "./passions.js?v=20260824m";
-import { proseForMarket } from "./market-prose.js?v=20260824k";
+} from "./passions.js?v=20260825d";
+import { proseForMarket } from "./market-prose.js?v=20260825a";
+import {
+  buildDistributionCatalog,
+  slicesFor,
+  legendFor,
+  gwiKeyForMapAudience,
+  MAP_AUDIENCES,
+} from "./distributions.js?v=20260825b";
 
 /** Explore audiences only — Affluent & Gen Z */
 const EXPLORE_AUDIENCES = EXPLORE_THEME_IDS;
@@ -35,10 +43,14 @@ const EXPLORE_AUDIENCES = EXPLORE_THEME_IDS;
 const state = {
   data: null,
   gwi: null,
+  distCatalog: null,
+  mapView: "compare", // compare | mix
+  mapLens: "sponsors", // sponsors | social (mix mode)
+  mapAudience: "all", // all | affluent | genz (mix mode)
   activeThemes: new Set(["affluent"]),
   active: null,
   mode: "explore",
-  passionId: null,
+  passionId: "f1",
   localLens: null,
 };
 
@@ -87,6 +99,16 @@ const bubbles = createBubbles({
     if (tutorial.active && tutorial.gate === "category") {
       tutorial.notify("category");
     }
+  },
+  onSponsor: (item) => {
+    const code = state.active;
+    if (!code || !item?.id) return;
+    state.passionId = item.id;
+    state.localLens = null;
+    syncPassions();
+    applyMetricToMap();
+    // Stay on the theme menu — do not advance the tutorial gate
+    if (bubbleAudienceKey) openAudienceThemeMenu(code);
   },
   onCategory: (item) => {
     const code = state.active;
@@ -151,11 +173,13 @@ const bubbles = createBubbles({
     $("mapwrap").classList.remove("dim");
     map.paint();
     syncPassions();
+    syncMapDistributions();
   },
 });
 
 function clearTutorialHighlights() {
   document.documentElement.classList.remove(
+    "tutorial-step-dist",
     "tutorial-step-who",
     "tutorial-step-passions",
     "tutorial-step-f1map",
@@ -167,9 +191,11 @@ function clearTutorialHighlights() {
   document.querySelectorAll(".tutorial-spot, .tutorial-spot-stage").forEach((el) => {
     el.classList.remove("tutorial-spot", "tutorial-spot-stage", "tutorial-spot-map-only");
   });
-  document.querySelectorAll(".aud-chip.tutorial-hl, .passion-chip.tutorial-hl").forEach((el) => {
-    el.classList.remove("tutorial-hl");
-  });
+  document
+    .querySelectorAll(".map-filter-btn.tutorial-hl, .aud-chip.tutorial-hl, .passion-chip.tutorial-hl")
+    .forEach((el) => {
+      el.classList.remove("tutorial-hl");
+    });
   const scrim = $("tutorialScrim");
   scrim?.classList.remove("on");
   scrim?.setAttribute("aria-hidden", "true");
@@ -190,6 +216,40 @@ function spotlight(...els) {
   });
 }
 
+/** During sponsor story: frame the map only (sponsorship chips locked). */
+function focusSponsorStoryChrome() {
+  document.querySelectorAll(".tutorial-spot, .tutorial-spot-stage").forEach((el) => {
+    el.classList.remove("tutorial-spot", "tutorial-spot-stage", "tutorial-spot-map-only");
+  });
+  document.querySelectorAll(".passion-chip.tutorial-hl").forEach((el) => {
+    el.classList.remove("tutorial-hl");
+  });
+  spotlight($("mapwrap"));
+}
+
+function resetMapForTutorial({ withMetric = false } = {}) {
+  setMapView("compare");
+  if (bubbles.open) bubbles.hide();
+  state.active = null;
+  state.localLens = null;
+  map.setActive(null);
+  map.clearOverlays();
+  $("mapwrap").classList.remove("dim");
+  if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
+  map.setThemes(state.activeThemes);
+  syncAudiences();
+  syncPassions();
+  if (withMetric) {
+    if (!state.passionId) state.passionId = "f1";
+    applyMetricToMap();
+  } else {
+    map.setMetricValues(null);
+    map.paint();
+    syncLegend(null);
+  }
+  syncMapDistributions();
+}
+
 async function applyTutorialStep(step) {
   clearTutorialHighlights();
   tutorial.hidePanel();
@@ -199,55 +259,31 @@ async function applyTutorialStep(step) {
 
   if (id === "intro") {
     tutorialCountry = null;
-    if (bubbles.open) bubbles.hide();
-    state.active = null;
-    state.localLens = null;
     state.passionId = null;
-    state.activeThemes = new Set(["affluent"]);
-    map.setActive(null);
-    map.clearOverlays();
-    $("mapwrap").classList.remove("dim");
-    syncAudiences();
-    map.setThemes(state.activeThemes);
-    syncPassions();
-    map.setMetricValues(null);
-    map.paint();
-    syncLegend(null);
+    resetMapForTutorial();
     $("targetPill")?.classList.add("tutorial-focus");
     spotlight($("targetPill"));
     return;
   }
 
   if (id === "who") {
-    if (bubbles.open) bubbles.hide();
-    state.active = null;
-    map.setActive(null);
-    map.clearOverlays();
-    $("mapwrap").classList.remove("dim");
-    // F1 on so switching Who visibly recolours the map
+    if (!state.passionId) state.passionId = "f1";
     state.activeThemes = new Set(["affluent"]);
-    state.passionId = "f1";
-    state.localLens = null;
-    syncAudiences();
-    syncPassions();
-    map.setThemes(state.activeThemes);
-    applyMetricToMap();
+    resetMapForTutorial({ withMetric: true });
     document.documentElement.classList.add("tutorial-step-who");
     $("audiences")?.querySelectorAll(".aud-chip").forEach((b) => {
       b.classList.add("tutorial-hl");
     });
-    spotlight(document.querySelector(".explore-group-who"), $("mapwrap"));
+    spotlight(document.querySelector(".explore-group-who"));
     return;
   }
 
   if (id === "passions") {
     if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
-    state.passionId = "f1";
-    state.localLens = null;
-    syncAudiences();
-    syncPassions();
-    applyMetricToMap();
+    if (!state.passionId) state.passionId = "f1";
+    resetMapForTutorial({ withMetric: true });
     document.documentElement.classList.add("tutorial-step-passions");
+    document.documentElement.classList.remove("tutorial-step-f1map");
     $("passions")?.querySelectorAll(".passion-chip").forEach((b) => {
       b.classList.add("tutorial-hl");
     });
@@ -255,42 +291,13 @@ async function applyTutorialStep(step) {
     return;
   }
 
-  if (id === "f1map") {
-    if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
-    state.passionId = "f1";
-    state.localLens = null;
-    state.active = null;
-    map.setActive(null);
-    map.clearOverlays();
-    $("mapwrap").classList.remove("dim");
-    if (bubbles.open) bubbles.hide();
-    syncAudiences();
-    syncPassions();
-    applyMetricToMap();
-    document.documentElement.classList.add("tutorial-step-f1map");
-    const f1Chip = $("passions")?.querySelector('[data-passion="f1"]');
-    f1Chip?.classList.add("tutorial-hl");
-    const beat = f1Story.reset();
-    renderF1StoryBeat(beat);
-    return;
-  }
-
   if (id === "country") {
     tutorialCountry = null;
     if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
-    state.passionId = "f1";
-    state.localLens = null;
-    state.active = null;
-    map.setActive(null);
-    map.clearOverlays();
-    $("mapwrap").classList.remove("dim");
-    if (bubbles.open) bubbles.hide();
-    syncAudiences();
-    syncPassions();
-    applyMetricToMap();
+    if (!state.passionId) state.passionId = "f1";
+    resetMapForTutorial({ withMetric: true });
     document.documentElement.classList.add("tutorial-step-country");
-    const f1Chip = $("passions")?.querySelector('[data-passion="f1"]');
-    f1Chip?.classList.add("tutorial-hl");
+    spotlight($("mapwrap"));
     return;
   }
 
@@ -306,16 +313,19 @@ async function applyTutorialStep(step) {
     bubbleAudienceKey = null;
     tutorial.hidePanel();
     hidePeek();
+    hideDistTip();
     document.documentElement.classList.add("tutorial-step-bubbles");
     state.active = code;
     map.setActive(code);
     map.clearOverlays();
+    map.clearDistributionPies();
+    $("mapwrap")?.classList.remove("has-pies");
     map.paint();
     $("mapwrap").classList.add("dim");
     openPassionBubbles(code);
     const sub = $("bubbleSub");
     if (sub) {
-      sub.textContent = "Click to Explore the audiences";
+      sub.textContent = "Click Affluent or Gen Z — then a circle";
     }
     return;
   }
@@ -325,7 +335,9 @@ async function applyTutorialStep(step) {
     document.documentElement.classList.add("tutorial-step-bubbles");
     let code = tutorialCountry || state.active;
     if (!code || !map.hasShape(code)) {
-      code = ["AT", "CZ", "HU", "RO", "HR", "RS"].find((c) => state.data.markets[c] && map.hasShape(c));
+      code = ["AT", "CZ", "HU", "RO", "HR", "RS"].find(
+        (c) => state.data.markets[c] && map.hasShape(c)
+      );
     }
     if (!code) return;
     if (!state.passionId && !state.localLens) state.passionId = "f1";
@@ -333,29 +345,30 @@ async function applyTutorialStep(step) {
     hidePeek();
     map.setActive(code);
     map.clearOverlays();
+    map.clearDistributionPies();
+    $("mapwrap")?.classList.remove("has-pies");
     map.paint();
-    // Prefer answer level if already drilled; otherwise Interests for current audience
     if (bubbles.open && bubbles.level === "answers") {
-      /* keep current answer view from the theme-field click */
+      /* keep */
     } else if (bubbles.open && bubbles.level === "menu") {
-      openAnswerBubbles(code, {
-        category: "Personal Interests",
-        pack: null,
-        label: "Interests",
-      });
+      if (!state.passionId) {
+        openAnswerBubbles(code, {
+          category: "Personal Interests",
+          pack: null,
+          label: "Interests",
+        });
+      }
     } else {
       if (!bubbleAudienceKey) bubbleAudienceKey = gwiAudienceKey() || "Affluent";
-      openAnswerBubbles(code, {
-        category: "Personal Interests",
-        pack: null,
-        label: "Interests",
-      });
+      openAudienceThemeMenu(code);
     }
     syncPassions();
     $("mapwrap").classList.add("dim");
     const sub = $("bubbleSub");
     if (sub) {
-      sub.textContent = `${bubbleAudienceKey || audienceLabel()} · hover themes for Interest + reach — Next when ready`;
+      sub.textContent = `${
+        bubbleAudienceKey || audienceLabel()
+      } · hover themes for Interest + reach — Next when ready`;
     }
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -371,34 +384,53 @@ async function applyTutorialStep(step) {
     tutorial.hidePanel();
     clearTutorialHighlights();
     if (bubbles.open) bubbles.hide();
-    // Keep the chosen theme on the map — that's the payoff after a theme click
     state.active = null;
     map.setActive(null);
     map.clearOverlays();
     $("mapwrap").classList.remove("dim");
+    setMapView("compare");
     applyMetricToMap();
-    // Unlock Who + sponsorships while the "done" bar is still visible
+    syncMapDistributions();
     document.documentElement.classList.add("tutorial-free");
     return;
   }
 }
 
-const f1Story = createF1Story();
+const sponsorStory = createSponsorStory();
 
-function renderF1StoryBeat(beat) {
+function renderSponsorStoryBeat(beat) {
   if (!beat) return;
-  const panel = $("tutorialPanel");
+  const lo =
+    $("scaleLo")?.textContent?.replace(/^Lower\s*/i, "").trim() || "—";
+  const hi =
+    $("scaleHi")?.textContent?.replace(/^Higher\s*/i, "").trim() || "—";
+  const legendTitle =
+    $("legendTitle")?.textContent || themeLabelForLens() || "Interest";
+  const autoOn = document.documentElement.classList.contains("tutorial-auto");
+  const nextBtn = $("tutorialNext");
+  if (nextBtn) {
+    nextBtn.textContent =
+      sponsorStory.index >= sponsorStory.length - 1 ? "Continue" : "Next";
+  }
+  const storyName = sponsorStory.label || "Sponsor";
   tutorial.showPanel(`
-    <div class="f1-story">
-      <div class="f1-story-progress">${f1Story.progressLabel()}</div>
-      <div class="tutorial-panel-kicker">${beat.kicker}</div>
-      <div class="tutorial-panel-title">${beat.title}</div>
-      <p class="f1-story-body">${beat.body}</p>
+    <div class="f1-story-progress">${storyName} story · ${sponsorStory.progressLabel()}${
+      autoOn ? " · auto" : ""
+    }</div>
+    <div class="tutorial-panel-kicker">${beat.kicker}</div>
+    <div class="tutorial-panel-title">${beat.title}</div>
+    <p class="f1-story-body">${beat.body}</p>
+    <div class="f1-story-legend">
+      <div class="f1-story-legend-kicker">Interest (Index) across Erste</div>
+      <div class="f1-story-legend-title">${legendTitle}</div>
+      <div class="f1-story-legend-bar" aria-hidden="true"></div>
+      <div class="f1-story-legend-row">
+        <span>Lower ${lo}</span>
+        <span>Higher ${hi}</span>
+      </div>
+      <div class="f1-story-legend-note">Darker = lower Interest · Brighter orange = higher (among these 6 markets)</div>
     </div>
   `);
-  panel?.classList.add("dock-start", "f1-story-panel");
-  panel?.setAttribute("aria-hidden", "false");
-  tutorial.setCaption(beat.caption);
 
   if (beat.code && map.hasShape(beat.code)) {
     state.active = beat.code;
@@ -409,36 +441,62 @@ function renderF1StoryBeat(beat) {
     map.setActive(null);
     map.paint();
   }
+  focusSponsorStoryChrome();
 }
 
-function advanceF1Story() {
-  const moved = f1Story.next();
+function startTutorialSponsorStory(id) {
+  const passionId = id || state.passionId || "f1";
+  state.passionId = passionId;
+  state.localLens = null;
+  syncPassions();
+  applyMetricToMap();
+  document.documentElement.classList.add("tutorial-step-passions");
+  document.documentElement.classList.add("tutorial-step-f1map");
+  openSponsorStory(passionId);
+  focusSponsorStoryChrome();
+}
+
+function advanceSponsorStory() {
+  const moved = sponsorStory.next();
   if (!moved) {
     tutorial.hidePanel();
-    $("tutorialPanel")?.classList.remove("dock-start", "f1-story-panel");
+    $("tutorialPanel")?.classList.remove("dock-start", "dock-end", "f1-story-panel");
+    document.documentElement.classList.remove("tutorial-step-f1map");
     state.active = null;
     map.setActive(null);
     map.paint();
     return false;
   }
-  renderF1StoryBeat(f1Story.beat());
+  renderSponsorStoryBeat(sponsorStory.beat());
   return true;
+}
+
+function openSponsorStory(id) {
+  const passionId = id || state.passionId || "f1";
+  state.passionId = passionId;
+  state.localLens = null;
+  syncPassions();
+  applyMetricToMap();
+  const beat = sponsorStory.reset(passionId);
+  renderSponsorStoryBeat(beat);
 }
 
 const tutorial = createTutorial({
   onStep: (step) => applyTutorialStep(step),
   onStoryNext: async (step) => {
-    if (step?.story !== "f1") return false;
-    return advanceF1Story();
+    if (step?.story !== "sponsor") return false;
+    // Story not started yet — start with current sponsorship, stay on step
+    if (!document.documentElement.classList.contains("tutorial-step-f1map")) {
+      startTutorialSponsorStory(state.passionId || "f1");
+      return true;
+    }
+    return advanceSponsorStory();
   },
-  onStoryAutoMs: (step) => {
-    if (step?.story !== "f1") return null;
-    return f1Story.beat()?.autoMs ?? 6500;
-  },
+  onStoryAutoMs: () => null,
   onExit: () => {
     clearTutorialHighlights();
     tutorial.hidePanel();
-    $("tutorialPanel")?.classList.remove("dock-start", "f1-story-panel");
+    $("tutorialPanel")?.classList.remove("dock-start", "dock-end", "f1-story-panel");
     tutorialCountry = null;
     bubbleAudienceKey = null;
     // Drop country selection left over from tutorial gates
@@ -449,7 +507,7 @@ const tutorial = createTutorial({
     $("mapwrap").classList.remove("dim");
     if (!state.passionId && !state.localLens) state.passionId = "f1";
     syncPassions();
-    applyMetricToMap();
+    setMapView("compare");
     map.paint();
   },
 });
@@ -467,18 +525,28 @@ const splash = createSplash({
 });
 
 function primaryAudienceId() {
-  return [...state.activeThemes][0] || null;
+  if (state.mapView === "mix") {
+    if (state.mapAudience === "genz") return "genz";
+    if (state.mapAudience === "affluent") return "affluent";
+  }
+  return [...state.activeThemes][0] || "affluent";
 }
 
 function gwiAudienceKey() {
-  const id = primaryAudienceId();
-  return id ? THEME_TO_GWI[id] || null : null;
+  if (bubbleAudienceKey) return bubbleAudienceKey;
+  if (state.mapView === "mix") return gwiKeyForMapAudience(state.mapAudience);
+  const id = [...state.activeThemes][0];
+  return THEME_TO_GWI[id] || "Affluent";
 }
 
 function audienceLabel() {
-  const id = primaryAudienceId();
+  if (bubbleAudienceKey) return bubbleAudienceKey;
+  if (state.mapView === "mix") {
+    return MAP_AUDIENCES.find((a) => a.id === state.mapAudience)?.label || "Audience";
+  }
+  const id = [...state.activeThemes][0];
   const th = state.data?.themes?.find((t) => t.id === id);
-  return th?.label || id || "Audience";
+  return th?.label || "Audience";
 }
 
 function activeLens() {
@@ -498,21 +566,33 @@ function setMode(mode) {
   $("insightsBtn")?.classList.toggle("on", mode === "insights");
 }
 
-function syncGuide() {
-  const hasTheme = Boolean(state.passionId || state.localLens);
-  const hasCountry = Boolean(state.active);
-  let active = "theme";
-  if (hasTheme && !hasCountry) active = "map";
-  if (hasCountry) active = "country";
+function setMapView(view) {
+  state.mapView = view === "mix" ? "mix" : "compare";
+  document.documentElement.classList.toggle("map-view-compare", state.mapView === "compare");
+  document.documentElement.classList.toggle("map-view-mix", state.mapView === "mix");
+  $("viewToggle")?.querySelectorAll("[data-view]").forEach((btn) => {
+    btn.classList.toggle("on", btn.dataset.view === state.mapView);
+  });
+  const hint = $("passionHint");
+  if (hint) {
+    hint.textContent =
+      state.mapView === "mix"
+        ? "Hover a circle for the mix — click a country to explore"
+        : "Pick a sponsorship theme — then click a country";
+  }
+  const modeLegend = $("modeLegend");
+  if (modeLegend) modeLegend.hidden = state.mapView !== "mix";
+  syncMapFilterChrome();
+  applyMetricToMap();
+  syncMapDistributions();
+}
 
-  document.querySelectorAll(".guide-step").forEach((el) => {
-    const key = el.dataset.step;
-    const done =
-      (key === "theme" && hasTheme) ||
-      (key === "map" && hasCountry) ||
-      (key === "country" && hasCountry);
-    el.classList.toggle("on", key === active);
-    el.classList.toggle("done", done && key !== active);
+function bindViewToggle() {
+  $("viewToggle")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-view]");
+    if (!btn) return;
+    if (tutorial.active && tutorial.gate === "category") return;
+    setMapView(btn.dataset.view);
   });
 }
 
@@ -544,8 +624,17 @@ function syncLegend(values = null) {
   title.textContent = lens.answer;
   if (kicker) kicker.textContent = "Interest (Index) across Erste";
   if (note) {
-    note.textContent =
-      "Darker = lower Interest · Brighter orange = higher (among these 6 markets)";
+    if (state.mapView === "mix" && state.mapLens === "social") {
+      note.textContent =
+        state.distCatalog?.modes?.social?.note ||
+        "Top 6 social by Erste reach · pie = relative mix (overlap)";
+    } else if (state.mapView === "mix") {
+      note.textContent =
+        "Colour = theme Interest · Circles = Global sponsorships mix";
+    } else {
+      note.textContent =
+        "Darker = lower Interest · Brighter orange = higher (among these 6 markets)";
+    }
   }
   if (mid) mid.textContent = "→";
   $("scaleLo").textContent = lo != null ? `Lower ${fmt(lo)}` : "Lower";
@@ -573,10 +662,14 @@ function openPassionBubbles(code) {
   const countryKey = ISO_TO_GWI[code];
   const lens = activeLens();
   bubbleAudienceKey = null;
+  const theme = themeLabelForLens();
   bubbles.showCountryLanding({
     countryName: market?.name || code,
     who: whoSplitForCountry(state.gwi, countryKey, lens),
     prose: proseForMarket(code),
+    lensNote: theme
+      ? `Map shows ${theme} Interest · pick Affluent or Gen Z`
+      : "Click Affluent or Gen Z to explore",
   });
 }
 
@@ -584,14 +677,13 @@ function openAudienceThemeMenu(code) {
   const market = state.data.markets[code];
   const countryKey = ISO_TO_GWI[code];
   const aud = bubbleAudienceKey || gwiAudienceKey();
-  const lens = activeLens();
   bubbles.showThemeMenu({
     countryName: market?.name || code,
     audienceLabel: aud || audienceLabel(),
-    audienceKey: aud,
-    fields: themeFieldsForMenu(),
+    sponsors: coreMetricsForCountry(state.gwi, aud, countryKey),
+    fields: fieldMetricsForCountry(state.gwi, aud, countryKey),
     prose: proseForMarket(code),
-    who: whoSplitForCountry(state.gwi, countryKey, lens),
+    lensNote: "tap a circle to open",
   });
 }
 
@@ -652,11 +744,142 @@ function applyCopy() {
   syncLegend();
 }
 
+function bindMapFilter() {
+  $("lensFilter")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-lens]");
+    if (!btn) return;
+    state.mapLens = btn.dataset.lens;
+    syncMapFilterChrome();
+    syncMapDistributions();
+  });
+  $("audFilter")?.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-aud]");
+    if (!btn) return;
+    state.mapAudience = btn.dataset.aud;
+    // Keep bubble/country Who in sync when Affluent / Gen Z selected
+    if (btn.dataset.aud === "affluent" || btn.dataset.aud === "genz") {
+      state.activeThemes = new Set([btn.dataset.aud]);
+      map.setThemes(state.activeThemes);
+    }
+    applyMetricToMap();
+    syncMapFilterChrome();
+    syncMapDistributions();
+  });
+  syncMapFilterChrome();
+}
+
+function syncMapFilterChrome() {
+  $("lensFilter")?.querySelectorAll("[data-lens]").forEach((el) => {
+    el.classList.toggle("on", el.dataset.lens === state.mapLens);
+  });
+  $("audFilter")?.querySelectorAll("[data-aud]").forEach((el) => {
+    el.classList.toggle("on", el.dataset.aud === state.mapAudience);
+  });
+  const legend = legendFor(state.distCatalog, state.mapAudience, state.mapLens);
+  const modeLegend = $("modeLegend");
+  if (modeLegend) {
+    modeLegend.innerHTML = legend
+      .map(
+        (s) =>
+          `<span class="mode-chip"><i style="background:${s.color}"></i>${s.short}</span>`
+      )
+      .join("");
+  }
+  const note = $("legendNote");
+  if (note) {
+    if (state.mapView === "mix" && state.mapLens === "social") {
+      note.textContent =
+        state.distCatalog?.modes?.social?.note ||
+        "Top 6 social by Erste reach · pie = relative mix (overlap)";
+    } else if (state.mapView === "mix") {
+      note.textContent =
+        "Colour = theme Interest · Circles = Global sponsorships mix";
+    } else {
+      note.textContent = "Colour = Interest (Index) vs other Erste markets";
+    }
+  }
+  const aud = state.distCatalog?.audiences?.[state.mapAudience];
+  if (aud && $("source") && state.mapView === "mix") {
+    $("source").textContent = `GWI ${aud.label} · Erste markets`;
+  } else if ($("source") && state.data?.meta?.source) {
+    $("source").textContent = state.data.meta.source;
+  }
+}
+
+function syncMapDistributions() {
+  if (!map || !state.distCatalog) return;
+  if (state.mapView !== "mix" || bubbles.open || state.active) {
+    map.clearDistributionPies();
+    $("mapwrap")?.classList.remove("has-pies");
+    hideDistTip();
+    return;
+  }
+  const byCode = {};
+  for (const code of Object.keys(state.data?.markets || {})) {
+    const slices = slicesFor(
+      state.distCatalog,
+      state.mapAudience,
+      state.mapLens,
+      code
+    ).filter((s) => (s.share || 0) > 0);
+    if (slices.length) byCode[code] = slices;
+  }
+  map.drawDistributionPies(byCode, {
+    onHover: (code, slices) => showDistTip(code, slices),
+    onLeave: () => hideDistTip(),
+  });
+  $("mapwrap")?.classList.add("has-pies");
+}
+
+function showDistTip(code, slices) {
+  const tip = $("distTip");
+  const wrap = $("mapwrap");
+  if (!tip || !wrap) return;
+  const market = state.data?.markets?.[code];
+  const mode = state.distCatalog?.modes?.[state.mapLens];
+  const aud = state.distCatalog?.audiences?.[state.mapAudience];
+  const rows = [...(slices || [])]
+    .sort((a, b) => (b.share || 0) - (a.share || 0) || (b.universe || 0) - (a.universe || 0))
+    .map(
+      (s) => `
+      <div class="dist-tip-row">
+        <span class="dist-tip-swatch" style="background:${s.color}"></span>
+        <span>${s.short}</span>
+        <b>${Math.round((s.share || 0) * 100)}% · ${formatPeople(s.universe)}</b>
+      </div>`
+    )
+    .join("");
+  tip.innerHTML = `<div class="dist-tip-title">${market?.name || code} · ${
+    aud?.label || ""
+  } · ${mode?.tipTitle || "mix"}</div>${rows}`;
+  tip.classList.add("on");
+  tip.setAttribute("aria-hidden", "false");
+  const c = map.centroidOf?.(code);
+  if (c) {
+    const svg = $("map");
+    const vb = svg.viewBox.baseVal;
+    const rect = svg.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    const x = ((c[0] - vb.x) / vb.width) * rect.width + (rect.left - wrapRect.left);
+    const y = ((c[1] - vb.y) / vb.height) * rect.height + (rect.top - wrapRect.top);
+    tip.style.left = `${x}px`;
+    tip.style.top = `${y}px`;
+  }
+}
+
+function hideDistTip() {
+  const tip = $("distTip");
+  tip?.classList.remove("on");
+  tip?.setAttribute("aria-hidden", "true");
+}
+
 function buildAudiences() {
   const bar = $("audiences");
   if (!bar) return;
   bar.replaceChildren();
-  const themes = state.data.themes.filter((t) => EXPLORE_AUDIENCES.includes(t.id));
+  const themes = (state.data?.themes || []).filter((t) =>
+    EXPLORE_AUDIENCES.includes(t.id)
+  );
   if (!state.activeThemes.size && themes[0]) {
     state.activeThemes = new Set([themes[0].id]);
   }
@@ -680,7 +903,7 @@ function buildAudiences() {
       map.setThemes(state.activeThemes);
       applyMetricToMap();
       syncPassions();
-      // Optional play on Who step — do not auto-advance
+      syncMapDistributions();
     };
     bar.appendChild(b);
   });
@@ -726,6 +949,14 @@ function syncPassionsNote() {
 }
 
 function selectPassion(id) {
+  // During running sponsor story — chips are locked
+  if (
+    tutorial.active &&
+    document.documentElement.classList.contains("tutorial-step-f1map")
+  ) {
+    return;
+  }
+
   state.passionId = id;
   state.localLens = null;
   document.querySelectorAll(".passion-chip.pulse").forEach((el) => {
@@ -733,8 +964,21 @@ function selectPassion(id) {
   });
   syncPassions();
   applyMetricToMap();
+
+  // Tutorial pick step: select only — story starts on Next
+  if (
+    tutorial.active &&
+    document.documentElement.classList.contains("tutorial-step-passions")
+  ) {
+    return;
+  }
+
   if (bubbles.open && bubbles.mode === "countries") openCountryBubbles();
-  else if (bubbles.open && state.active) openPassionBubbles(state.active);
+  else if (bubbles.open && state.active && bubbleAudienceKey) {
+    openAudienceThemeMenu(state.active);
+  } else if (bubbles.open && state.active) {
+    openPassionBubbles(state.active);
+  }
 }
 
 function syncPassions() {
@@ -744,9 +988,12 @@ function syncPassions() {
   syncPassionsNote();
   $("passionHint")?.classList.toggle(
     "gone",
-    Boolean(state.passionId || state.localLens || state.active || bubbles.open)
+    Boolean(
+      state.mapView === "mix"
+        ? state.active || bubbles.open
+        : state.passionId || state.localLens || state.active || bubbles.open
+    )
   );
-  syncGuide();
 }
 
 function applyAnalysisSignal(themeId, category, answer) {
@@ -772,7 +1019,7 @@ function applyAnalysisSignal(themeId, category, answer) {
 }
 
 function showPeek(code, e) {
-  if (state.activeThemes.size === 0 || bubbles.open) return;
+  if (bubbles.open || state.active) return;
   const market = state.data.markets[code];
   const p = $("peek");
 
@@ -805,7 +1052,6 @@ function hidePeek() {
 let lastCountryPickAt = 0;
 
 function select(code) {
-  if (state.activeThemes.size === 0) return;
   if (!state.data.markets[code] || !map.hasShape(code)) return;
   // F1 story step: map is narrative, not clickable explore
   if (document.documentElement.classList.contains("tutorial-step-f1map")) return;
@@ -818,9 +1064,12 @@ function select(code) {
 
   state.active = code;
   hidePeek();
+  hideDistTip();
   map.setActive(code);
   map.paint();
   map.clearOverlays();
+  map.clearDistributionPies();
+  $("mapwrap")?.classList.remove("has-pies");
   openPassionBubbles(code);
   syncPassions();
   $("mapwrap").classList.add("dim");
@@ -842,6 +1091,7 @@ function clear() {
   $("mapwrap").classList.remove("dim");
   map.paint();
   syncPassions();
+  syncMapDistributions();
 }
 
 function boot(data) {
@@ -849,12 +1099,18 @@ function boot(data) {
   state.active = null;
   state.passionId = "f1";
   state.localLens = null;
+  state.mapLens = "sponsors";
+  state.mapAudience = "all";
   state.activeThemes = new Set(["affluent"]);
+  if (state.gwi) {
+    state.distCatalog = buildDistributionCatalog(state.gwi, data.markets);
+  }
   map.setData(data);
   insights.setInsights(data.insights);
   if (state.gwi) insights.setGwi(state.gwi);
   applyCopy();
-  // Chrome first — never block Who/passions if map geography fails
+  bindViewToggle();
+  bindMapFilter();
   buildAudiences();
   buildPassions();
   try {
@@ -862,11 +1118,9 @@ function boot(data) {
   } catch (err) {
     console.error("Map build failed", err);
   }
-  applyMetricToMap();
+  setMapView("compare");
   setMode("explore");
   clear();
-  syncPassions();
-  // Default entry: splash (tilted map + Start the engine)
   splash.show();
 }
 
@@ -955,6 +1209,9 @@ Promise.all([
       map.setGeo(geo);
       map.build(true);
       applyMetricToMap();
+      syncMapDistributions();
+    } else {
+      syncMapDistributions();
     }
   })
   .catch((err) => {

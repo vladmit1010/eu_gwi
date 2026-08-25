@@ -180,25 +180,91 @@ function includeAnswer(category, answer) {
 }
 
 /**
- * Who split for a country on a lens (Affluent vs Gen Z universe).
+ * Estimate audience base size in a market from GWI col_pct + universe.
+ */
+export function estimateAudienceUniverse(gwi, audienceKey, countryKey) {
+  const cell = gwi?.[audienceKey]?.[countryKey];
+  if (!cell) return 0;
+  const samples = [];
+  for (const answers of Object.values(cell)) {
+    if (!answers || typeof answers !== "object") continue;
+    for (const m of Object.values(answers)) {
+      const u = m?.universe;
+      const pct = m?.col_pct;
+      if (u > 0 && pct > 5 && pct < 95) samples.push(u / (pct / 100));
+    }
+  }
+  if (!samples.length) return 0;
+  samples.sort((a, b) => a - b);
+  return Math.round(samples[Math.floor(samples.length / 2)]);
+}
+
+/**
+ * Affluent vs Gen Z chooser rows for a country + total people (All users).
  */
 export function whoSplitForCountry(gwi, countryKey, lens) {
-  const use = lens?.category && lens?.answer ? lens : CORE_PASSIONS[0];
+  void lens;
   const rows = ["Affluent", "Gen Z"].map((aud) => {
-    const m = gwi?.[aud]?.[countryKey]?.[use.category]?.[use.answer];
+    const universe = estimateAudienceUniverse(gwi, aud, countryKey);
     return {
       key: aud,
       label: aud,
-      universe: m?.universe ?? 0,
-      index: m?.index ?? null,
+      universe,
+      index: null,
       share: 0,
     };
   });
-  const total = rows.reduce((a, r) => a + r.universe, 0) || 1;
+  const total =
+    estimateAudienceUniverse(gwi, "All Internet Users", countryKey) ||
+    rows.reduce((a, r) => a + (r.universe || 0), 0);
+  const sum = rows.reduce((a, r) => a + (r.universe || 0), 0) || 1;
   rows.forEach((r) => {
-    r.share = r.universe / total;
+    r.share = (r.universe || 0) / sum;
   });
-  return { lens: use, rows, total };
+  return { rows, total };
+}
+
+/**
+ * Passion-field circles for a country × audience (sized by strongest answer).
+ */
+export function fieldMetricsForCountry(gwi, audienceKey, countryKey) {
+  if (!gwi || !audienceKey || !countryKey) return [];
+  return EXPLORE_THEME_FIELDS.map((f) => {
+    let universe = 0;
+    let index = null;
+    if (f.pack === "media") {
+      const interests =
+        gwi[audienceKey]?.[countryKey]?.["Personal Interests"] || {};
+      for (const [answer, m] of Object.entries(interests)) {
+        if (!MEDIA_TOUCHPOINT_ANSWERS.has(answer)) continue;
+        const u = m?.universe ?? 0;
+        if (u > universe) {
+          universe = u;
+          index = m?.index ?? null;
+        }
+      }
+    } else {
+      const answers = gwi[audienceKey]?.[countryKey]?.[f.category] || {};
+      for (const m of Object.values(answers)) {
+        const u = m?.universe ?? 0;
+        if (u > universe) {
+          universe = u;
+          index = m?.index ?? null;
+        }
+      }
+    }
+    return {
+      id: f.id,
+      kind: "theme-field",
+      pack: f.pack,
+      category: f.category,
+      label: f.label,
+      short: f.label,
+      universe,
+      index,
+      field: f,
+    };
+  });
 }
 
 /**
@@ -273,7 +339,7 @@ export function answerBubblesForCategory(
     .slice(0, limit);
 }
 
-/** Theme-field buttons for the audience mini-menu (labels only, no numbers). */
+/** Passion-field metadata (labels); prefer fieldMetricsForCountry for sized circles. */
 export function themeFieldsForMenu() {
   return EXPLORE_THEME_FIELDS.map((f) => ({
     id: f.id,

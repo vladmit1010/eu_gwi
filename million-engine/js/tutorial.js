@@ -1,4 +1,4 @@
-/** Guided tutorial — early steps auto-play; wait-gates for real Explore actions. */
+/** Guided tutorial — one fixed left reader; covers map mix + country themes. */
 
 import { $ } from "./utils/dom.js";
 
@@ -20,16 +20,9 @@ export const TUTORIAL_STEPS = [
   {
     id: "passions",
     gate: "next",
-    autoMs: 3200,
+    story: "sponsor",
     caption:
-      "Global sponsorships — F1 lights the six markets.",
-  },
-  {
-    id: "f1map",
-    gate: "next",
-    story: "f1",
-    autoMs: "story",
-    caption: "12,3 Mio. folgen Motorsport — 1 Mio. Ziel. Jede zwölfte Person schaut schon zu.",
+      "Pick F1, Running or Live music — then press Next to start that story.",
   },
   {
     id: "country",
@@ -40,7 +33,7 @@ export const TUTORIAL_STEPS = [
     id: "f1split",
     gate: "category",
     caption:
-      "Click Affluent or Gen Z — then pick a passion field.",
+      "Click Affluent or Gen Z — then a sponsorship circle or passion field.",
     prompt: "Explore audiences",
   },
   {
@@ -52,18 +45,17 @@ export const TUTORIAL_STEPS = [
   {
     id: "done",
     gate: "done",
-    caption: "Tutorial done — explore on your own.",
+    caption:
+      "Tutorial done — Compare paints Interest; switch to Mix for distribution circles.",
   },
 ];
 
 export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = {}) {
-  const root = $("tutorialBar");
-  const captionEl = $("tutorialCaption");
-  const stepEl = $("tutorialStep");
   const nextBtn = $("tutorialNext");
   const skipBtn = $("tutorialSkip");
   const startBtn = $("tutorialBtn");
   const panel = $("tutorialPanel");
+  const body = $("tutorialPanelBody");
   let active = false;
   let index = 0;
   let autoTimer = null;
@@ -86,7 +78,7 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
     if (!s?.autoMs) return null;
     if (s.autoMs === "story") {
       const ms = onStoryAutoMs?.(s);
-      return typeof ms === "number" && ms > 0 ? ms : 6500;
+      return typeof ms === "number" && ms > 0 ? ms : null;
     }
     return typeof s.autoMs === "number" && s.autoMs > 0 ? s.autoMs : null;
   }
@@ -107,23 +99,41 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
     }, delay);
   }
 
-  function syncChrome() {
+  function renderDefaultBody(s) {
+    if (!body || !s) return;
+    const autoOn = document.documentElement.classList.contains("tutorial-auto");
+    const prompt = s.prompt
+      ? `<div class="tutorial-panel-kicker">${s.prompt}</div>`
+      : "";
+    body.innerHTML = `
+      <div class="tutorial-reader-progress">Tutorial · ${index + 1} / ${
+        TUTORIAL_STEPS.length
+      }${autoOn ? " · auto" : ""}</div>
+      ${prompt}
+      <p class="tutorial-reader-caption">${s.caption || ""}</p>
+    `;
+  }
+
+  function openReader() {
+    panel?.classList.add("open", "tutorial-reader");
+    panel?.classList.remove("dock-end", "dock-start");
+    panel?.setAttribute("aria-hidden", "false");
+  }
+
+  function syncChrome({ preserveBody = false } = {}) {
     document.documentElement.classList.toggle("tutorial-on", active);
-    root?.classList.toggle("open", active);
-    root?.setAttribute("aria-hidden", active ? "false" : "true");
     startBtn?.classList.toggle("on", active);
     if (startBtn) startBtn.textContent = active ? "Exit tutorial" : "Tutorial";
 
     if (!active) {
-      panel?.classList.remove("open");
+      panel?.classList.remove("open", "tutorial-reader", "f1-story-panel", "dock-start", "dock-end");
+      if (body) body.innerHTML = "";
+      panel?.setAttribute("aria-hidden", "true");
       return;
     }
 
     const s = step();
-    if (stepEl) stepEl.textContent = `${index + 1} / ${TUTORIAL_STEPS.length}`;
-    if (captionEl) {
-      captionEl.textContent = s?.caption || "";
-    }
+    openReader();
 
     const wait = s?.gate === "category";
     const done = s?.gate === "done";
@@ -137,6 +147,11 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
       nextBtn.setAttribute("aria-disabled", wait ? "true" : "false");
     }
     document.documentElement.classList.toggle("tutorial-wait-category", wait);
+
+    if (!preserveBody && !s?.story) {
+      panel?.classList.remove("f1-story-panel");
+      renderDefaultBody(s);
+    }
   }
 
   async function go(i) {
@@ -164,12 +179,11 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
       exit();
       return;
     }
-    // Manual Skip during auto: cancel timer, then advance once
     if (!fromAuto) clearAuto();
     if (s?.story) {
       const stayed = await onStoryNext?.(s);
       if (stayed) {
-        // Beat caption already set by story handler — don't reset via syncChrome
+        syncChrome({ preserveBody: true });
         scheduleAuto();
         return;
       }
@@ -196,11 +210,10 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
     if (!active) return;
     clearAuto();
     active = false;
-    panel?.classList.remove("open");
-    if (panel) panel.innerHTML = "";
     document.documentElement.classList.remove(
       "tutorial-wait-category",
       "tutorial-step-bubbles",
+      "tutorial-step-dist",
       "tutorial-step-who",
       "tutorial-step-passions",
       "tutorial-step-f1map",
@@ -213,17 +226,29 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
   }
 
   function showPanel(html) {
-    if (!panel) return;
-    panel.innerHTML = html;
-    panel.classList.add("open");
+    if (!body) return;
+    body.innerHTML = html;
+    openReader();
+    panel?.classList.add("f1-story-panel");
   }
 
   function hidePanel() {
-    panel?.classList.remove("open", "dock-start", "f1-story-panel");
-    if (panel) {
-      panel.innerHTML = "";
-      panel.setAttribute("aria-hidden", "true");
+    panel?.classList.remove("f1-story-panel", "dock-start", "dock-end");
+    if (body) body.innerHTML = "";
+    if (active) {
+      openReader();
+      renderDefaultBody(step());
+    } else {
+      panel?.classList.remove("open", "tutorial-reader");
+      panel?.setAttribute("aria-hidden", "true");
     }
+  }
+
+  /** Restart auto-advance for the current step (e.g. after a story starts mid-step). */
+  function resyncAuto() {
+    if (!active) return;
+    scheduleAuto();
+    syncChrome({ preserveBody: true });
   }
 
   startBtn?.addEventListener("click", () => {
@@ -240,7 +265,8 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
   });
 
   function setCaption(text) {
-    if (captionEl) captionEl.textContent = text || "";
+    const el = body?.querySelector(".tutorial-reader-caption");
+    if (el) el.textContent = text || "";
   }
 
   return {
@@ -252,6 +278,7 @@ export function createTutorial({ onStep, onExit, onStoryNext, onStoryAutoMs } = 
     showPanel,
     hidePanel,
     setCaption,
+    resyncAuto,
     get active() {
       return active;
     },
