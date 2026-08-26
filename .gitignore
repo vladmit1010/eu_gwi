@@ -2,7 +2,25 @@
 **/.DS_Store
 .idea/
 **/.idea/
+
+# Python (legacy / local tooling — not used by the app)
 .venv/
+**/.venv/
+venv/
+**/venv/
+__pycache__/
 **/__pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 .python-version
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.tox/
+pip-wheel-metadata/
+
+# Node
+**/node_modules/

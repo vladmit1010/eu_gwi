@@ -1,19 +1,19 @@
 {
   "name": "million-engine",
   "version": "1.0.0",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
+  "private": true,
+  "type": "module",
   "scripts": {
+    "start": "node scripts/serve.mjs",
     "test": "node tests/smoke.mjs",
-    "smoke": "node tests/smoke.mjs"
+    "smoke": "node tests/smoke.mjs",
+    "parse-gwi": "node scripts/parse-gwi.mjs",
+    "merge-gwi": "node scripts/merge-frequency.mjs",
+    "build-markets": "node scripts/build-markets.mjs",
+    "build-data": "node scripts/merge-frequency.mjs --write && node scripts/build-markets.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "playwright-core": "^1.49.0"
+    "playwright-core": "^1.49.0",
+    "xlsx": "^0.18.5"
   }
 }

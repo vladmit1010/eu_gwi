@@ -45,8 +45,8 @@ async function main() {
   await page.goto(BASE, { waitUntil: "networkidle", timeout: 45000 });
   ok("boot loads", await page.title().then((t) => /Million Engine/i.test(t)));
 
-  await page.click("#splashSkip");
-  await page.waitForTimeout(1200);
+  await page.click("#splashStart");
+  await page.waitForTimeout(1400);
   const afterSplash = await page.evaluate(() => ({
     splashOn: document.documentElement.classList.contains("splash-on"),
     compare: document.documentElement.classList.contains("map-view-compare"),
@@ -134,23 +134,10 @@ async function main() {
   );
   ok("Pies return in Mix after close", afterClose >= 6, `pies=${afterClose}`);
 
-  await page.click("#tutorialBtn");
-  await page.waitForTimeout(400);
-  ok(
-    "Tutorial starts",
-    await page.evaluate(() => document.documentElement.classList.contains("tutorial-on"))
-  );
-  await page.click("#tutorialSkip");
-  await page.waitForTimeout(400);
-  ok(
-    "Tutorial exit clears tutorial-on",
-    await page.evaluate(() => !document.documentElement.classList.contains("tutorial-on"))
-  );
-
   ok("No page JS errors", pageErrors.length === 0, pageErrors.slice(0, 3).join(" | "));
   ok(
     "No critical request failures",
-    failed.filter((f) => /gwi|markets|geojson|app\.js|distributions|tutorial/i.test(f)).length ===
+    failed.filter((f) => /gwi|markets|geojson|app\.js|distributions/i.test(f)).length ===
       0,
     failed.slice(0, 3).join(" | ")
   );

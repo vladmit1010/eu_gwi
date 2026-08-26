@@ -1,4 +1,4 @@
-/** Boot splash — default entry: title + tilted map, then reveal + tutorial. */
+/** Boot splash — title + tilted map, then reveal Explore. */
 
 import { $ } from "./utils/dom.js";
 
@@ -6,10 +6,9 @@ const REDUCE =
   typeof matchMedia === "function" &&
   matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function createSplash({ onStartTutorial, onSkipToExplore } = {}) {
+export function createSplash({ onEnter } = {}) {
   const root = $("splash");
   const startBtn = $("splashStart");
-  const skipBtn = $("splashSkip");
   let visible = false;
   let busy = false;
 
@@ -32,30 +31,23 @@ export function createSplash({ onStartTutorial, onSkipToExplore } = {}) {
     busy = false;
   }
 
-  async function runReveal({ startTutorial }) {
+  async function runReveal() {
     if (!visible || busy) return;
     busy = true;
 
     document.documentElement.classList.add("splash-leaving", "splash-reveal");
     document.documentElement.classList.remove("splash-on");
 
-    const wait = REDUCE ? 80 : 1100;
+    const wait = REDUCE ? 40 : 450;
     await new Promise((r) => setTimeout(r, wait));
 
     hideChromeFlags();
-
-    if (startTutorial) await onStartTutorial?.();
-    else await onSkipToExplore?.();
+    await onEnter?.();
   }
 
   startBtn?.addEventListener("click", (e) => {
     e.preventDefault();
-    runReveal({ startTutorial: true });
-  });
-
-  skipBtn?.addEventListener("click", (e) => {
-    e.preventDefault();
-    runReveal({ startTutorial: false });
+    runReveal();
   });
 
   return {

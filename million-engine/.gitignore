@@ -1,2 +1,12 @@
 node_modules/
 .DS_Store
+
+# Python leftovers (app is Node/JS only)
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/

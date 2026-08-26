@@ -4,9 +4,7 @@ import { $, formatInt, formatPeople } from "./utils/dom.js";
 import { createMap, loadEuropeGeo } from "./map.js?v=20260825b";
 import { createInsights } from "./insights.js";
 import { createBubbles } from "./bubbles.js?v=20260825g";
-import { createTutorial } from "./tutorial.js?v=20260825k";
-import { createSplash } from "./splash.js?v=20260824a";
-import { createSponsorStory } from "./sponsor-stories.js?v=20260825b";
+import { createSplash } from "./splash.js?v=20260826a";
 import { loadInitialData } from "./data-loader.js";
 import {
   loadGwi,
@@ -54,8 +52,6 @@ const state = {
   localLens: null,
 };
 
-/** Country picked during tutorial country-gate — survives the Who step */
-let tutorialCountry = null;
 /** GWI audience key while drilled into theme menu / answers */
 let bubbleAudienceKey = null;
 
@@ -96,9 +92,6 @@ const bubbles = createBubbles({
     const code = state.active;
     if (!code || !field) return;
     openAnswerBubbles(code, field);
-    if (tutorial.active && tutorial.gate === "category") {
-      tutorial.notify("category");
-    }
   },
   onSponsor: (item) => {
     const code = state.active;
@@ -107,16 +100,12 @@ const bubbles = createBubbles({
     state.localLens = null;
     syncPassions();
     applyMetricToMap();
-    // Stay on the theme menu — do not advance the tutorial gate
     if (bubbleAudienceKey) openAudienceThemeMenu(code);
   },
   onCategory: (item) => {
     const code = state.active;
     if (!code) return;
     openAnswerBubbles(code, item);
-    if (tutorial.active && tutorial.gate === "category") {
-      tutorial.notify("category");
-    }
   },
   onPassion: (item) => {
     // Apply theme to the map but keep Potential open with a richer readout.
@@ -162,10 +151,7 @@ const bubbles = createBubbles({
     }
   },
   onClose: (opts) => {
-    if (opts?.phase === "before") {
-      if (tutorial.active && tutorial.gate === "category") return false;
-      return;
-    }
+    if (opts?.phase === "before") return;
     bubbleAudienceKey = null;
     state.active = null;
     map.setActive(null);
@@ -174,350 +160,11 @@ const bubbles = createBubbles({
     map.paint();
     syncPassions();
     syncMapDistributions();
-  },
-});
-
-function clearTutorialHighlights() {
-  document.documentElement.classList.remove(
-    "tutorial-step-dist",
-    "tutorial-step-who",
-    "tutorial-step-passions",
-    "tutorial-step-f1map",
-    "tutorial-step-country",
-    "tutorial-step-bubbles",
-    "tutorial-free"
-  );
-  $("targetPill")?.classList.remove("tutorial-focus");
-  document.querySelectorAll(".tutorial-spot, .tutorial-spot-stage").forEach((el) => {
-    el.classList.remove("tutorial-spot", "tutorial-spot-stage", "tutorial-spot-map-only");
-  });
-  document
-    .querySelectorAll(".map-filter-btn.tutorial-hl, .aud-chip.tutorial-hl, .passion-chip.tutorial-hl")
-    .forEach((el) => {
-      el.classList.remove("tutorial-hl");
-    });
-  const scrim = $("tutorialScrim");
-  scrim?.classList.remove("on");
-  scrim?.setAttribute("aria-hidden", "true");
-}
-
-function spotlight(...els) {
-  const list = els.filter(Boolean);
-  const scrim = $("tutorialScrim");
-  if (list.length && scrim) {
-    scrim.classList.add("on");
-    scrim.setAttribute("aria-hidden", "false");
-  }
-  list.forEach((el) => {
-    el.classList.add("tutorial-spot");
-    if (el.id === "mapwrap" || el.id === "bubbleOverlay") {
-      el.classList.add("tutorial-spot-stage");
-    }
-  });
-}
-
-/** During sponsor story: frame the map only (sponsorship chips locked). */
-function focusSponsorStoryChrome() {
-  document.querySelectorAll(".tutorial-spot, .tutorial-spot-stage").forEach((el) => {
-    el.classList.remove("tutorial-spot", "tutorial-spot-stage", "tutorial-spot-map-only");
-  });
-  document.querySelectorAll(".passion-chip.tutorial-hl").forEach((el) => {
-    el.classList.remove("tutorial-hl");
-  });
-  spotlight($("mapwrap"));
-}
-
-function resetMapForTutorial({ withMetric = false } = {}) {
-  setMapView("compare");
-  if (bubbles.open) bubbles.hide();
-  state.active = null;
-  state.localLens = null;
-  map.setActive(null);
-  map.clearOverlays();
-  $("mapwrap").classList.remove("dim");
-  if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
-  map.setThemes(state.activeThemes);
-  syncAudiences();
-  syncPassions();
-  if (withMetric) {
-    if (!state.passionId) state.passionId = "f1";
-    applyMetricToMap();
-  } else {
-    map.setMetricValues(null);
-    map.paint();
-    syncLegend(null);
-  }
-  syncMapDistributions();
-}
-
-async function applyTutorialStep(step) {
-  clearTutorialHighlights();
-  tutorial.hidePanel();
-  if (insights.open) insights.hide();
-
-  const id = step?.id;
-
-  if (id === "intro") {
-    tutorialCountry = null;
-    state.passionId = null;
-    resetMapForTutorial();
-    $("targetPill")?.classList.add("tutorial-focus");
-    spotlight($("targetPill"));
-    return;
-  }
-
-  if (id === "who") {
-    if (!state.passionId) state.passionId = "f1";
-    state.activeThemes = new Set(["affluent"]);
-    resetMapForTutorial({ withMetric: true });
-    document.documentElement.classList.add("tutorial-step-who");
-    $("audiences")?.querySelectorAll(".aud-chip").forEach((b) => {
-      b.classList.add("tutorial-hl");
-    });
-    spotlight(document.querySelector(".explore-group-who"));
-    return;
-  }
-
-  if (id === "passions") {
-    if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
-    if (!state.passionId) state.passionId = "f1";
-    resetMapForTutorial({ withMetric: true });
-    document.documentElement.classList.add("tutorial-step-passions");
-    document.documentElement.classList.remove("tutorial-step-f1map");
-    $("passions")?.querySelectorAll(".passion-chip").forEach((b) => {
-      b.classList.add("tutorial-hl");
-    });
-    spotlight(document.querySelector(".explore-group-passions"));
-    return;
-  }
-
-  if (id === "country") {
-    tutorialCountry = null;
-    if (!state.activeThemes.size) state.activeThemes = new Set(["affluent"]);
-    if (!state.passionId) state.passionId = "f1";
-    resetMapForTutorial({ withMetric: true });
-    document.documentElement.classList.add("tutorial-step-country");
-    spotlight($("mapwrap"));
-    return;
-  }
-
-  if (id === "f1split") {
-    let code = tutorialCountry || state.active;
-    if (!code || !map.hasShape(code)) {
-      code = ["RO", "HU", "AT", "CZ", "HR", "RS"].find(
-        (c) => state.data.markets[c] && map.hasShape(c)
-      );
-    }
-    if (!code) return;
-    tutorialCountry = code;
-    bubbleAudienceKey = null;
-    tutorial.hidePanel();
-    hidePeek();
-    hideDistTip();
-    document.documentElement.classList.add("tutorial-step-bubbles");
-    state.active = code;
-    map.setActive(code);
-    map.clearOverlays();
-    map.clearDistributionPies();
-    $("mapwrap")?.classList.remove("has-pies");
-    map.paint();
-    $("mapwrap").classList.add("dim");
-    openPassionBubbles(code);
-    const sub = $("bubbleSub");
-    if (sub) {
-      sub.textContent = "Click Affluent or Gen Z — then a circle";
-    }
-    return;
-  }
-
-  if (id === "local") {
-    tutorial.hidePanel();
-    document.documentElement.classList.add("tutorial-step-bubbles");
-    let code = tutorialCountry || state.active;
-    if (!code || !map.hasShape(code)) {
-      code = ["AT", "CZ", "HU", "RO", "HR", "RS"].find(
-        (c) => state.data.markets[c] && map.hasShape(c)
-      );
-    }
-    if (!code) return;
-    if (!state.passionId && !state.localLens) state.passionId = "f1";
-    state.active = code;
-    hidePeek();
-    map.setActive(code);
-    map.clearOverlays();
-    map.clearDistributionPies();
-    $("mapwrap")?.classList.remove("has-pies");
-    map.paint();
-    if (bubbles.open && bubbles.level === "answers") {
-      /* keep */
-    } else if (bubbles.open && bubbles.level === "menu") {
-      if (!state.passionId) {
-        openAnswerBubbles(code, {
-          category: "Personal Interests",
-          pack: null,
-          label: "Interests",
-        });
-      }
-    } else {
-      if (!bubbleAudienceKey) bubbleAudienceKey = gwiAudienceKey() || "Affluent";
-      openAudienceThemeMenu(code);
-    }
-    syncPassions();
-    $("mapwrap").classList.add("dim");
-    const sub = $("bubbleSub");
-    if (sub) {
-      sub.textContent = `${
-        bubbleAudienceKey || audienceLabel()
-      } · hover themes for Interest + reach — Next when ready`;
-    }
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        const overlay = $("bubbleOverlay");
-        if (overlay?.classList.contains("open")) spotlight(overlay);
-        else spotlight($("mapwrap"));
-      });
-    });
-    return;
-  }
-
-  if (id === "done") {
-    tutorial.hidePanel();
-    clearTutorialHighlights();
-    if (bubbles.open) bubbles.hide();
-    state.active = null;
-    map.setActive(null);
-    map.clearOverlays();
-    $("mapwrap").classList.remove("dim");
-    setMapView("compare");
-    applyMetricToMap();
-    syncMapDistributions();
-    document.documentElement.classList.add("tutorial-free");
-    return;
-  }
-}
-
-const sponsorStory = createSponsorStory();
-
-function renderSponsorStoryBeat(beat) {
-  if (!beat) return;
-  const lo =
-    $("scaleLo")?.textContent?.replace(/^Lower\s*/i, "").trim() || "—";
-  const hi =
-    $("scaleHi")?.textContent?.replace(/^Higher\s*/i, "").trim() || "—";
-  const legendTitle =
-    $("legendTitle")?.textContent || themeLabelForLens() || "Interest";
-  const autoOn = document.documentElement.classList.contains("tutorial-auto");
-  const nextBtn = $("tutorialNext");
-  if (nextBtn) {
-    nextBtn.textContent =
-      sponsorStory.index >= sponsorStory.length - 1 ? "Continue" : "Next";
-  }
-  const storyName = sponsorStory.label || "Sponsor";
-  tutorial.showPanel(`
-    <div class="f1-story-progress">${storyName} story · ${sponsorStory.progressLabel()}${
-      autoOn ? " · auto" : ""
-    }</div>
-    <div class="tutorial-panel-kicker">${beat.kicker}</div>
-    <div class="tutorial-panel-title">${beat.title}</div>
-    <p class="f1-story-body">${beat.body}</p>
-    <div class="f1-story-legend">
-      <div class="f1-story-legend-kicker">Interest (Index) across Erste</div>
-      <div class="f1-story-legend-title">${legendTitle}</div>
-      <div class="f1-story-legend-bar" aria-hidden="true"></div>
-      <div class="f1-story-legend-row">
-        <span>Lower ${lo}</span>
-        <span>Higher ${hi}</span>
-      </div>
-      <div class="f1-story-legend-note">Darker = lower Interest · Brighter orange = higher (among these 6 markets)</div>
-    </div>
-  `);
-
-  if (beat.code && map.hasShape(beat.code)) {
-    state.active = beat.code;
-    map.setActive(beat.code);
-    map.paint();
-  } else {
-    state.active = null;
-    map.setActive(null);
-    map.paint();
-  }
-  focusSponsorStoryChrome();
-}
-
-function startTutorialSponsorStory(id) {
-  const passionId = id || state.passionId || "f1";
-  state.passionId = passionId;
-  state.localLens = null;
-  syncPassions();
-  applyMetricToMap();
-  document.documentElement.classList.add("tutorial-step-passions");
-  document.documentElement.classList.add("tutorial-step-f1map");
-  openSponsorStory(passionId);
-  focusSponsorStoryChrome();
-}
-
-function advanceSponsorStory() {
-  const moved = sponsorStory.next();
-  if (!moved) {
-    tutorial.hidePanel();
-    $("tutorialPanel")?.classList.remove("dock-start", "dock-end", "f1-story-panel");
-    document.documentElement.classList.remove("tutorial-step-f1map");
-    state.active = null;
-    map.setActive(null);
-    map.paint();
-    return false;
-  }
-  renderSponsorStoryBeat(sponsorStory.beat());
-  return true;
-}
-
-function openSponsorStory(id) {
-  const passionId = id || state.passionId || "f1";
-  state.passionId = passionId;
-  state.localLens = null;
-  syncPassions();
-  applyMetricToMap();
-  const beat = sponsorStory.reset(passionId);
-  renderSponsorStoryBeat(beat);
-}
-
-const tutorial = createTutorial({
-  onStep: (step) => applyTutorialStep(step),
-  onStoryNext: async (step) => {
-    if (step?.story !== "sponsor") return false;
-    // Story not started yet — start with current sponsorship, stay on step
-    if (!document.documentElement.classList.contains("tutorial-step-f1map")) {
-      startTutorialSponsorStory(state.passionId || "f1");
-      return true;
-    }
-    return advanceSponsorStory();
-  },
-  onStoryAutoMs: () => null,
-  onExit: () => {
-    clearTutorialHighlights();
-    tutorial.hidePanel();
-    $("tutorialPanel")?.classList.remove("dock-start", "dock-end", "f1-story-panel");
-    tutorialCountry = null;
-    bubbleAudienceKey = null;
-    // Drop country selection left over from tutorial gates
-    if (bubbles.open) bubbles.hide();
-    state.active = null;
-    map.setActive(null);
-    map.clearOverlays();
-    $("mapwrap").classList.remove("dim");
-    if (!state.passionId && !state.localLens) state.passionId = "f1";
-    syncPassions();
-    setMapView("compare");
-    map.paint();
   },
 });
 
 const splash = createSplash({
-  onStartTutorial: async () => {
-    await tutorial.start();
-  },
-  onSkipToExplore: async () => {
-    if (tutorial.active) tutorial.exit();
+  onEnter: async () => {
     if (!state.passionId && !state.localLens) state.passionId = "f1";
     syncPassions();
     applyMetricToMap();
@@ -591,7 +238,6 @@ function bindViewToggle() {
   $("viewToggle")?.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-view]");
     if (!btn) return;
-    if (tutorial.active && tutorial.gate === "category") return;
     setMapView(btn.dataset.view);
   });
 }
@@ -949,14 +595,6 @@ function syncPassionsNote() {
 }
 
 function selectPassion(id) {
-  // During running sponsor story — chips are locked
-  if (
-    tutorial.active &&
-    document.documentElement.classList.contains("tutorial-step-f1map")
-  ) {
-    return;
-  }
-
   state.passionId = id;
   state.localLens = null;
   document.querySelectorAll(".passion-chip.pulse").forEach((el) => {
@@ -964,14 +602,6 @@ function selectPassion(id) {
   });
   syncPassions();
   applyMetricToMap();
-
-  // Tutorial pick step: select only — story starts on Next
-  if (
-    tutorial.active &&
-    document.documentElement.classList.contains("tutorial-step-passions")
-  ) {
-    return;
-  }
 
   if (bubbles.open && bubbles.mode === "countries") openCountryBubbles();
   else if (bubbles.open && state.active && bubbleAudienceKey) {
@@ -1053,14 +683,10 @@ let lastCountryPickAt = 0;
 
 function select(code) {
   if (!state.data.markets[code] || !map.hasShape(code)) return;
-  // F1 story step: map is narrative, not clickable explore
-  if (document.documentElement.classList.contains("tutorial-step-f1map")) return;
 
   const now = performance.now();
   if (now - lastCountryPickAt < 350) return;
   lastCountryPickAt = now;
-
-  const countryPlay = document.documentElement.classList.contains("tutorial-step-country");
 
   state.active = code;
   hidePeek();
@@ -1073,17 +699,9 @@ function select(code) {
   openPassionBubbles(code);
   syncPassions();
   $("mapwrap").classList.add("dim");
-
-  if (tutorial.active && countryPlay) {
-    tutorialCountry = code;
-    tutorial.next();
-  }
 }
 
 function clear() {
-  if (tutorial.active && tutorial.gate === "category") {
-    return;
-  }
   if (bubbles.open) bubbles.hide();
   state.active = null;
   map.setActive(null);
@@ -1157,20 +775,6 @@ $("map").addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (tutorial.active) {
-    if (e.key === "Escape") {
-      tutorial.exit();
-      return;
-    }
-    if (e.key === "Enter" || e.key === "ArrowRight") {
-      const g = tutorial.gate;
-      if (g === "next" || g === "done") {
-        e.preventDefault();
-        tutorial.next();
-      }
-      return;
-    }
-  }
   if (e.key !== "Escape") return;
   if (insights.open) insights.hide();
   else if (bubbles.open) {

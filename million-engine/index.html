@@ -10,8 +10,7 @@
   <link rel="stylesheet" href="css/map.css?v=20260825b">
   <link rel="stylesheet" href="css/bubbles.css?v=20260825h">
   <link rel="stylesheet" href="css/insights.css?v=20260824a">
-  <link rel="stylesheet" href="css/tutorial.css?v=20260825o">
-  <link rel="stylesheet" href="css/splash.css?v=20260824d">
+  <link rel="stylesheet" href="css/splash.css?v=20260826a">
 </head>
 <body>
   <div class="splash" id="splash" aria-hidden="true">
@@ -27,7 +26,6 @@
       <p class="splash-sub">Connect with people through passions — powered by real GWI data across Erste markets.</p>
       <div class="splash-actions">
         <button type="button" class="splash-start" id="splashStart">Start the engine</button>
-        <button type="button" class="splash-skip" id="splashSkip">Skip to explore</button>
       </div>
     </div>
   </div>
@@ -57,7 +55,6 @@
             <button type="button" class="view-toggle-btn on" data-view="compare" title="Colour markets by Interest">Compare</button>
             <button type="button" class="view-toggle-btn" data-view="mix" title="Distribution mix on markets">Mix</button>
           </div>
-          <button class="analysis-link" id="tutorialBtn" type="button" title="Guided tutorial">Tutorial</button>
           <button class="analysis-link" id="insightsBtn" type="button" title="Optional deep dive">More signals</button>
         </div>
       </div>
@@ -117,16 +114,6 @@
         <div class="dist-tip" id="distTip" aria-hidden="true"></div>
         <div class="source" id="source">GWI Core · Erste markets</div>
 
-        <div class="tutorial-panel tutorial-reader" id="tutorialPanel" aria-hidden="true">
-          <div class="tutorial-reader-inner">
-            <div class="tutorial-reader-scroll" id="tutorialPanelBody"></div>
-            <div class="tutorial-reader-actions">
-              <button type="button" class="tutorial-skip" id="tutorialSkip">Skip tutorial</button>
-              <button type="button" class="tutorial-next" id="tutorialNext">Next</button>
-            </div>
-          </div>
-        </div>
-
         <div class="bubble-overlay" id="bubbleOverlay" aria-hidden="true">
           <div class="bubble-head">
             <div>
@@ -154,7 +141,6 @@
       </div>
       </main>
 
-    <div class="tutorial-scrim" id="tutorialScrim" aria-hidden="true"></div>
   </div>
 
   <div class="insights" id="insights" aria-hidden="true">
@@ -173,6 +159,6 @@
   </div>
 
   <script src="js/vendor/d3.min.js"></script>
-  <script type="module" src="js/app.js?v=20260825ad"></script>
+  <script type="module" src="js/app.js?v=20260826a"></script>
 </body>
 </html>

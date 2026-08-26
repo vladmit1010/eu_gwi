@@ -9,7 +9,6 @@ html.splash-on .explore-bar,
 html.splash-on .legend,
 html.splash-on .passion-hint,
 html.splash-on .source,
-html.splash-on .tutorial-bar,
 html.splash-on .panel,
 html.splash-on #peek {
   opacity: 0 !important;
@@ -204,25 +203,6 @@ html.splash-on .splash-copy {
 
 .splash-start:active {
   transform: translateY(0);
-}
-
-.splash-skip {
-  appearance: none;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-3);
-  letter-spacing: 0.02em;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 8px 0;
-}
-
-.splash-skip:hover {
-  color: var(--ink-2);
 }
 
 /* Clear borders between Erste markets (same fill otherwise merges into one blob) */
