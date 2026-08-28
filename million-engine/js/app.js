@@ -2,6 +2,13 @@ import { $ } from "./utils/dom.js";
 import { createMap, loadEuropeGeo } from "./map.js?v=20260828e";
 import { createSplash } from "./splash.js?v=20260826b";
 import { PRESENTATION_DATA } from "./data/presentation.js";
+import {
+  acquisitionSeries,
+  expectedAcquisition,
+  marketPotential as excelPotential,
+  maxAcquisition,
+} from "./excel-model.js?v=20260828f";
+import { parseImportFile } from "./import-workbook.js?v=20260828i";
 
 const state = {
   data: structuredClone(PRESENTATION_DATA),
@@ -64,50 +71,72 @@ function metricsOf(country, topicId) {
 }
 
 function rates() {
-  const r = state.data.meta?.rates || {};
+  const r = state.data?.meta?.rates || {};
   return {
+    /** Excel $C$19 Acquisition potential — default 0.50% */
     acquisition: Number(r.acquisition) || 0.005,
-    expected: Number(r.expected) || 0.00136,
   };
 }
 
-function setRates({ acquisition, expected }) {
+function setRates({ acquisition }) {
   if (!state.data.meta) state.data.meta = {};
   if (!state.data.meta.rates) state.data.meta.rates = {};
   if (acquisition != null) state.data.meta.rates.acquisition = Number(acquisition);
-  if (expected != null) state.data.meta.rates.expected = Number(expected);
 }
 
 function marketPotential(m) {
   if (!m) return 0;
-  const target = Number(m.target_audience) || 0;
-  const share = Math.max(Number(m.market_share_pct) || 0.01, 0.01) / 100;
-  return Math.round(target / share);
+  return excelPotential(m.target_audience, m.market_share_pct);
 }
 
-/** Derive potential / max / expected from inputs + global rates. */
+function totalTargetAudience() {
+  let sum = 0;
+  for (const c of Object.values(state.data.countries || {})) {
+    sum += Number(c?.base?.target_audience) || 0;
+  }
+  return sum;
+}
+
+/**
+ * Excel (formeln.txt):
+ *   Potential = Target / MarketShare
+ *   Max       = Potential × AcquisitionPotential ($C$19)
+ *   Expected  = Max × MarketShare
+ *   ShareTotal= Target / Σ Target
+ *   PP vols   = Expected, then ×(1+growth) chain
+ */
 function derive(m) {
   if (!m) return null;
-  const { acquisition, expected } = rates();
-  const potential = marketPotential(m);
-  const maxAcq = Math.round(potential * acquisition);
-  const expAcq = Math.round(potential * expected);
+  const { acquisition } = rates();
+  const target = Number(m.target_audience) || 0;
+  const marketSharePct = Number(m.market_share_pct) || 0;
+  const potential =
+    m._excel?.pot != null ? Number(m._excel.pot) : marketPotential(m);
+  const maxAcq =
+    m._excel?.max != null ? Number(m._excel.max) : maxAcquisition(potential, acquisition);
+  const expAcq =
+    m._excel?.exp != null ? Number(m._excel.exp) : expectedAcquisition(maxAcq, marketSharePct);
+  const total = totalTargetAudience();
+  const shareTotal =
+    total > 0 ? Math.round((1000 * target) / total) / 10 : Number(m.share_of_total_target_pct) || 0;
+  const growthPct = m.growth_pct || [];
+  // Excel S…AB: always rebuild from Expected × growth unless row locks imported PP vols
+  const growthVolume =
+    m.pp_locked && Array.isArray(m.growth_volume) && m.growth_volume.length
+      ? m.growth_volume
+      : acquisitionSeries(expAcq, growthPct);
   return {
     ...m,
+    share_of_total_target_pct: shareTotal,
     market_potential: potential,
     max_acquisition: maxAcq,
     expected_acquisition: expAcq,
+    growth_volume: growthVolume,
     display: {
-      target_audience: fmtPeople(m.target_audience),
-      share_of_total_target_pct:
-        m.share_of_total_target_pct != null
-          ? `${m.share_of_total_target_pct}%`
-          : m.display?.share_of_total_cards_pct,
-      share_of_total_cards_pct:
-        m.share_of_total_target_pct != null
-          ? `${m.share_of_total_target_pct}%`
-          : m.display?.share_of_total_cards_pct,
-      market_share_pct: `${m.market_share_pct}%`,
+      target_audience: fmtPeople(target),
+      share_of_total_target_pct: `${shareTotal}%`,
+      share_of_total_cards_pct: `${shareTotal}%`,
+      market_share_pct: `${marketSharePct}%`,
       market_potential: fmtPeople(potential),
       max_acquisition: fmtPeople(maxAcq),
       expected_acquisition: fmtPeople(expAcq),
@@ -189,23 +218,19 @@ function syncMapHeat() {
 }
 
 function syncRatesUI() {
-  const { acquisition, expected } = rates();
+  const { acquisition } = rates();
   const acq = $("acqRate");
-  const exp = $("expRate");
   if (acq) acq.value = String(acquisition);
-  if (exp) exp.value = String(expected);
   if ($("acqRateLabel")) $("acqRateLabel").textContent = `${(acquisition * 100).toFixed(2)}%`;
-  if ($("expRateLabel")) $("expRateLabel").textContent = `${(expected * 100).toFixed(3)}%`;
   const at = derive(state.data.countries?.AT?.base);
   if ($("ratesHint") && at) {
-    $("ratesHint").textContent = `Austria → expected ${at.display.expected_acquisition} · max ${at.display.max_acquisition} (potential ${at.display.market_potential})`;
+    $("ratesHint").textContent = `Excel: Max = Potential × rate · Expected = Max × market share → AT expected ${at.display.expected_acquisition}`;
   }
 }
 
 function onRatesChange() {
   setRates({
     acquisition: Number($("acqRate")?.value),
-    expected: Number($("expRate")?.value),
   });
   syncRatesUI();
   syncMapHeat();
@@ -426,7 +451,8 @@ function openCountry(code, { history = "push" } = {}) {
 function renderYearTable(m) {
   const years = state.data.years || [];
   const table = $("yearTable");
-  if (!table || !m) return;
+  const d = derive(m);
+  if (!table || !d) return;
   const headRow = table.querySelector("thead tr");
   const pctRow = $("yearPctRow");
   const volRow = $("yearVolRow");
@@ -448,13 +474,15 @@ function renderYearTable(m) {
     headRow.appendChild(th);
 
     const tdP = document.createElement("td");
-    tdP.textContent = m.growth_pct?.[i] != null ? `${m.growth_pct[i]}%` : "—";
+    // Excel: growth J…R applies between years; show rate that produced this year (none for Y1)
+    if (i === 0) tdP.textContent = "—";
+    else tdP.textContent = d.growth_pct?.[i - 1] != null ? `${d.growth_pct[i - 1]}%` : "—";
     pctRow.appendChild(tdP);
 
     const tdV = document.createElement("td");
-    const v = m.growth_volume?.[i];
+    const v = d.growth_volume?.[i];
     tdV.textContent =
-      v == null ? "—" : v >= 1000 ? `${Math.round(v / 1000)}k` : String(v);
+      v == null ? "—" : v >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v));
     volRow.appendChild(tdV);
   });
 }
@@ -464,7 +492,8 @@ function renderOfferChartFromMetrics(m, title) {
   const barsEl = $("offerChartBars");
   if (!wrap || !barsEl) return;
   const years = state.data.years || [];
-  const vols = m?.growth_volume || [];
+  const d = derive(m);
+  const vols = d?.growth_volume || [];
   if (!vols.length) {
     wrap.hidden = true;
     barsEl.replaceChildren();
@@ -473,7 +502,7 @@ function renderOfferChartFromMetrics(m, title) {
   wrap.hidden = false;
   $("offerChartTitle").textContent = title || "10-year volume";
   $("offerChartCaption").textContent =
-    "Yearly volume after growth % · demo — replace via Import";
+    "PP1 = Expected · then ×(1 + growth) per Excel formeln";
 
   const max = Math.max(...vols.map(Number), 1);
   barsEl.replaceChildren();
@@ -520,10 +549,10 @@ function openOffer(topicId, { history = "push" } = {}) {
 
   $("offerDesc1").textContent =
     topicId === "base"
-      ? `Potential = target ÷ (market share / 100). Max = potential × acquisition rate. Expected = potential × expected rate.`
-      : `Hobby row for ${meta.label}. Same formulas · rates are global (see map panel).`;
+      ? `Excel: Potential = Target ÷ Market share. Max = Potential × acquisition potential. Expected = Max × Market share (= Target × rate).`
+      : `Hobby row for ${meta.label}. Same Excel formulas · acquisition potential is global (map panel).`;
   $("offerDesc2").textContent =
-    "Change rates on the map to recalculate max / expected for every country.";
+    "Change acquisition potential on the map to recalculate max / expected for every country.";
 
   renderOfferChartFromMetrics(m, `${meta.label} · volume by year`);
   renderYearTable(m);
@@ -564,6 +593,40 @@ function applyHistorySnapshot(snap) {
   }
 }
 
+async function importDeckFile(file) {
+  if (!file) return;
+  const XLSX = globalThis.XLSX;
+  if (!XLSX && !file.name.toLowerCase().endsWith(".json")) {
+    throw new Error("SheetJS (XLSX) not loaded — refresh the page");
+  }
+  const result = await parseImportFile(file, XLSX, { rate: rates().acquisition });
+  if (!result.presentation?.countries) throw new Error("No countries found in file");
+
+  state.data = result.presentation;
+  applyCopy();
+  syncRatesUI();
+  bootMaps();
+
+  // Leave cover if still there — go straight to map with new data
+  if (state.level === "cover") {
+    document.documentElement.classList.remove("splash-on");
+    $("splash")?.setAttribute("aria-hidden", "true");
+    openMap({ history: "replace" });
+  } else if (state.level === "country" && state.country) {
+    openCountry(state.country, { history: "replace" });
+  } else if (state.level === "offer" && state.country && state.topic) {
+    openCountry(state.country, { history: false });
+    openOffer(state.topic, { history: "replace" });
+  } else {
+    openMap({ history: "replace" });
+  }
+
+  const n = Object.keys(result.presentation.countries).length;
+  const sheet = result.sheet ? ` · ${result.sheet}` : "";
+  if ($("source")) $("source").textContent = `${file.name}${sheet} · ${n} countries`;
+  return result;
+}
+
 function bindChrome() {
   $("countryBack")?.addEventListener("click", () => goBack());
   $("offerBack")?.addEventListener("click", () => goBack());
@@ -571,7 +634,6 @@ function bindChrome() {
   $("restartBtn")?.addEventListener("click", () => restart());
 
   $("acqRate")?.addEventListener("input", onRatesChange);
-  $("expRate")?.addEventListener("input", onRatesChange);
 
   window.addEventListener("popstate", (e) => {
     const snap = e.state?.deck ? e.state : { level: "cover", country: null, topic: null, deck: true };
@@ -583,22 +645,52 @@ function bindChrome() {
     e.target.value = "";
     if (!file) return;
     try {
-      const text = await file.text();
-      const json = JSON.parse(text);
-      if (!json.countries || !json.hobbies) throw new Error("Invalid presentation JSON");
-      state.data = json;
-      applyCopy();
-      bootMaps();
-      if (state.level === "country" && state.country) openCountry(state.country, { history: "replace" });
-      else if (state.level === "offer" && state.country && state.topic) {
-        openCountry(state.country, { history: false });
-        openOffer(state.topic, { history: "replace" });
-      } else if (state.level === "map" || state.level === "country" || state.level === "offer") {
-        openMap({ history: "replace" });
-      }
+      await importDeckFile(file);
     } catch (err) {
       console.error(err);
-      alert("Could not import JSON. Check the presentation.json schema.");
+      alert(`Import failed: ${err.message || err}`);
+    }
+  });
+
+  // Drag & drop Excel anywhere on the page
+  let dragDepth = 0;
+  const overlay = $("dropOverlay");
+  const showDrop = (on) => {
+    document.documentElement.classList.toggle("is-dropping", on);
+    if (overlay) {
+      overlay.hidden = !on;
+      overlay.setAttribute("aria-hidden", on ? "false" : "true");
+    }
+  };
+
+  window.addEventListener("dragenter", (e) => {
+    if (![...e.dataTransfer.types].includes("Files")) return;
+    e.preventDefault();
+    dragDepth += 1;
+    showDrop(true);
+  });
+  window.addEventListener("dragover", (e) => {
+    if (![...e.dataTransfer.types].includes("Files")) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  });
+  window.addEventListener("dragleave", (e) => {
+    if (![...e.dataTransfer.types].includes("Files")) return;
+    e.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (dragDepth === 0) showDrop(false);
+  });
+  window.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    dragDepth = 0;
+    showDrop(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (!file) return;
+    try {
+      await importDeckFile(file);
+    } catch (err) {
+      console.error(err);
+      alert(`Import failed: ${err.message || err}`);
     }
   });
 

@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>The Million Engine</title>
-  <link rel="stylesheet" href="css/tokens.css?v=20260828e">
+  <link rel="stylesheet" href="css/tokens.css?v=20260828f">
   <link rel="stylesheet" href="css/base.css?v=20260827a">
   <link rel="stylesheet" href="css/map.css?v=20260828e">
   <link rel="stylesheet" href="css/splash.css?v=20260827a">
-  <link rel="stylesheet" href="css/deck.css?v=20260828e">
+  <link rel="stylesheet" href="css/deck.css?v=20260828j">
 </head>
 <body>
   <!-- L0 Cover -->
@@ -39,14 +39,18 @@
         <span class="deck-wordmark" id="wordmark">The Million Engine</span>
       </div>
       <div class="deck-bar-actions">
-        <label class="deck-import">
-          Import
-          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        <label class="deck-import" title="Click or drop Excel here">
+          Drop Excel here
+          <input type="file" id="importFile" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.json,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
         </label>
         <button type="button" class="ghostbtn" id="restartBtn" hidden>Restart</button>
       </div>
     </header>
 
+    <div class="drop-overlay" id="dropOverlay" hidden aria-hidden="true">
+      <p class="drop-overlay-title">Drop Excel to load</p>
+      <p class="drop-overlay-sub">.xlsx · same layout as masterexcel.xlsx</p>
+    </div>
     <!-- L1 Map -->
     <main class="stage" id="stage">
       <div class="mapwrap" id="mapwrap">
@@ -62,16 +66,12 @@
         <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Market map"></svg>
         <div class="peek" id="peek"></div>
         <div class="rates-panel" id="ratesPanel">
-          <p class="rates-title">Acquisition rates</p>
+          <p class="rates-title">Acquisition potential</p>
           <label class="rates-field">
-            <span>Max rate <em id="acqRateLabel">0.5%</em></span>
+            <span>Rate <em id="acqRateLabel">0.5%</em></span>
             <input type="range" id="acqRate" min="0.001" max="0.02" step="0.0001" value="0.005">
           </label>
-          <label class="rates-field">
-            <span>Expected rate <em id="expRateLabel">0.14%</em></span>
-            <input type="range" id="expRate" min="0.0002" max="0.01" step="0.00005" value="0.00138">
-          </label>
-          <p class="rates-hint" id="ratesHint">Expected rate moves map numbers · max rate moves Max total</p>
+          <p class="rates-hint" id="ratesHint">Excel $C$19 · Max = Potential × rate · Expected = Max × market share</p>
         </div>
         <div class="map-legend" id="mapLegend">
           <span class="map-legend-title">Expected acquisition</span>
@@ -82,7 +82,7 @@
           </div>
         </div>
         <p class="deck-hint" id="mapHint">Click a country</p>
-        <div class="source" id="source">Placeholder deck · Import JSON to fill</div>
+        <div class="source" id="source">Import Excel · CSV · JSON to fill</div>
       </div>
     </main>
 
@@ -144,6 +144,7 @@
   </div>
 
   <script src="js/vendor/d3.min.js"></script>
-  <script type="module" src="js/app.js?v=20260828e"></script>
+  <script src="js/vendor/xlsx.full.min.js"></script>
+  <script type="module" src="js/app.js?v=20260828j"></script>
 </body>
 </html>

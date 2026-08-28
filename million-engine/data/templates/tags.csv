@@ -1,0 +1,6 @@
+tag,value
+# Optional overrides / passion PP volumes (plain integers, no thousand separators)
+# AT_RUN_PP1,13875
+# AT_RUN_PP2,14150
+# AT_RUN_HEADLINE,Running Club in Austria
+# AT_RUN_BULLET1,First offering point

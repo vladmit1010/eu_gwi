@@ -1,5 +1,7 @@
 node_modules/
 .DS_Store
+deck-filled.html
+Million-Engine.html
 
 # Python leftovers (app is Node/JS only)
 .venv/

@@ -8,6 +8,8 @@
     "test": "node tests/smoke.mjs",
     "smoke": "node tests/smoke.mjs",
     "fill-placeholders": "node scripts/fill-placeholders.mjs",
+    "csv-to-deck": "node scripts/csv-to-deck.mjs",
+    "build-deck": "node scripts/csv-to-deck.mjs --excel masterexcel.xlsx --out Million-Engine.html --write-json",
     "seed-demo": "node scripts/seed-demo-presentation.mjs",
     "parse-gwi": "node scripts/parse-gwi.mjs",
     "merge-gwi": "node scripts/merge-frequency.mjs",
