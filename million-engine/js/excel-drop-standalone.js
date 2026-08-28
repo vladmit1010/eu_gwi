@@ -113,6 +113,7 @@
     if (headerRow < 0) return null;
     var hdr = matrix[headerRow];
     var iCountry = findCol(hdr, [function (h) { return h === "countries" || h === "country"; }]);
+    var iTotal = findCol(hdr, [function (h) { return h === "total" || h === "total total"; }]);
     var ppIdx = [];
     for (var p = 1; p <= 10; p++) {
       var idx = findCol(hdr, [function (h) { return h === "pp" + p || h === "pp " + p; }]);
@@ -129,10 +130,14 @@
         if (String(name || "").trim() && !countryCode(name)) break;
         continue;
       }
-      out[code] = ppIdx.map(function (i) {
+      var vols = ppIdx.map(function (i) {
         var v = num(line[i]);
         return isFinite(v) ? v : 0;
       });
+      var fromCol = iTotal >= 0 ? num(line[iTotal]) : NaN;
+      var total = isFinite(fromCol) ? fromCol : vols.reduce(function (s, v) { return s + v; }, 0);
+      vols.total = total;
+      out[code] = vols;
     }
     return out;
   }
@@ -232,6 +237,8 @@
       ) || parseCountryBlock(matrix, passion.match) || {};
     }
 
+    var readinessBlock = parseCountryBlock(matrix, /potentially\s+acquired\s+cards/i) || {};
+
     var sumT = rows.reduce(function (s, row) { return s + row.target; }, 0);
     var tags = {};
     for (var ri = 0; ri < rows.length; ri++) {
@@ -243,6 +250,10 @@
       var max = isFinite(row.max) ? Math.round(row.max) : Math.round(pot * rate);
       var exp = isFinite(row.exp) ? Math.round(row.exp) : Math.round(max * (row.marketShare / 100));
       var vols = row.vols || [exp, exp, exp, exp, exp, exp, exp, exp, exp, exp];
+      var ready = readinessBlock[row.code];
+      var total10 = ready && isFinite(ready.total)
+        ? Math.round(ready.total)
+        : Math.round(vols.reduce(function (s, v) { return s + (Number(v) || 0); }, 0));
 
       tags[row.code + "_TARGET"] = fmtInt(row.target);
       tags[row.code + "_CARDSHARE"] = fmtPct(share);
@@ -250,6 +261,7 @@
       tags[row.code + "_MPOT"] = fmtInt(pot);
       tags[row.code + "_MAXACQ"] = fmtInt(max);
       tags[row.code + "_EXPACQ"] = fmtInt(exp);
+      tags[row.code + "_TOTAL10"] = fmtInt(total10);
 
       for (pi = 0; pi < PASSIONS.length; pi++) {
         passion = PASSIONS[pi];

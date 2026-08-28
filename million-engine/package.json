@@ -7,17 +7,12 @@
     "start": "node scripts/serve.mjs",
     "test": "node tests/smoke.mjs",
     "smoke": "node tests/smoke.mjs",
-    "fill-placeholders": "node scripts/fill-placeholders.mjs",
-    "csv-to-deck": "node scripts/csv-to-deck.mjs",
-    "build-deck": "node scripts/csv-to-deck.mjs --excel masterexcel.xlsx --out Million-Engine.html --write-json",
-    "seed-demo": "node scripts/seed-demo-presentation.mjs",
-    "parse-gwi": "node scripts/parse-gwi.mjs",
-    "merge-gwi": "node scripts/merge-frequency.mjs",
-    "build-markets": "node scripts/build-markets.mjs",
-    "build-data": "node scripts/merge-frequency.mjs --write && node scripts/build-markets.mjs"
+    "check-offerings": "python3 scripts/check_offerings.py",
+    "build-standalone": "node scripts/build-standalone.mjs",
+    "build-deck": "npm run build-standalone"
   },
-  "dependencies": {
-    "playwright-core": "^1.49.0",
-    "xlsx": "^0.18.5"
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "playwright-core": "^1.49.0"
   }
 }

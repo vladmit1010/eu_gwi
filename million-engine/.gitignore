@@ -1,9 +1,13 @@
 node_modules/
 .DS_Store
-deck-filled.html
+
+# Build / share artifact (regenerate: npm run build-standalone)
 Million-Engine.html
 
-# Python leftovers (app is Node/JS only)
+# Local tooling (kept on disk, not in git)
+tests/
+
+# Python leftovers
 .venv/
 __pycache__/
 *.py[cod]

@@ -1,7 +1,0 @@
-{
-  "Romania_F1_Potential": "1.4M",
-  "Romania_F1_MCOffer_Description_1": "Real offer text…",
-  "Romania_F1_Chart_Bar_Jan": 98,
-  "Romania_F1_Chart_Bar_Jun": 121,
-  "_note": "Chart is a time series for all users (Jan–Jun demo). Prefer full-file Import; tags on chart.bars[].tag work with fill-placeholders."
-}

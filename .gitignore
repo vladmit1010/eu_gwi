@@ -24,3 +24,9 @@ pip-wheel-metadata/
 
 # Node
 **/node_modules/
+
+# Root reference / brief (local only)
+Erste_Mastercard-Export.xlsx
+mastercard_aufgabe*.docx
+*.docx
+segmentation-v5.html

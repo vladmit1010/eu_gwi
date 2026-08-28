@@ -1,0 +1,108 @@
+{
+  "RUN": [
+    {
+      "text": "NY Marathon packages"
+    },
+    {
+      "text": "Tokyo Marathon packages"
+    },
+    {
+      "text": "Cashback (5–10 transactions per month to be eligible)"
+    },
+    {
+      "text": "Strava — 30% cashback on subscription"
+    },
+    {
+      "text": "GymBeam — 30% cashback, capped"
+    },
+    {
+      "text": "Hyrox Games — 50% cashback for one competition"
+    }
+  ],
+  "F1": [
+    {
+      "text": "IP Rights (e.g. McLaren Mastercard co-branded card and communicate the asset)"
+    },
+    {
+      "text": "Hot Laps Experience package (prize draw for clients)",
+      "countries": [
+        "AT",
+        "PL",
+        "SK"
+      ]
+    },
+    {
+      "text": "McLaren Mastercard merchandise"
+    },
+    {
+      "text": "McLaren Technology Centre experience (prize draw for clients)"
+    },
+    {
+      "text": "Cashback (5–10 transactions per month to be eligible)"
+    },
+    {
+      "text": "F1 broadcasting platform — 20% cashback on subscription"
+    },
+    {
+      "text": "B2B Paddock Pass (access to the Paddock for selected GPs, for Erste corporate clients)",
+      "countries": [
+        "AT",
+        "PL",
+        "SK"
+      ]
+    }
+  ],
+  "MUSLN": [
+    {
+      "text": "IP Rights (e.g. communicate ticket pre-sales)"
+    }
+  ],
+  "MUSOT": [
+    {
+      "text": "Cashback (5–10 transactions per month to be eligible)"
+    },
+    {
+      "text": "ULTRA Music Festival — 50% cashback on tickets",
+      "countries": [
+        "HR"
+      ]
+    },
+    {
+      "text": "YouTube Premium / Spotify / Apple Music — 20% cashback on subscription"
+    }
+  ],
+  "GAMMC": [
+    {
+      "text": "Valorant IP Rights (e.g. Valorant co-branded card and communicate the asset)"
+    },
+    {
+      "text": "League of Legends IP Rights (e.g. LoL co-branded card and communicate the asset)"
+    },
+    {
+      "text": "Cashback (5–10 transactions per month to be eligible)"
+    },
+    {
+      "text": "Twitch — 20% cashback on creator subscriptions, capped"
+    },
+    {
+      "text": "In-game currencies — 20% cashback, capped"
+    },
+    {
+      "text": "Steam — 20% cashback on subscriptions, capped"
+    }
+  ],
+  "GAMOT": [
+    {
+      "text": "Cashback (5–10 transactions per month to be eligible)"
+    },
+    {
+      "text": "Twitch — 20% cashback on creator subscriptions, capped"
+    },
+    {
+      "text": "In-game currencies — 20% cashback, capped"
+    },
+    {
+      "text": "Steam — 20% cashback on subscriptions, capped"
+    }
+  ]
+}

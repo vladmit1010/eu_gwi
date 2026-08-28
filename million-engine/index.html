@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" class="splash-on">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>The Million Engine</title>
-  <link rel="stylesheet" href="css/tokens.css?v=20260828f">
-  <link rel="stylesheet" href="css/base.css?v=20260827a">
-  <link rel="stylesheet" href="css/map.css?v=20260828e">
-  <link rel="stylesheet" href="css/splash.css?v=20260827a">
-  <link rel="stylesheet" href="css/deck.css?v=20260828j">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>The Million Engine</title>
+<link rel="stylesheet" href="css/deck-app.css">
 </head>
 <body>
-  <!-- L0 Cover -->
+<!-- L0 Cover -->
   <div class="splash" id="splash" aria-hidden="true">
     <div class="splash-copy">
       <div class="splash-brand">
@@ -19,12 +15,19 @@
           <circle cx="9" cy="8" r="7" fill="var(--red)"/>
           <circle cx="17" cy="8" r="7" fill="var(--yellow)" style="mix-blend-mode:screen"/>
         </svg>
-        <span class="splash-kicker">Mastercard × Erste</span>
+        <span class="splash-kicker" id="splashKicker">Mastercard × Erste</span>
       </div>
       <h1 class="splash-title">The <em>1 Million</em> Engine</h1>
-      <p class="splash-sub">Connect with people through passions across Erste markets.</p>
+      <p class="splash-sub">Load your Excel first, then start the engine.</p>
+      <div class="splash-import">
+        <label class="splash-import-btn" id="splashImportBtn" title="Choose Excel file">
+          <span id="splashImportLabel">Drop Excel here or click to load</span>
+          <input type="file" id="importFile" accept=".xlsx,.xlsm,.xls,.csv" hidden>
+        </label>
+        <p class="splash-import-status" id="splashImportStatus">No file loaded yet</p>
+      </div>
       <div class="splash-actions">
-        <button type="button" class="splash-start" id="splashStart">Start the engine</button>
+        <button type="button" class="splash-start" id="splashStart" disabled>Start the engine</button>
       </div>
     </div>
   </div>
@@ -39,112 +42,99 @@
         <span class="deck-wordmark" id="wordmark">The Million Engine</span>
       </div>
       <div class="deck-bar-actions">
-        <label class="deck-import" title="Click or drop Excel here">
-          Drop Excel here
-          <input type="file" id="importFile" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.json,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
-        </label>
         <button type="button" class="ghostbtn" id="restartBtn" hidden>Restart</button>
       </div>
     </header>
 
-    <div class="drop-overlay" id="dropOverlay" hidden aria-hidden="true">
+    <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
       <p class="drop-overlay-title">Drop Excel to load</p>
-      <p class="drop-overlay-sub">.xlsx · same layout as masterexcel.xlsx</p>
+      <p class="drop-overlay-sub">Same layout as masterexcel.xlsx</p>
     </div>
+    <div class="import-toast" id="importToast" aria-live="polite"></div>
+
     <!-- L1 Map -->
     <main class="stage" id="stage">
       <div class="mapwrap" id="mapwrap">
         <div class="map-atmosphere" aria-hidden="true"></div>
         <div class="map-total" id="mapTotal">
-          <span class="map-total-label">Total expected</span>
+          <span class="map-total-label">Total expected · 10 years</span>
           <strong class="map-total-value" id="mapTotalValue">—</strong>
-          <span class="map-total-sub">
-            Max <em id="mapTotalMax">—</em>
-            · Potential <em id="mapTotalPotential">—</em>
-          </span>
         </div>
         <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Market map"></svg>
         <div class="peek" id="peek"></div>
-        <div class="rates-panel" id="ratesPanel">
-          <p class="rates-title">Acquisition potential</p>
-          <label class="rates-field">
-            <span>Rate <em id="acqRateLabel">0.5%</em></span>
-            <input type="range" id="acqRate" min="0.001" max="0.02" step="0.0001" value="0.005">
-          </label>
-          <p class="rates-hint" id="ratesHint">Excel $C$19 · Max = Potential × rate · Expected = Max × market share</p>
-        </div>
-        <div class="map-legend" id="mapLegend">
-          <span class="map-legend-title">Expected acquisition</span>
-          <div class="map-legend-bar" aria-hidden="true"></div>
-          <div class="map-legend-row">
-            <span id="legendLo">—</span>
-            <span id="legendHi">—</span>
-          </div>
-        </div>
-        <p class="deck-hint" id="mapHint">Click a country</p>
-        <div class="source" id="source">Import Excel · CSV · JSON to fill</div>
+        <p class="deck-hint" id="mapHint">Pick a country</p>
+        <div class="source" id="source"></div>
       </div>
     </main>
 
     <!-- L2 Country -->
     <section class="country-layer" id="countryLayer" aria-hidden="true">
       <button type="button" class="ghostbtn country-back" id="countryBack">Back</button>
-      <div class="country-split">
-        <div class="country-aside">
-          <p class="country-kicker">Market overview</p>
-          <h2 class="country-title" id="countryTitle">—</h2>
-          <p class="country-teaser" id="countryTeaser"></p>
-          <div class="metric-strip" id="baseStrip"></div>
-          <p class="country-kicker hobby-kicker">Hobbies / assets</p>
-          <div class="topic-cards" id="topicCards"></div>
-        </div>
+      <div class="country-top">
+        <p class="country-kicker">Pick a passion</p>
+        <h2 class="country-title" id="countryTitle">—</h2>
+        <div class="passion-grid" id="passionGrid"></div>
+      </div>
+      <div class="country-main">
         <div class="country-map-panel">
           <svg id="countryMap" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Selected country"></svg>
+        </div>
+        <div class="master-note" id="masterNote" hidden>
+          <p class="master-note-kicker">Market data</p>
+          <div class="master-grid" id="masterGrid"></div>
         </div>
       </div>
     </section>
 
-    <!-- L3 Hobby / base detail -->
+    <!-- L3 Offer -->
     <section class="offer-layer" id="offerLayer" aria-hidden="true">
       <div class="offer-toolbar">
         <button type="button" class="ghostbtn" id="offerBack">Back</button>
         <button type="button" class="ghostbtn" id="offerRestart">Restart</button>
       </div>
       <article class="offer-card" id="offerCard">
-        <p class="offer-kicker" id="offerKicker">Market detail</p>
-        <h2 class="offer-title" id="offerTitle">—</h2>
-        <div class="offer-stats" id="offerStats"></div>
+        <div class="offer-head">
+          <p class="offer-kicker" id="offerKicker">—</p>
+          <h2 class="offer-title" id="offerTitle">—</h2>
+        </div>
         <div class="offer-body">
-          <p id="offerDesc1"></p>
-          <p id="offerDesc2"></p>
-        </div>
-        <div class="offer-chart" id="offerChart">
-          <div class="offer-chart-head">
-            <p class="offer-chart-title" id="offerChartTitle"></p>
-            <p class="offer-chart-caption" id="offerChartCaption"></p>
+          <div class="offer-chart-col">
+            <div class="offer-hero">
+              <div>
+                <span class="offer-hero-label">Acquisition potential · 10 years</span>
+                <span class="offer-hero-value" id="offerTotal">—</span>
+              </div>
+              <div class="acq-legend" id="acqLegend">
+                <span><i class="sw-base"></i>Acquired to date</span>
+                <span><i class="sw-new"></i>New in period</span>
+              </div>
+            </div>
+            <div class="acq-chart" id="acqChart" role="img" aria-label="Acquisition over ten years"></div>
           </div>
-          <div class="offer-chart-bars" id="offerChartBars" role="img" aria-label="10-year volume chart"></div>
-        </div>
-        <div class="year-table-wrap">
-          <table class="year-table" id="yearTable">
-            <thead>
-              <tr>
-                <th></th>
-                <!-- years filled by JS -->
-              </tr>
-            </thead>
-            <tbody>
-              <tr id="yearPctRow"><th>Growth %</th></tr>
-              <tr id="yearVolRow"><th>Volume</th></tr>
-            </tbody>
-          </table>
+          <div class="offer-facts-col">
+            <div class="offer-offering">
+              <p class="offering-kicker" id="offeringKicker">Mastercard offering</p>
+              <ul class="offer-bullets" id="offerBullets"></ul>
+              <p class="offering-empty">Offering to be defined.</p>
+            </div>
+          </div>
         </div>
       </article>
     </section>
   </div>
 
-  <script src="js/vendor/d3.min.js"></script>
+  <!-- Data check overlay: Shift+D -->
+  <div class="checker" id="checker" hidden>
+    <div class="checker-head">
+      <b>Datencheck</b>
+      <button type="button" class="ghostbtn" id="checkerClose">Schließen</button>
+    </div>
+    <div class="checker-body" id="checkerBody"></div>
+  </div>
+
+  <!-- Vendor + Excel parser (global XLSX + parseExcelFileToTags) -->
   <script src="js/vendor/xlsx.full.min.js"></script>
-  <script type="module" src="js/app.js?v=20260828j"></script>
+  <script src="js/excel-drop-standalone.js"></script>
+  <script type="module" src="js/deck/main.js"></script>
 </body>
 </html>
