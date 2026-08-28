@@ -352,9 +352,285 @@ html.level-offer .country-layer {
   margin-bottom: 22px;
 }
 
+.rates-panel {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 8;
+  width: min(280px, calc(100% - 32px));
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--panel-glass);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+}
+
+.rates-title {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+
+.rates-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.rates-field span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rates-field em {
+  font-style: normal;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.rates-field input[type="range"] {
+  width: 100%;
+  accent-color: var(--blue);
+}
+
+.rates-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--ink-3);
+}
+
+.map-total {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 18px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-glass);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+}
+
+.map-total-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.map-total-value {
+  font-size: 28px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+.map-total-sub {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+
+.map-total-sub em {
+  font-style: normal;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.map-legend {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  z-index: 8;
+  min-width: 160px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--panel-glass);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+}
+
+.map-legend-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 8px;
+}
+
+.map-legend-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--heat-0), var(--heat-2), var(--heat-4));
+  margin-bottom: 6px;
+}
+
+.map-legend-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.map-legend-binary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.map-legend-item em {
+  margin-left: auto;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.map-legend-item .swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 51, 90, 0.12);
+}
+
+.map-legend-item .swatch.under {
+  background: var(--map-under-million);
+}
+
+.map-legend-item .swatch.over {
+  background: var(--map-over-million);
+}
+
+html.level-country .rates-panel,
+html.level-offer .rates-panel,
+html.level-country .map-legend,
+html.level-offer .map-legend,
+html.level-country .map-total,
+html.level-offer .map-total,
+html.splash-on .rates-panel,
+html.splash-on .map-legend,
+html.splash-on .map-total {
+  display: none;
+}
+
+.hobby-kicker {
+  margin-top: 8px;
+}
+
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.metric-strip-clickable {
+  cursor: pointer;
+}
+
+.metric-chip {
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.metric-strip-clickable:hover .metric-chip {
+  border-color: rgba(40, 112, 237, 0.4);
+}
+
+.metric-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.metric-chip-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.year-table-wrap {
+  margin-top: 24px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.year-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 640px;
+}
+
+.year-table th,
+.year-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+
+.year-table thead th {
+  color: var(--ink-3);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10px;
+  background: var(--bg-soft);
+}
+
+.year-table tbody th {
+  text-align: left;
+  color: var(--ink);
+  font-weight: 650;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+}
+
 .offer-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }

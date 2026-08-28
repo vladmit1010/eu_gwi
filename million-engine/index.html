@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>The Million Engine</title>
-  <link rel="stylesheet" href="css/tokens.css?v=20260827c">
+  <link rel="stylesheet" href="css/tokens.css?v=20260828e">
   <link rel="stylesheet" href="css/base.css?v=20260827a">
-  <link rel="stylesheet" href="css/map.css?v=20260827a">
+  <link rel="stylesheet" href="css/map.css?v=20260828e">
   <link rel="stylesheet" href="css/splash.css?v=20260827a">
-  <link rel="stylesheet" href="css/deck.css?v=20260827b">
+  <link rel="stylesheet" href="css/deck.css?v=20260828e">
 </head>
 <body>
   <!-- L0 Cover -->
@@ -51,21 +51,51 @@
     <main class="stage" id="stage">
       <div class="mapwrap" id="mapwrap">
         <div class="map-atmosphere" aria-hidden="true"></div>
+        <div class="map-total" id="mapTotal">
+          <span class="map-total-label">Total expected</span>
+          <strong class="map-total-value" id="mapTotalValue">—</strong>
+          <span class="map-total-sub">
+            Max <em id="mapTotalMax">—</em>
+            · Potential <em id="mapTotalPotential">—</em>
+          </span>
+        </div>
         <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Market map"></svg>
         <div class="peek" id="peek"></div>
+        <div class="rates-panel" id="ratesPanel">
+          <p class="rates-title">Acquisition rates</p>
+          <label class="rates-field">
+            <span>Max rate <em id="acqRateLabel">0.5%</em></span>
+            <input type="range" id="acqRate" min="0.001" max="0.02" step="0.0001" value="0.005">
+          </label>
+          <label class="rates-field">
+            <span>Expected rate <em id="expRateLabel">0.14%</em></span>
+            <input type="range" id="expRate" min="0.0002" max="0.01" step="0.00005" value="0.00138">
+          </label>
+          <p class="rates-hint" id="ratesHint">Expected rate moves map numbers · max rate moves Max total</p>
+        </div>
+        <div class="map-legend" id="mapLegend">
+          <span class="map-legend-title">Expected acquisition</span>
+          <div class="map-legend-bar" aria-hidden="true"></div>
+          <div class="map-legend-row">
+            <span id="legendLo">—</span>
+            <span id="legendHi">—</span>
+          </div>
+        </div>
         <p class="deck-hint" id="mapHint">Click a country</p>
         <div class="source" id="source">Placeholder deck · Import JSON to fill</div>
       </div>
     </main>
 
-    <!-- L2 Country: cards + focused map -->
+    <!-- L2 Country -->
     <section class="country-layer" id="countryLayer" aria-hidden="true">
       <button type="button" class="ghostbtn country-back" id="countryBack">Back</button>
       <div class="country-split">
         <div class="country-aside">
-          <p class="country-kicker">Sponsoring potentials</p>
+          <p class="country-kicker">Market overview</p>
           <h2 class="country-title" id="countryTitle">—</h2>
           <p class="country-teaser" id="countryTeaser"></p>
+          <div class="metric-strip" id="baseStrip"></div>
+          <p class="country-kicker hobby-kicker">Hobbies / assets</p>
           <div class="topic-cards" id="topicCards"></div>
         </div>
         <div class="country-map-panel">
@@ -74,29 +104,16 @@
       </div>
     </section>
 
-    <!-- L3 Offer -->
+    <!-- L3 Hobby / base detail -->
     <section class="offer-layer" id="offerLayer" aria-hidden="true">
       <div class="offer-toolbar">
         <button type="button" class="ghostbtn" id="offerBack">Back</button>
         <button type="button" class="ghostbtn" id="offerRestart">Restart</button>
       </div>
       <article class="offer-card" id="offerCard">
-        <p class="offer-kicker" id="offerKicker">Mastercard offer</p>
+        <p class="offer-kicker" id="offerKicker">Market detail</p>
         <h2 class="offer-title" id="offerTitle">—</h2>
-        <div class="offer-stats">
-          <div class="offer-stat">
-            <span class="offer-stat-label">Potential</span>
-            <span class="offer-stat-value" id="offerPotential">—</span>
-          </div>
-          <div class="offer-stat">
-            <span class="offer-stat-label">Statistic 1</span>
-            <span class="offer-stat-value" id="offerStat1">—</span>
-          </div>
-          <div class="offer-stat">
-            <span class="offer-stat-label">Statistic 2</span>
-            <span class="offer-stat-value" id="offerStat2">—</span>
-          </div>
-        </div>
+        <div class="offer-stats" id="offerStats"></div>
         <div class="offer-body">
           <p id="offerDesc1"></p>
           <p id="offerDesc2"></p>
@@ -106,13 +123,27 @@
             <p class="offer-chart-title" id="offerChartTitle"></p>
             <p class="offer-chart-caption" id="offerChartCaption"></p>
           </div>
-          <div class="offer-chart-bars" id="offerChartBars" role="img" aria-label="Schematic chart"></div>
+          <div class="offer-chart-bars" id="offerChartBars" role="img" aria-label="10-year volume chart"></div>
+        </div>
+        <div class="year-table-wrap">
+          <table class="year-table" id="yearTable">
+            <thead>
+              <tr>
+                <th></th>
+                <!-- years filled by JS -->
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="yearPctRow"><th>Growth %</th></tr>
+              <tr id="yearVolRow"><th>Volume</th></tr>
+            </tbody>
+          </table>
         </div>
       </article>
     </section>
   </div>
 
   <script src="js/vendor/d3.min.js"></script>
-  <script type="module" src="js/app.js?v=20260827a"></script>
+  <script type="module" src="js/app.js?v=20260828e"></script>
 </body>
 </html>

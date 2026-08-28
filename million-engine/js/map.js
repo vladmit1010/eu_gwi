@@ -78,6 +78,10 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
   let data = null;
   /** Optional { ISO: number|null } — when set, map heats by these values */
   let metricValues = null;
+  /** If set, shown under ISO instead of metricValues */
+  let labelValues = null;
+  /** If set with metricValues, colour is binary: >= threshold vs below */
+  let metricThreshold = null;
   const featureByCode = {};
 
   function setGeo(next) {
@@ -193,19 +197,38 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
       lands[code] = path;
       requestAnimationFrame(() => path.classList.add("drawn"));
 
-      /* Labels on every Erste market — only 6, so always show */
+      /* Labels: ISO + metric value under name */
       if (isActive) {
         const [cx, cy] = centroidOf(code);
+        const stack = document.createElementNS(NS, "g");
+        stack.setAttribute("class", "code-stack");
+        stack.dataset.code = code;
+
         const t = document.createElementNS(NS, "text");
         t.setAttribute("x", cx);
-        t.setAttribute("y", cy);
-        t.setAttribute("class", "code");
+        t.setAttribute("y", cy - 1.4);
+        t.setAttribute("class", "code code-iso");
         t.textContent = code;
-        gCode.appendChild(t);
-        labels[code] = t;
+
+        const v = document.createElementNS(NS, "text");
+        v.setAttribute("x", cx);
+        v.setAttribute("y", cy + 2.4);
+        v.setAttribute("class", "code code-value");
+        v.textContent = "";
+
+        stack.append(t, v);
+        gCode.appendChild(stack);
+        labels[code] = { stack, iso: t, value: v };
       }
     });
     return true;
+  }
+
+  function formatMetricLabel(n) {
+    if (n == null || Number.isNaN(n)) return "";
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 1 : 2)}M`;
+    if (n >= 1000) return `${Math.round(n / 1000)}k`;
+    return String(Math.round(n));
   }
 
   function paint() {
@@ -221,25 +244,34 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
 
     const palette = themeColors();
     const heat = createThemeHeat();
+    const hiFill = cssVarSafe("--map-over-million", "#0f3d8c");
+    const loFill = cssVarSafe("--map-under-million", "#7eb0f5");
 
     Object.keys(lands).forEach((c) => {
       const path = lands[c];
       const live = list.includes(c);
       if (!live) {
         path.style.fill = palette.cold;
-        path.classList.remove("on");
+        path.classList.remove("on", "over-million", "under-million");
         path.parentNode?.classList.remove("mute");
         return;
       }
 
       let fill = palette.live;
+      const raw = usingMetric ? metricValues[c] : growthIndex(data, c, activeThemes);
       if (!empty) {
-        const raw = usingMetric ? metricValues[c] : growthIndex(data, c, activeThemes);
         if (raw == null) fill = palette.live;
-        else {
+        else if (usingMetric && metricThreshold != null) {
+          fill = raw >= metricThreshold ? hiFill : loFill;
+          path.classList.toggle("over-million", raw >= metricThreshold);
+          path.classList.toggle("under-million", raw < metricThreshold);
+        } else {
           const t = (raw - lo) / (hi - lo || 1);
           fill = heat(t);
+          path.classList.remove("over-million", "under-million");
         }
+      } else {
+        path.classList.remove("over-million", "under-million");
       }
       path.style.fill = fill;
       const isOn = c === active;
@@ -247,10 +279,32 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
       path.classList.toggle("on", isOn);
       path.parentNode?.classList.toggle("mute", isMute);
       if (labels[c]) {
-        labels[c].classList.toggle("on", isOn);
-        labels[c].classList.toggle("mute", isMute);
+        labels[c].iso.classList.toggle("on", isOn);
+        labels[c].iso.classList.toggle("mute", isMute);
+        labels[c].value.classList.toggle("on", isOn);
+        labels[c].value.classList.toggle("mute", isMute);
+        const shown =
+          labelValues != null
+            ? labelValues[c]
+            : usingMetric
+              ? metricValues[c]
+              : null;
+        labels[c].value.textContent =
+          shown != null && !Number.isNaN(shown) ? formatMetricLabel(shown) : "";
+        if (usingMetric && metricThreshold != null && metricValues[c] != null) {
+          labels[c].value.classList.toggle("over-million", metricValues[c] >= metricThreshold);
+          labels[c].value.classList.toggle("under-million", metricValues[c] < metricThreshold);
+        } else {
+          labels[c].value.classList.remove("over-million", "under-million");
+        }
       }
     });
+  }
+
+  function cssVarSafe(name, fallback) {
+    if (typeof document === "undefined") return fallback;
+    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return v || fallback;
   }
 
   function drawLock(code) {
@@ -465,6 +519,14 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     metricValues = mapOrNull;
   }
 
+  function setLabelValues(mapOrNull) {
+    labelValues = mapOrNull;
+  }
+
+  function setMetricThreshold(nOrNull) {
+    metricThreshold = nOrNull == null ? null : Number(nOrNull);
+  }
+
   function bubbleAt(i) {
     return gSeg.querySelector(`.bub[data-i="${i}"]`);
   }
@@ -502,8 +564,10 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
       }
       if (labels[c]) {
         const [cx, cy] = centroidOf(c);
-        labels[c].setAttribute("x", cx);
-        labels[c].setAttribute("y", cy);
+        labels[c].iso.setAttribute("x", cx);
+        labels[c].iso.setAttribute("y", cy - 1.4);
+        labels[c].value.setAttribute("x", cx);
+        labels[c].value.setAttribute("y", cy + 2.4);
       }
     });
     paint();
@@ -522,6 +586,8 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     setThemes,
     setActive,
     setMetricValues,
+    setLabelValues,
+    setMetricThreshold,
     bubbleAt,
     highlightBubbles,
     hasShape,

@@ -1,5 +1,5 @@
 /**
- * Smoke tests for 3-level presentation deck.
+ * Smoke tests for 3-level presentation deck (client table schema).
  * Run: npm start (port 8766) then npm test
  */
 
@@ -48,7 +48,7 @@ async function main() {
   const afterSplash = await page.evaluate(() => ({
     splashOn: document.documentElement.classList.contains("splash-on"),
     levelMap: document.documentElement.classList.contains("level-map"),
-    lands: document.querySelectorAll("path.land.live").length,
+    lands: document.querySelectorAll("#mapwrap path.land.live").length,
     explore: !!document.getElementById("exploreBar"),
   }));
   ok("splash dismissed", !afterSplash.splashOn);
@@ -62,22 +62,23 @@ async function main() {
     country: document.documentElement.classList.contains("level-country"),
     title: document.getElementById("countryTitle")?.textContent,
     cards: document.querySelectorAll(".topic-card").length,
+    chips: document.querySelectorAll("#baseStrip .metric-chip").length,
   }));
   ok("L2 country opens", l2.country === true, l2.title);
-  ok("Three topic cards", l2.cards === 3, `n=${l2.cards}`);
+  ok("Base metric chips", l2.chips >= 5, `n=${l2.chips}`);
+  ok("Hobby cards", l2.cards >= 6, `n=${l2.cards}`);
 
   await page.locator(".topic-card").first().click();
   await page.waitForTimeout(300);
   const l3 = await page.evaluate(() => ({
     offer: document.documentElement.classList.contains("level-offer"),
     title: document.getElementById("offerTitle")?.textContent || "",
-    potential: document.getElementById("offerPotential")?.textContent || "",
     bars: document.querySelectorAll("#offerChartBars .offer-chart-col").length,
-    chartHidden: document.getElementById("offerChart")?.hidden === true,
+    yearCells: document.querySelectorAll("#yearPctRow td").length,
   }));
-  ok("L3 offer opens", l3.offer === true);
-  ok("Offer shows demo copy", /Romania|Formula|opportunity|Interest|M|k|%/i.test(l3.title + l3.potential));
-  ok("Schematic chart bars", l3.bars >= 6 && !l3.chartHidden, `bars=${l3.bars}`);
+  ok("L3 offer opens", l3.offer === true, l3.title);
+  ok("10-year chart", l3.bars >= 10, `bars=${l3.bars}`);
+  ok("Year growth row", l3.yearCells >= 10, `cells=${l3.yearCells}`);
 
   await page.click("#offerBack");
   await page.waitForTimeout(200);

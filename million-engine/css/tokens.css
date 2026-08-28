@@ -50,6 +50,9 @@
   --map-live: #2870ed;
   --map-live-hover: #1a54c4;
   --map-live-on: #123f96;
+  /* Binary map: market potential vs 1M */
+  --map-under-million: #7eb0f5;
+  --map-over-million: #0f3d8c;
   --heat-0: #d7e4fc;
   --heat-1: #8eaffa;
   --heat-2: #5b8ff5;

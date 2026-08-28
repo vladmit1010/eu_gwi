@@ -1,1190 +1,1738 @@
 {
-  "_comment": "Demo invent data for layout. Replace entire file via Import or fill-placeholders. Tags remain on chart.bars[].tag. Countries: AT HR CZ HU RO RS SI SK. Topics: F1 Running LiveMusic.",
+  "_comment": "Fictional demo invent — same order of magnitude as a CEE card table, not client figures. Inputs only in rows. App derives: market_potential = target / (market_share%/100); max_acquisition = potential * rates.acquisition; expected_acquisition = potential * rates.expected.",
   "meta": {
     "title": "The Million Engine",
     "tagline": "Mastercard × Erste",
-    "source": "Demo schematic data · replace via Import before client use"
+    "source": "Demo invent · editable acquisition rates",
+    "rates": {
+      "acquisition": 0.005,
+      "expected": 0.00138162
+    }
   },
-  "topics": [
+  "years": [
+    2026,
+    2027,
+    2028,
+    2029,
+    2030,
+    2031,
+    2032,
+    2033,
+    2034,
+    2035
+  ],
+  "hobbies": [
     {
-      "id": "F1",
-      "label": "Formula 1"
+      "id": "running_club",
+      "label": "Running Club"
     },
     {
-      "id": "Running",
-      "label": "Running"
+      "id": "mclaren_f1",
+      "label": "McLaren Mastercard F1"
     },
     {
-      "id": "LiveMusic",
-      "label": "Live music"
+      "id": "music_live_nation",
+      "label": "Music · Live Nation"
+    },
+    {
+      "id": "music_other",
+      "label": "Music · Other"
+    },
+    {
+      "id": "gaming_mc_assets",
+      "label": "Gaming · MC assets"
+    },
+    {
+      "id": "gaming_other",
+      "label": "Gaming · Other"
     }
   ],
   "countries": {
     "AT": {
       "name": "Austria",
       "slug": "Austria",
-      "peek": "2.0M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Austria (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "586k",
-          "offer": {
-            "title": "Formula 1 opportunity in Austria",
-            "description_1": "Demo narrative for Austria × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Austria_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "102 Interest",
-            "statistic_2": "13% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Austria_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 99,
-                  "tag": "Austria_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 88,
-                  "tag": "Austria_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 77,
-                  "tag": "Austria_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 123,
-                  "tag": "Austria_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 86,
-                  "tag": "Austria_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 75,
-                  "tag": "Austria_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+      "peek": "2.8M target · demo",
+      "teaser": "15% of total target · 27% market share · potential ~10.3M",
+      "base": {
+        "target_audience": 2775000,
+        "share_of_total_target_pct": 15,
+        "market_share_pct": 27,
+        "growth_pct": [
+          2.3,
+          4.2,
+          2,
+          3.9,
+          2.9,
+          1.3,
+          2.6,
+          1,
+          1.1,
+          3
+        ],
+        "growth_volume": [
+          14523,
+          15145,
+          15445,
+          16060,
+          16524,
+          16753,
+          17188,
+          17375,
+          17558,
+          18093
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 388500,
+          "share_of_total_target_pct": 2.1,
+          "market_share_pct": 25.6,
+          "growth_pct": [
+            3.7,
+            2.1,
+            3.4,
+            1.8,
+            0.8,
+            2.7,
+            4,
+            2.4,
+            1.4,
+            3.3
+          ],
+          "growth_volume": [
+            2180,
+            2216,
+            2297,
+            2329,
+            2351,
+            2402,
+            2502,
+            2551,
+            2596,
+            2676
+          ]
         },
-        "Running": {
-          "potential": "591k",
-          "offer": {
-            "title": "Running opportunity in Austria",
-            "description_1": "Demo narrative for Austria × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Austria_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "97 Interest",
-            "statistic_2": "39% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Austria_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 101,
-                  "tag": "Austria_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 90,
-                  "tag": "Austria_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 79,
-                  "tag": "Austria_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 125,
-                  "tag": "Austria_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 114,
-                  "tag": "Austria_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 103,
-                  "tag": "Austria_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "mclaren_f1": {
+          "target_audience": 610500,
+          "share_of_total_target_pct": 3.3,
+          "market_share_pct": 29.6,
+          "growth_pct": [
+            1.1,
+            2.7,
+            1.4,
+            3,
+            1.7,
+            3.3,
+            2,
+            3.6,
+            3.4,
+            1.5
+          ],
+          "growth_volume": [
+            2891,
+            2963,
+            3013,
+            3096,
+            3157,
+            3253,
+            3325,
+            3436,
+            3559,
+            3602
+          ]
         },
-        "LiveMusic": {
-          "potential": "317k",
-          "offer": {
-            "title": "Live music opportunity in Austria",
-            "description_1": "Demo narrative for Austria × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Austria_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "116 Interest",
-            "statistic_2": "14% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Austria_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 124,
-                  "tag": "Austria_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 113,
-                  "tag": "Austria_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 89,
-                  "tag": "Austria_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 78,
-                  "tag": "Austria_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 111,
-                  "tag": "Austria_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 100,
-                  "tag": "Austria_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_live_nation": {
+          "target_audience": 499500,
+          "share_of_total_target_pct": 2.7,
+          "market_share_pct": 26.9,
+          "growth_pct": [
+            3,
+            1.4,
+            3.3,
+            1,
+            2.6,
+            4.2,
+            2.3,
+            3.9,
+            1.8,
+            3.7
+          ],
+          "growth_volume": [
+            2636,
+            2682,
+            2763,
+            2799,
+            2863,
+            2990,
+            3049,
+            3174,
+            3220,
+            3344
+          ]
+        },
+        "music_other": {
+          "target_audience": 444000,
+          "share_of_total_target_pct": 2.4,
+          "market_share_pct": 26.6,
+          "growth_pct": [
+            2,
+            3.9,
+            1.7,
+            3.6,
+            2.6,
+            1,
+            2.3,
+            4.2,
+            3.2,
+            1.6
+          ],
+          "growth_volume": [
+            2362,
+            2448,
+            2499,
+            2582,
+            2661,
+            2684,
+            2757,
+            2868,
+            2966,
+            3003
+          ]
+        },
+        "gaming_mc_assets": {
+          "target_audience": 416250,
+          "share_of_total_target_pct": 2.3,
+          "market_share_pct": 29.2,
+          "growth_pct": [
+            1.1,
+            2.7,
+            0.8,
+            2.4,
+            4,
+            2.1,
+            3.7,
+            1.8,
+            2.3,
+            3.9
+          ],
+          "growth_volume": [
+            1978,
+            2033,
+            2034,
+            2084,
+            2182,
+            2228,
+            2324,
+            2365,
+            2432,
+            2525
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 416250,
+          "share_of_total_target_pct": 2.3,
+          "market_share_pct": 24.9,
+          "growth_pct": [
+            1.4,
+            3.3,
+            1.1,
+            3,
+            0.8,
+            2.7,
+            4,
+            2.4,
+            3.7,
+            2.1
+          ],
+          "growth_volume": [
+            2351,
+            2422,
+            2457,
+            2523,
+            2550,
+            2610,
+            2720,
+            2775,
+            2891,
+            2949
+          ]
         }
       }
     },
-    "HR": {
-      "name": "Croatia",
-      "slug": "Croatia",
-      "peek": "2.1M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Croatia (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "2.1M",
-          "offer": {
-            "title": "Formula 1 opportunity in Croatia",
-            "description_1": "Demo narrative for Croatia × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Croatia_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "112 Interest",
-            "statistic_2": "25% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Croatia_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 98,
-                  "tag": "Croatia_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 109,
-                  "tag": "Croatia_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 76,
-                  "tag": "Croatia_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 87,
-                  "tag": "Croatia_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 111,
-                  "tag": "Croatia_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 122,
-                  "tag": "Croatia_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+    "PL": {
+      "name": "Poland",
+      "slug": "Poland",
+      "peek": "5.2M target · demo",
+      "teaser": "28% of total target · 15% market share · potential ~34.5M",
+      "base": {
+        "target_audience": 5180000,
+        "share_of_total_target_pct": 28,
+        "market_share_pct": 15,
+        "growth_pct": [
+          0.9,
+          2.8,
+          1.2,
+          3.1,
+          3.8,
+          2.2,
+          4.1,
+          2.5,
+          2.1,
+          4
+        ],
+        "growth_volume": [
+          48126,
+          49474,
+          50054,
+          51607,
+          53582,
+          54759,
+          57019,
+          58443,
+          59682,
+          62065
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 725200,
+          "share_of_total_target_pct": 3.9,
+          "market_share_pct": 16.2,
+          "growth_pct": [
+            1.7,
+            3.3,
+            1.4,
+            3,
+            1.1,
+            2.7,
+            0.8,
+            2.4,
+            4,
+            3
+          ],
+          "growth_volume": [
+            6285,
+            6503,
+            6588,
+            6796,
+            6868,
+            7045,
+            7097,
+            7279,
+            7576,
+            7793
+          ]
         },
-        "Running": {
-          "potential": "1.2M",
-          "offer": {
-            "title": "Running opportunity in Croatia",
-            "description_1": "Demo narrative for Croatia × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Croatia_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "131 Interest",
-            "statistic_2": "19% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Croatia_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 81,
-                  "tag": "Croatia_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 92,
-                  "tag": "Croatia_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 116,
-                  "tag": "Croatia_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 127,
-                  "tag": "Croatia_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 94,
-                  "tag": "Croatia_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 105,
-                  "tag": "Croatia_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "mclaren_f1": {
+          "target_audience": 1139600,
+          "share_of_total_target_pct": 6.2,
+          "market_share_pct": 15.3,
+          "growth_pct": [
+            3.6,
+            2,
+            3.9,
+            2.3,
+            2.1,
+            3.7,
+            1.8,
+            1.7,
+            1.3,
+            3.2
+          ],
+          "growth_volume": [
+            10651,
+            10869,
+            11284,
+            11550,
+            11785,
+            12228,
+            12441,
+            12660,
+            12819,
+            13238
+          ]
         },
-        "LiveMusic": {
-          "potential": "2.3M",
-          "offer": {
-            "title": "Live music opportunity in Croatia",
-            "description_1": "Demo narrative for Croatia × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Croatia_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "101 Interest",
-            "statistic_2": "48% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Croatia_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 104,
-                  "tag": "Croatia_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 93,
-                  "tag": "Croatia_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 82,
-                  "tag": "Croatia_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 128,
-                  "tag": "Croatia_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 91,
-                  "tag": "Croatia_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 80,
-                  "tag": "Croatia_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
-    "CZ": {
-      "name": "Czechia",
-      "slug": "Czechia",
-      "peek": "1.3M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Czechia (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "1.8M",
-          "offer": {
-            "title": "Formula 1 opportunity in Czechia",
-            "description_1": "Demo narrative for Czechia × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Czechia_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "108 Interest",
-            "statistic_2": "36% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Czechia_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 86,
-                  "tag": "Czechia_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 97,
-                  "tag": "Czechia_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 121,
-                  "tag": "Czechia_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 75,
-                  "tag": "Czechia_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 73,
-                  "tag": "Czechia_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 84,
-                  "tag": "Czechia_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_live_nation": {
+          "target_audience": 932400,
+          "share_of_total_target_pct": 5,
+          "market_share_pct": 12.7,
+          "growth_pct": [
+            1.7,
+            3.6,
+            2,
+            3.9,
+            1.1,
+            3,
+            1.4,
+            3.3,
+            2.9,
+            1.3
+          ],
+          "growth_volume": [
+            10319,
+            10679,
+            10896,
+            11309,
+            11435,
+            11765,
+            11931,
+            12311,
+            12668,
+            12818
+          ]
         },
-        "Running": {
-          "potential": "1.1M",
-          "offer": {
-            "title": "Running opportunity in Czechia",
-            "description_1": "Demo narrative for Czechia × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Czechia_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "103 Interest",
-            "statistic_2": "28% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Czechia_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 105,
-                  "tag": "Czechia_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 116,
-                  "tag": "Czechia_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 83,
-                  "tag": "Czechia_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 94,
-                  "tag": "Czechia_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 92,
-                  "tag": "Czechia_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 103,
-                  "tag": "Czechia_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_other": {
+          "target_audience": 828800,
+          "share_of_total_target_pct": 4.5,
+          "market_share_pct": 17.5,
+          "growth_pct": [
+            3.9,
+            2.3,
+            3.6,
+            2,
+            3.3,
+            1.7,
+            3,
+            1.4,
+            2.7,
+            1.1
+          ],
+          "growth_volume": [
+            6785,
+            6943,
+            7179,
+            7324,
+            7555,
+            7687,
+            7906,
+            8020,
+            8251,
+            8340
+          ]
         },
-        "LiveMusic": {
-          "potential": "2.2M",
-          "offer": {
-            "title": "Live music opportunity in Czechia",
-            "description_1": "Demo narrative for Czechia × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Czechia_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "120 Interest",
-            "statistic_2": "17% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Czechia_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 89,
-                  "tag": "Czechia_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 78,
-                  "tag": "Czechia_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 124,
-                  "tag": "Czechia_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 113,
-                  "tag": "Czechia_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 102,
-                  "tag": "Czechia_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 91,
-                  "tag": "Czechia_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
-    "HU": {
-      "name": "Hungary",
-      "slug": "Hungary",
-      "peek": "1.4M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Hungary (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "1.8M",
-          "offer": {
-            "title": "Formula 1 opportunity in Hungary",
-            "description_1": "Demo narrative for Hungary × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Hungary_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "117 Interest",
-            "statistic_2": "15% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Hungary_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 74,
-                  "tag": "Hungary_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 85,
-                  "tag": "Hungary_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 96,
-                  "tag": "Hungary_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 107,
-                  "tag": "Hungary_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 87,
-                  "tag": "Hungary_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 98,
-                  "tag": "Hungary_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "gaming_mc_assets": {
+          "target_audience": 777000,
+          "share_of_total_target_pct": 4.2,
+          "market_share_pct": 13.8,
+          "growth_pct": [
+            3.3,
+            1.4,
+            3.6,
+            1.7,
+            3.9,
+            2,
+            4.2,
+            2.3,
+            2.1,
+            3.7
+          ],
+          "growth_volume": [
+            8038,
+            8138,
+            8434,
+            8565,
+            8899,
+            9062,
+            9444,
+            9647,
+            9848,
+            10226
+          ]
         },
-        "Running": {
-          "potential": "461k",
-          "offer": {
-            "title": "Running opportunity in Hungary",
-            "description_1": "Demo narrative for Hungary × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Hungary_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "90 Interest",
-            "statistic_2": "22% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Hungary_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 118,
-                  "tag": "Hungary_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 72,
-                  "tag": "Hungary_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 105,
-                  "tag": "Hungary_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 107,
-                  "tag": "Hungary_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 105,
-                  "tag": "Hungary_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 116,
-                  "tag": "Hungary_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
-        },
-        "LiveMusic": {
-          "potential": "1.4M",
-          "offer": {
-            "title": "Live music opportunity in Hungary",
-            "description_1": "Demo narrative for Hungary × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Hungary_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "132 Interest",
-            "statistic_2": "39% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Hungary_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 112,
-                  "tag": "Hungary_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 123,
-                  "tag": "Hungary_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 77,
-                  "tag": "Hungary_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 88,
-                  "tag": "Hungary_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 99,
-                  "tag": "Hungary_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 110,
-                  "tag": "Hungary_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "gaming_other": {
+          "target_audience": 777000,
+          "share_of_total_target_pct": 4.2,
+          "market_share_pct": 13.5,
+          "growth_pct": [
+            3.5,
+            1.6,
+            3.2,
+            1.3,
+            2.9,
+            1,
+            2.6,
+            4.2,
+            1.2,
+            2.8
+          ],
+          "growth_volume": [
+            8241,
+            8369,
+            8647,
+            8754,
+            9021,
+            9109,
+            9358,
+            9748,
+            9872,
+            10140
+          ]
         }
       }
     },
     "RO": {
       "name": "Romania",
       "slug": "Romania",
-      "peek": "367k addressable · demo",
-      "teaser": "3 sponsorship themes ready · Romania (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "2.2M",
-          "offer": {
-            "title": "Formula 1 opportunity in Romania",
-            "description_1": "Demo narrative for Romania × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Romania_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "106 Interest",
-            "statistic_2": "19% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Romania_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 109,
-                  "tag": "Romania_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 98,
-                  "tag": "Romania_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 87,
-                  "tag": "Romania_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 76,
-                  "tag": "Romania_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 96,
-                  "tag": "Romania_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 85,
-                  "tag": "Romania_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+      "peek": "2.4M target · demo",
+      "teaser": "13% of total target · 19% market share · potential ~12.7M",
+      "base": {
+        "target_audience": 2405000,
+        "share_of_total_target_pct": 13,
+        "market_share_pct": 19,
+        "growth_pct": [
+          2.4,
+          0.8,
+          2.1,
+          4,
+          3,
+          1.4,
+          2.7,
+          1.1,
+          1.2,
+          3.1
+        ],
+        "growth_volume": [
+          17910,
+          18040,
+          18422,
+          19147,
+          19725,
+          19990,
+          20535,
+          20751,
+          20998,
+          21663
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 336700,
+          "share_of_total_target_pct": 1.8,
+          "market_share_pct": 21.2,
+          "growth_pct": [
+            1.3,
+            3.2,
+            1,
+            2.9,
+            1.9,
+            3.8,
+            1.6,
+            3.5,
+            2.5,
+            0.9
+          ],
+          "growth_volume": [
+            2222,
+            2307,
+            2328,
+            2409,
+            2456,
+            2534,
+            2575,
+            2680,
+            2742,
+            2777
+          ]
         },
-        "Running": {
-          "potential": "1.5M",
-          "offer": {
-            "title": "Running opportunity in Romania",
-            "description_1": "Demo narrative for Romania × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Romania_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "93 Interest",
-            "statistic_2": "28% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Romania_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 100,
-                  "tag": "Romania_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 111,
-                  "tag": "Romania_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 122,
-                  "tag": "Romania_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 76,
-                  "tag": "Romania_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 87,
-                  "tag": "Romania_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 98,
-                  "tag": "Romania_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "mclaren_f1": {
+          "target_audience": 529100,
+          "share_of_total_target_pct": 2.9,
+          "market_share_pct": 21.6,
+          "growth_pct": [
+            3.1,
+            1.5,
+            2.8,
+            1.2,
+            2.5,
+            0.9,
+            2.2,
+            4.1,
+            1.9,
+            3.5
+          ],
+          "growth_volume": [
+            3476,
+            3531,
+            3618,
+            3665,
+            3746,
+            3785,
+            3858,
+            4022,
+            4089,
+            4239
+          ]
         },
-        "LiveMusic": {
-          "potential": "602k",
-          "offer": {
-            "title": "Live music opportunity in Romania",
-            "description_1": "Demo narrative for Romania × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Romania_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "127 Interest",
-            "statistic_2": "19% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Romania_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 109,
-                  "tag": "Romania_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 120,
-                  "tag": "Romania_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 87,
-                  "tag": "Romania_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 98,
-                  "tag": "Romania_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 122,
-                  "tag": "Romania_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 76,
-                  "tag": "Romania_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_live_nation": {
+          "target_audience": 432900,
+          "share_of_total_target_pct": 2.3,
+          "market_share_pct": 17.9,
+          "growth_pct": [
+            4.2,
+            2.3,
+            3.9,
+            2,
+            3.6,
+            1.7,
+            3.3,
+            1.4,
+            1.9,
+            3.5
+          ],
+          "growth_volume": [
+            3476,
+            3566,
+            3701,
+            3786,
+            3919,
+            3998,
+            4128,
+            4199,
+            4278,
+            4442
+          ]
+        },
+        "music_other": {
+          "target_audience": 384800,
+          "share_of_total_target_pct": 2.1,
+          "market_share_pct": 19.7,
+          "growth_pct": [
+            2.6,
+            1.7,
+            2.3,
+            4.2,
+            3,
+            1.1,
+            3.3,
+            1.4,
+            2.4,
+            4
+          ],
+          "growth_volume": [
+            2779,
+            2820,
+            2894,
+            3009,
+            3092,
+            3122,
+            3236,
+            3276,
+            3361,
+            3485
+          ]
+        },
+        "gaming_mc_assets": {
+          "target_audience": 360750,
+          "share_of_total_target_pct": 2,
+          "market_share_pct": 16.8,
+          "growth_pct": [
+            2.7,
+            0.8,
+            2.4,
+            4,
+            2.1,
+            3.7,
+            1.8,
+            3.4,
+            3.9,
+            2
+          ],
+          "growth_volume": [
+            3058,
+            3077,
+            3144,
+            3266,
+            3327,
+            3458,
+            3511,
+            3637,
+            3769,
+            3850
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 360750,
+          "share_of_total_target_pct": 2,
+          "market_share_pct": 17,
+          "growth_pct": [
+            3,
+            1.4,
+            2.7,
+            1.1,
+            2.4,
+            0.8,
+            2.1,
+            4,
+            1.8,
+            3.7
+          ],
+          "growth_volume": [
+            3006,
+            3050,
+            3119,
+            3156,
+            3220,
+            3250,
+            3307,
+            3444,
+            3519,
+            3647
+          ]
         }
       }
     },
-    "RS": {
-      "name": "Serbia",
-      "slug": "Serbia",
-      "peek": "1.3M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Serbia (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "785k",
-          "offer": {
-            "title": "Formula 1 opportunity in Serbia",
-            "description_1": "Demo narrative for Serbia × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Serbia_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "88 Interest",
-            "statistic_2": "42% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Serbia_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 117,
-                  "tag": "Serbia_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 128,
-                  "tag": "Serbia_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 95,
-                  "tag": "Serbia_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 106,
-                  "tag": "Serbia_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 104,
-                  "tag": "Serbia_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 115,
-                  "tag": "Serbia_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+    "CZ": {
+      "name": "Czechia",
+      "slug": "Czechia",
+      "peek": "3.9M target · demo",
+      "teaser": "21% of total target · 22% market share · potential ~17.7M",
+      "base": {
+        "target_audience": 3885000,
+        "share_of_total_target_pct": 21,
+        "market_share_pct": 22,
+        "growth_pct": [
+          3.5,
+          1.6,
+          3.2,
+          1.3,
+          2.9,
+          1,
+          2.6,
+          4.2,
+          2.3,
+          3.9
+        ],
+        "growth_volume": [
+          25237,
+          25641,
+          26448,
+          26793,
+          27584,
+          27858,
+          28597,
+          29797,
+          30494,
+          31679
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 543900,
+          "share_of_total_target_pct": 2.9,
+          "market_share_pct": 20.1,
+          "growth_pct": [
+            1.8,
+            3.4,
+            1.5,
+            3.1,
+            2.4,
+            4,
+            2.1,
+            3.7,
+            4.1,
+            2.2
+          ],
+          "growth_volume": [
+            3805,
+            3948,
+            4007,
+            4146,
+            4243,
+            4425,
+            4516,
+            4696,
+            4884,
+            5001
+          ]
         },
-        "Running": {
-          "potential": "2.0M",
-          "offer": {
-            "title": "Running opportunity in Serbia",
-            "description_1": "Demo narrative for Serbia × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Serbia_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "129 Interest",
-            "statistic_2": "18% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Serbia_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 100,
-                  "tag": "Serbia_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 111,
-                  "tag": "Serbia_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 122,
-                  "tag": "Serbia_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 76,
-                  "tag": "Serbia_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 113,
-                  "tag": "Serbia_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 124,
-                  "tag": "Serbia_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "mclaren_f1": {
+          "target_audience": 854700,
+          "share_of_total_target_pct": 4.6,
+          "market_share_pct": 20,
+          "growth_pct": [
+            3.5,
+            1.9,
+            3.8,
+            2.2,
+            2.9,
+            1.3,
+            3.2,
+            1.6,
+            1.2,
+            3.1
+          ],
+          "growth_volume": [
+            6117,
+            6223,
+            6466,
+            6599,
+            6794,
+            6870,
+            7095,
+            7198,
+            7286,
+            7498
+          ]
         },
-        "LiveMusic": {
-          "potential": "1.7M",
-          "offer": {
-            "title": "Live music opportunity in Serbia",
-            "description_1": "Demo narrative for Serbia × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Serbia_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "123 Interest",
-            "statistic_2": "29% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Serbia_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 125,
-                  "tag": "Serbia_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 114,
-                  "tag": "Serbia_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 90,
-                  "tag": "Serbia_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 79,
-                  "tag": "Serbia_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 81,
-                  "tag": "Serbia_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 127,
-                  "tag": "Serbia_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
-    "SI": {
-      "name": "Slovenia",
-      "slug": "Slovenia",
-      "peek": "2.4M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Slovenia (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "1.1M",
-          "offer": {
-            "title": "Formula 1 opportunity in Slovenia",
-            "description_1": "Demo narrative for Slovenia × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Slovenia_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "130 Interest",
-            "statistic_2": "47% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Slovenia_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 109,
-                  "tag": "Slovenia_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 120,
-                  "tag": "Slovenia_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 87,
-                  "tag": "Slovenia_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 98,
-                  "tag": "Slovenia_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 96,
-                  "tag": "Slovenia_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 107,
-                  "tag": "Slovenia_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_live_nation": {
+          "target_audience": 699300,
+          "share_of_total_target_pct": 3.8,
+          "market_share_pct": 21.2,
+          "growth_pct": [
+            0.8,
+            2.7,
+            4,
+            2.4,
+            3.7,
+            2.1,
+            3.4,
+            1.8,
+            3.1,
+            1.5
+          ],
+          "growth_volume": [
+            4588,
+            4723,
+            4908,
+            5038,
+            5221,
+            5344,
+            5524,
+            5637,
+            5803,
+            5897
+          ]
         },
-        "Running": {
-          "potential": "1.0M",
-          "offer": {
-            "title": "Running opportunity in Slovenia",
-            "description_1": "Demo narrative for Slovenia × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Slovenia_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "109 Interest",
-            "statistic_2": "32% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Slovenia_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 105,
-                  "tag": "Slovenia_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 94,
-                  "tag": "Slovenia_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 127,
-                  "tag": "Slovenia_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 116,
-                  "tag": "Slovenia_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 118,
-                  "tag": "Slovenia_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 107,
-                  "tag": "Slovenia_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_other": {
+          "target_audience": 621600,
+          "share_of_total_target_pct": 3.4,
+          "market_share_pct": 22.3,
+          "growth_pct": [
+            2.6,
+            4.2,
+            2.3,
+            3.9,
+            3.2,
+            1.3,
+            2.9,
+            1,
+            1.4,
+            3
+          ],
+          "growth_volume": [
+            3944,
+            4118,
+            4207,
+            4380,
+            4511,
+            4576,
+            4701,
+            4755,
+            4811,
+            4959
+          ]
         },
-        "LiveMusic": {
-          "potential": "1.5M",
-          "offer": {
-            "title": "Live music opportunity in Slovenia",
-            "description_1": "Demo narrative for Slovenia × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Slovenia_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "94 Interest",
-            "statistic_2": "42% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Slovenia_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 107,
-                  "tag": "Slovenia_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 108,
-                  "tag": "Slovenia_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 97,
-                  "tag": "Slovenia_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 86,
-                  "tag": "Slovenia_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 75,
-                  "tag": "Slovenia_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 121,
-                  "tag": "Slovenia_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "gaming_mc_assets": {
+          "target_audience": 582750,
+          "share_of_total_target_pct": 3.2,
+          "market_share_pct": 20.7,
+          "growth_pct": [
+            1.6,
+            3.5,
+            1.3,
+            3.2,
+            1,
+            2.9,
+            4.2,
+            2.6,
+            3.9,
+            2.3
+          ],
+          "growth_volume": [
+            3941,
+            4084,
+            4127,
+            4265,
+            4299,
+            4431,
+            4609,
+            4737,
+            4907,
+            5021
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 582750,
+          "share_of_total_target_pct": 3.2,
+          "market_share_pct": 22.1,
+          "growth_pct": [
+            0.9,
+            2.5,
+            4.1,
+            2.2,
+            3.8,
+            1.9,
+            3.5,
+            1.6,
+            3.2,
+            1.3
+          ],
+          "growth_volume": [
+            3680,
+            3760,
+            3919,
+            3994,
+            4145,
+            4239,
+            4385,
+            4469,
+            4612,
+            4687
+          ]
         }
       }
     },
     "SK": {
       "name": "Slovakia",
       "slug": "Slovakia",
-      "peek": "2.4M addressable · demo",
-      "teaser": "3 sponsorship themes ready · Slovakia (demo data)",
-      "topics": {
-        "F1": {
-          "potential": "559k",
-          "offer": {
-            "title": "Formula 1 opportunity in Slovakia",
-            "description_1": "Demo narrative for Slovakia × Formula 1: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Slovakia_F1_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "99 Interest",
-            "statistic_2": "41% of all users",
-            "chart": {
-              "title": "Formula 1 · All users over time",
-              "caption": "Demo time series · tags Slovakia_F1_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 73,
-                  "tag": "Slovakia_F1_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 84,
-                  "tag": "Slovakia_F1_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 95,
-                  "tag": "Slovakia_F1_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 106,
-                  "tag": "Slovakia_F1_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 115,
-                  "tag": "Slovakia_F1_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 104,
-                  "tag": "Slovakia_F1_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+      "peek": "1.5M target · demo",
+      "teaser": "8% of total target · 26% market share · potential ~5.7M",
+      "base": {
+        "target_audience": 1480000,
+        "share_of_total_target_pct": 8,
+        "market_share_pct": 26,
+        "growth_pct": [
+          3.1,
+          1.5,
+          3.4,
+          1.8,
+          3.7,
+          2.1,
+          4,
+          2.4,
+          0.8,
+          3.5
+        ],
+        "growth_volume": [
+          8111,
+          8219,
+          8501,
+          8641,
+          8962,
+          9138,
+          9504,
+          9717,
+          9793,
+          10149
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 207200,
+          "share_of_total_target_pct": 1.1,
+          "market_share_pct": 23,
+          "growth_pct": [
+            1.1,
+            2.7,
+            0.8,
+            2.4,
+            1.7,
+            3.3,
+            1.4,
+            3,
+            2.3,
+            3.9
+          ],
+          "growth_volume": [
+            1270,
+            1299,
+            1321,
+            1349,
+            1385,
+            1428,
+            1462,
+            1504,
+            1546,
+            1597
+          ]
         },
-        "Running": {
-          "potential": "1.1M",
-          "offer": {
-            "title": "Running opportunity in Slovakia",
-            "description_1": "Demo narrative for Slovakia × Running: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Slovakia_Running_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "122 Interest",
-            "statistic_2": "32% of all users",
-            "chart": {
-              "title": "Running · All users over time",
-              "caption": "Demo time series · tags Slovakia_Running_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 101,
-                  "tag": "Slovakia_Running_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 90,
-                  "tag": "Slovakia_Running_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 123,
-                  "tag": "Slovakia_Running_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 112,
-                  "tag": "Slovakia_Running_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 114,
-                  "tag": "Slovakia_Running_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 103,
-                  "tag": "Slovakia_Running_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "mclaren_f1": {
+          "target_audience": 325600,
+          "share_of_total_target_pct": 1.8,
+          "market_share_pct": 25.2,
+          "growth_pct": [
+            1.9,
+            3.8,
+            2.2,
+            4.1,
+            2.5,
+            0.9,
+            2.8,
+            1.2,
+            3.1,
+            1.5
+          ],
+          "growth_volume": [
+            1813,
+            1892,
+            1927,
+            2015,
+            2061,
+            2092,
+            2146,
+            2183,
+            2249,
+            2297
+          ]
         },
-        "LiveMusic": {
-          "potential": "1.7M",
-          "offer": {
-            "title": "Live music opportunity in Slovakia",
-            "description_1": "Demo narrative for Slovakia × Live music: partner touchpoints and card propositions for all users (replace via Import).",
-            "description_2": "Schematic only — Slovakia_LiveMusic_MCOffer_Description_2. Swap this JSON on a firm laptop before the client deck.",
-            "statistic_1": "127 Interest",
-            "statistic_2": "18% of all users",
-            "chart": {
-              "title": "Live music · All users over time",
-              "caption": "Demo time series · tags Slovakia_LiveMusic_Chart_* · replace via Import",
-              "bars": [
-                {
-                  "label": "Jan",
-                  "value": 128,
-                  "tag": "Slovakia_LiveMusic_Chart_Bar_Jan"
-                },
-                {
-                  "label": "Feb",
-                  "value": 82,
-                  "tag": "Slovakia_LiveMusic_Chart_Bar_Feb"
-                },
-                {
-                  "label": "Mar",
-                  "value": 93,
-                  "tag": "Slovakia_LiveMusic_Chart_Bar_Mar"
-                },
-                {
-                  "label": "Apr",
-                  "value": 104,
-                  "tag": "Slovakia_LiveMusic_Chart_Bar_Apr"
-                },
-                {
-                  "label": "May",
-                  "value": 115,
-                  "tag": "Slovakia_LiveMusic_Chart_Bar_May"
-                },
-                {
-                  "label": "Jun",
-                  "value": 126,
-                  "tag": "Slovakia_LiveMusic_Chart_Bar_Jun"
-                }
-              ]
-            }
-          }
+        "music_live_nation": {
+          "target_audience": 266400,
+          "share_of_total_target_pct": 1.4,
+          "market_share_pct": 25.5,
+          "growth_pct": [
+            2.6,
+            4.2,
+            2.3,
+            3.9,
+            2,
+            3.6,
+            1.7,
+            3.3,
+            1.4,
+            3
+          ],
+          "growth_volume": [
+            1483,
+            1531,
+            1569,
+            1617,
+            1649,
+            1723,
+            1753,
+            1796,
+            1819,
+            1887
+          ]
+        },
+        "music_other": {
+          "target_audience": 236800,
+          "share_of_total_target_pct": 1.3,
+          "market_share_pct": 23.9,
+          "growth_pct": [
+            3,
+            1.4,
+            2.7,
+            1.1,
+            3.6,
+            2,
+            3.3,
+            1.7,
+            4.2,
+            2.6
+          ],
+          "growth_volume": [
+            1413,
+            1421,
+            1463,
+            1468,
+            1526,
+            1547,
+            1604,
+            1622,
+            1697,
+            1733
+          ]
+        },
+        "gaming_mc_assets": {
+          "target_audience": 222000,
+          "share_of_total_target_pct": 1.2,
+          "market_share_pct": 25.5,
+          "growth_pct": [
+            3.2,
+            1.3,
+            3.5,
+            1.6,
+            2.6,
+            4.2,
+            2.9,
+            1,
+            0.9,
+            2.5
+          ],
+          "growth_volume": [
+            1248,
+            1255,
+            1305,
+            1316,
+            1355,
+            1401,
+            1446,
+            1448,
+            1472,
+            1504
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 222000,
+          "share_of_total_target_pct": 1.2,
+          "market_share_pct": 24.3,
+          "growth_pct": [
+            2.3,
+            3.9,
+            2,
+            3.6,
+            2.9,
+            1,
+            2.6,
+            4.2,
+            1.1,
+            2.7
+          ],
+          "growth_volume": [
+            1298,
+            1341,
+            1374,
+            1414,
+            1460,
+            1465,
+            1507,
+            1559,
+            1579,
+            1610
+          ]
+        }
+      }
+    },
+    "HU": {
+      "name": "Hungary",
+      "slug": "Hungary",
+      "peek": "1.3M target · demo",
+      "teaser": "7% of total target · 14% market share · potential ~9.3M",
+      "base": {
+        "target_audience": 1295000,
+        "share_of_total_target_pct": 7,
+        "market_share_pct": 14,
+        "growth_pct": [
+          1.8,
+          3.7,
+          2.1,
+          4,
+          2.4,
+          0.8,
+          2.7,
+          1.1,
+          4.1,
+          2.5
+        ],
+        "growth_volume": [
+          13015,
+          13486,
+          13775,
+          14316,
+          14667,
+          14775,
+          15182,
+          15341,
+          15979,
+          16371
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 181300,
+          "share_of_total_target_pct": 1,
+          "market_share_pct": 15.1,
+          "growth_pct": [
+            4.2,
+            2.3,
+            3.9,
+            2,
+            1.3,
+            2.9,
+            1,
+            2.6,
+            3,
+            1.1
+          ],
+          "growth_volume": [
+            1714,
+            1754,
+            1837,
+            1874,
+            1912,
+            1966,
+            1999,
+            2049,
+            2122,
+            2142
+          ]
+        },
+        "mclaren_f1": {
+          "target_audience": 284900,
+          "share_of_total_target_pct": 1.5,
+          "market_share_pct": 14.7,
+          "growth_pct": [
+            1.9,
+            3.8,
+            2.2,
+            2.1,
+            3.7,
+            1.8,
+            3.4,
+            1.5,
+            4.2,
+            2.6
+          ],
+          "growth_volume": [
+            2736,
+            2831,
+            2890,
+            2943,
+            3057,
+            3101,
+            3212,
+            3250,
+            3381,
+            3479
+          ]
+        },
+        "music_live_nation": {
+          "target_audience": 233100,
+          "share_of_total_target_pct": 1.3,
+          "market_share_pct": 16,
+          "growth_pct": [
+            1.8,
+            3.4,
+            1.5,
+            3.1,
+            1.2,
+            2.8,
+            0.9,
+            2.5,
+            3,
+            1.1
+          ],
+          "growth_volume": [
+            2040,
+            2115,
+            2139,
+            2212,
+            2228,
+            2294,
+            2305,
+            2368,
+            2434,
+            2471
+          ]
+        },
+        "music_other": {
+          "target_audience": 207200,
+          "share_of_total_target_pct": 1.1,
+          "market_share_pct": 16,
+          "growth_pct": [
+            1.6,
+            3.5,
+            1.3,
+            3.2,
+            2.2,
+            4.1,
+            1.9,
+            3.8,
+            3.9,
+            2.3
+          ],
+          "growth_volume": [
+            1831,
+            1892,
+            1929,
+            1987,
+            2042,
+            2121,
+            2171,
+            2247,
+            2321,
+            2375
+          ]
+        },
+        "gaming_mc_assets": {
+          "target_audience": 194250,
+          "share_of_total_target_pct": 1.1,
+          "market_share_pct": 14.6,
+          "growth_pct": [
+            3.1,
+            1.5,
+            2.8,
+            1.2,
+            3.7,
+            2.1,
+            3.4,
+            1.8,
+            0.8,
+            2.7
+          ],
+          "growth_volume": [
+            1905,
+            1929,
+            1994,
+            2014,
+            2101,
+            2142,
+            2228,
+            2266,
+            2298,
+            2359
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 194250,
+          "share_of_total_target_pct": 1.1,
+          "market_share_pct": 16.7,
+          "growth_pct": [
+            3,
+            1.1,
+            2.7,
+            0.8,
+            3.6,
+            1.7,
+            3.3,
+            1.4,
+            4.2,
+            2.3
+          ],
+          "growth_volume": [
+            1641,
+            1660,
+            1692,
+            1708,
+            1757,
+            1790,
+            1838,
+            1868,
+            1959,
+            2001
+          ]
+        }
+      }
+    },
+    "HR": {
+      "name": "Croatia",
+      "slug": "Croatia",
+      "peek": "0.9M target · demo",
+      "teaser": "5% of total target · 16% market share · potential ~5.8M",
+      "base": {
+        "target_audience": 925000,
+        "share_of_total_target_pct": 5,
+        "market_share_pct": 16,
+        "growth_pct": [
+          4,
+          2.1,
+          3.7,
+          1.8,
+          1.1,
+          2.7,
+          0.8,
+          2.4,
+          2.8,
+          0.9
+        ],
+        "growth_volume": [
+          8305,
+          8491,
+          8803,
+          8974,
+          9072,
+          9331,
+          9406,
+          9647,
+          9921,
+          9999
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 129500,
+          "share_of_total_target_pct": 0.7,
+          "market_share_pct": 15.8,
+          "growth_pct": [
+            2.6,
+            1,
+            2.9,
+            1.3,
+            3.2,
+            1.6,
+            3.5,
+            1.9,
+            1.4,
+            3.3
+          ],
+          "growth_volume": [
+            1152,
+            1170,
+            1196,
+            1219,
+            1251,
+            1279,
+            1318,
+            1352,
+            1366,
+            1421
+          ]
+        },
+        "mclaren_f1": {
+          "target_audience": 203500,
+          "share_of_total_target_pct": 1.1,
+          "market_share_pct": 14.7,
+          "growth_pct": [
+            1.3,
+            3.2,
+            1.6,
+            3.5,
+            1.9,
+            3.8,
+            2.2,
+            4.1,
+            3.6,
+            2
+          ],
+          "growth_volume": [
+            1924,
+            1988,
+            2005,
+            2076,
+            2130,
+            2211,
+            2274,
+            2366,
+            2464,
+            2511
+          ]
+        },
+        "music_live_nation": {
+          "target_audience": 166500,
+          "share_of_total_target_pct": 0.9,
+          "market_share_pct": 17.9,
+          "growth_pct": [
+            3.6,
+            1.7,
+            3.9,
+            2,
+            3,
+            1.1,
+            3.3,
+            1.4,
+            2.7,
+            1.1
+          ],
+          "growth_volume": [
+            1335,
+            1347,
+            1405,
+            1448,
+            1493,
+            1496,
+            1548,
+            1558,
+            1597,
+            1627
+          ]
+        },
+        "music_other": {
+          "target_audience": 148000,
+          "share_of_total_target_pct": 0.8,
+          "market_share_pct": 15.2,
+          "growth_pct": [
+            1.8,
+            3.4,
+            1.5,
+            3.1,
+            1.2,
+            2.8,
+            0.9,
+            2.5,
+            4.1,
+            2.2
+          ],
+          "growth_volume": [
+            1367,
+            1426,
+            1446,
+            1505,
+            1523,
+            1581,
+            1596,
+            1621,
+            1681,
+            1727
+          ]
+        },
+        "gaming_mc_assets": {
+          "target_audience": 138750,
+          "share_of_total_target_pct": 0.8,
+          "market_share_pct": 15.7,
+          "growth_pct": [
+            4.1,
+            2.5,
+            3.8,
+            2.2,
+            1.2,
+            3.1,
+            0.9,
+            2.8,
+            2.9,
+            1.3
+          ],
+          "growth_volume": [
+            1268,
+            1313,
+            1361,
+            1405,
+            1417,
+            1472,
+            1481,
+            1534,
+            1571,
+            1600
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 138750,
+          "share_of_total_target_pct": 0.8,
+          "market_share_pct": 16.2,
+          "growth_pct": [
+            2.3,
+            4.2,
+            2.6,
+            1,
+            1.7,
+            3.6,
+            2,
+            3.9,
+            3.5,
+            1.9
+          ],
+          "growth_volume": [
+            1203,
+            1263,
+            1288,
+            1309,
+            1326,
+            1385,
+            1407,
+            1472,
+            1521,
+            1563
+          ]
+        }
+      }
+    },
+    "RS": {
+      "name": "Serbia",
+      "slug": "Serbia",
+      "peek": "0.6M target · demo",
+      "teaser": "3% of total target · 10% market share · potential ~5.5M",
+      "base": {
+        "target_audience": 555000,
+        "share_of_total_target_pct": 3,
+        "market_share_pct": 10,
+        "growth_pct": [
+          1.9,
+          3.8,
+          1.6,
+          3.5,
+          1.3,
+          3.2,
+          1,
+          2.9,
+          4.2,
+          2.6
+        ],
+        "growth_volume": [
+          7805,
+          8108,
+          8228,
+          8521,
+          8621,
+          8901,
+          8978,
+          9241,
+          9624,
+          9884
+        ]
+      },
+      "hobbies": {
+        "running_club": {
+          "target_audience": 77700,
+          "share_of_total_target_pct": 0.4,
+          "market_share_pct": 12.5,
+          "growth_pct": [
+            3.8,
+            2.2,
+            3.5,
+            1.9,
+            3.2,
+            1.6,
+            2.9,
+            1.3,
+            1.5,
+            3.4
+          ],
+          "growth_volume": [
+            881,
+            904,
+            924,
+            945,
+            966,
+            987,
+            1006,
+            1024,
+            1032,
+            1075
+          ]
+        },
+        "mclaren_f1": {
+          "target_audience": 122100,
+          "share_of_total_target_pct": 0.7,
+          "market_share_pct": 8.3,
+          "growth_pct": [
+            0.8,
+            2.4,
+            1.1,
+            2.7,
+            1.3,
+            3,
+            1,
+            2.9,
+            4.2,
+            2.6
+          ],
+          "growth_volume": [
+            2041,
+            2098,
+            2113,
+            2177,
+            2200,
+            2276,
+            2293,
+            2368,
+            2456,
+            2524
+          ]
+        },
+        "music_live_nation": {
+          "target_audience": 99900,
+          "share_of_total_target_pct": 0.5,
+          "market_share_pct": 11.9,
+          "growth_pct": [
+            2.6,
+            4.2,
+            2.9,
+            1,
+            3.2,
+            1.3,
+            3.5,
+            1.6,
+            3.8,
+            1.9
+          ],
+          "growth_volume": [
+            1192,
+            1229,
+            1268,
+            1269,
+            1310,
+            1312,
+            1359,
+            1367,
+            1425,
+            1443
+          ]
+        },
+        "music_other": {
+          "target_audience": 88800,
+          "share_of_total_target_pct": 0.5,
+          "market_share_pct": 9.2,
+          "growth_pct": [
+            1.9,
+            3.5,
+            1.6,
+            3.2,
+            2.5,
+            4.1,
+            2.2,
+            3.8,
+            3.1,
+            1.2
+          ],
+          "growth_volume": [
+            1349,
+            1401,
+            1414,
+            1465,
+            1494,
+            1562,
+            1608,
+            1666,
+            1704,
+            1725
+          ]
+        },
+        "gaming_mc_assets": {
+          "target_audience": 83250,
+          "share_of_total_target_pct": 0.5,
+          "market_share_pct": 12.5,
+          "growth_pct": [
+            2.8,
+            0.9,
+            2.5,
+            4.1,
+            2.2,
+            3.8,
+            1.9,
+            3.5,
+            1.6,
+            3.2
+          ],
+          "growth_volume": [
+            952,
+            951,
+            982,
+            1013,
+            1039,
+            1066,
+            1091,
+            1118,
+            1138,
+            1160
+          ]
+        },
+        "gaming_other": {
+          "target_audience": 83250,
+          "share_of_total_target_pct": 0.5,
+          "market_share_pct": 10.9,
+          "growth_pct": [
+            3.8,
+            1.9,
+            4.1,
+            2.2,
+            0.9,
+            2.5,
+            1.2,
+            2.8,
+            1.5,
+            3.1
+          ],
+          "growth_volume": [
+            1089,
+            1120,
+            1161,
+            1198,
+            1201,
+            1239,
+            1247,
+            1291,
+            1308,
+            1363
+          ]
         }
       }
     }

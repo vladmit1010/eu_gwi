@@ -89,23 +89,42 @@ svg#map {
   to { opacity: 1; }
 }
 
+.land.live.under-million {
+  fill: var(--map-under-million) !important;
+}
+
+.land.live.over-million {
+  fill: var(--map-over-million) !important;
+}
+
 .land.live:hover {
-  fill: var(--map-live-hover) !important;
-  filter: none;
+  filter: brightness(0.92);
   stroke: rgba(255, 255, 255, 0.85);
   stroke-width: 0.36;
 }
 
+.land.live.under-million:hover {
+  fill: color-mix(in srgb, var(--map-under-million) 78%, #0a2a66) !important;
+  filter: none;
+}
+
+.land.live.over-million:hover {
+  fill: color-mix(in srgb, var(--map-over-million) 82%, #ffffff) !important;
+  filter: none;
+}
+
 .land.live.on,
 .land.on {
-  fill: var(--map-live-on) !important;
   stroke: rgba(255, 255, 255, 0.9);
   stroke-width: 0.42;
   filter: none;
 }
 
-.land.live.on:hover {
+.land.live.on:not(.under-million):not(.over-million) {
   fill: var(--map-live-on) !important;
+}
+
+.land.live.on:hover {
   filter: brightness(0.92);
 }
 
@@ -121,6 +140,25 @@ svg#map {
   paint-order: stroke;
   stroke: rgba(0, 51, 90, 0.35);
   stroke-width: 0.35px;
+}
+
+.code-iso {
+  font-size: 2.45px;
+}
+
+.code-value {
+  font-size: 1.85px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  fill: rgba(255, 255, 255, 0.95);
+}
+
+.code-value.over-million {
+  fill: #ffffff;
+}
+
+.code-value.under-million {
+  fill: rgba(255, 255, 255, 0.92);
 }
 
 .code.on {
