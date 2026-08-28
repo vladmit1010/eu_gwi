@@ -4,15 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>The Million Engine</title>
-  <link rel="stylesheet" href="css/tokens.css?v=20260824a">
-  <link rel="stylesheet" href="css/base.css?v=20260824a">
-  <link rel="stylesheet" href="css/layout.css?v=20260825c">
-  <link rel="stylesheet" href="css/map.css?v=20260825b">
-  <link rel="stylesheet" href="css/bubbles.css?v=20260825h">
-  <link rel="stylesheet" href="css/insights.css?v=20260824a">
-  <link rel="stylesheet" href="css/splash.css?v=20260826a">
+  <link rel="stylesheet" href="css/tokens.css?v=20260827c">
+  <link rel="stylesheet" href="css/base.css?v=20260827a">
+  <link rel="stylesheet" href="css/map.css?v=20260827a">
+  <link rel="stylesheet" href="css/splash.css?v=20260827a">
+  <link rel="stylesheet" href="css/deck.css?v=20260827b">
 </head>
 <body>
+  <!-- L0 Cover -->
   <div class="splash" id="splash" aria-hidden="true">
     <div class="splash-copy">
       <div class="splash-brand">
@@ -23,142 +22,97 @@
         <span class="splash-kicker">Mastercard × Erste</span>
       </div>
       <h1 class="splash-title">The <em>1 Million</em> Engine</h1>
-      <p class="splash-sub">Connect with people through passions — powered by real GWI data across Erste markets.</p>
+      <p class="splash-sub">Connect with people through passions across Erste markets.</p>
       <div class="splash-actions">
         <button type="button" class="splash-start" id="splashStart">Start the engine</button>
       </div>
     </div>
   </div>
 
-  <div class="app">
-    <header class="header">
-      <div class="topbar">
-        <div class="brand">
-          <svg class="mark" viewBox="0 0 26 16" aria-hidden="true">
-            <circle cx="9" cy="8" r="7" fill="var(--red)"/>
-            <circle cx="17" cy="8" r="7" fill="var(--yellow)" style="mix-blend-mode:screen"/>
-          </svg>
-          <div class="brand-text">
-            <span class="wordmark" id="wordmark">The Million Engine</span>
-            <span class="tagline" id="tagline">Mastercard × Erste</span>
-          </div>
-        </div>
-
-        <div class="target-hero" id="targetPill" aria-live="polite">
-          <span class="target-label">Target</span>
-          <span class="target-num" id="targetNum">1,000,000</span>
-          <span class="target-cap">customers</span>
-        </div>
-
-        <div class="topbar-actions">
-          <div class="view-toggle" id="viewToggle" role="toolbar" aria-label="Map mode">
-            <button type="button" class="view-toggle-btn on" data-view="compare" title="Colour markets by Interest">Compare</button>
-            <button type="button" class="view-toggle-btn" data-view="mix" title="Distribution mix on markets">Mix</button>
-          </div>
-          <button class="analysis-link" id="insightsBtn" type="button" title="Optional deep dive">More signals</button>
-        </div>
+  <div class="app" id="app">
+    <header class="deck-bar" id="deckBar">
+      <div class="deck-brand">
+        <svg class="mark" viewBox="0 0 26 16" aria-hidden="true">
+          <circle cx="9" cy="8" r="7" fill="var(--red)"/>
+          <circle cx="17" cy="8" r="7" fill="var(--yellow)" style="mix-blend-mode:screen"/>
+        </svg>
+        <span class="deck-wordmark" id="wordmark">The Million Engine</span>
       </div>
-
-      <div class="explore-bar" id="exploreBar">
-        <div class="explore-group explore-group-who">
-          <span class="explore-kicker">Who</span>
-          <div class="aud-row" id="audiences" role="toolbar" aria-label="Audiences"></div>
-        </div>
-        <div class="explore-group explore-group-passions">
-          <span class="explore-kicker">Global sponsorships</span>
-          <div class="passion-row" id="passions" role="toolbar" aria-label="Core passions"></div>
-          <p class="explore-note" id="passionsNote">Map: Interest in motor sports (e.g. Formula 1) across Erste markets</p>
-        </div>
-      </div>
-
-      <div class="map-filter" id="mapFilter">
-        <div class="map-filter-block">
-          <span class="map-filter-kicker">Lens</span>
-          <div class="map-filter-row" id="lensFilter" role="toolbar" aria-label="Map lens">
-            <button type="button" class="map-filter-btn on" data-lens="sponsors">Global sponsorships</button>
-            <button type="button" class="map-filter-btn" data-lens="social">Social media</button>
-          </div>
-        </div>
-        <div class="map-filter-block">
-          <span class="map-filter-kicker">Who</span>
-          <div class="map-filter-row" id="audFilter" role="toolbar" aria-label="Audience">
-            <button type="button" class="map-filter-btn on" data-aud="all">All</button>
-            <button type="button" class="map-filter-btn" data-aud="affluent">Affluent</button>
-            <button type="button" class="map-filter-btn" data-aud="genz">Gen Z</button>
-          </div>
-        </div>
+      <div class="deck-bar-actions">
+        <label class="deck-import">
+          Import
+          <input type="file" id="importFile" accept="application/json,.json" hidden>
+        </label>
+        <button type="button" class="ghostbtn" id="restartBtn" hidden>Restart</button>
       </div>
     </header>
 
-    <main class="stage">
+    <!-- L1 Map -->
+    <main class="stage" id="stage">
       <div class="mapwrap" id="mapwrap">
         <div class="map-atmosphere" aria-hidden="true"></div>
         <svg id="map" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Market map"></svg>
-
         <div class="peek" id="peek"></div>
-        <div class="passion-hint" id="passionHint">Pick a sponsorship theme — then click a country</div>
-        <div class="legend" id="legend">
-          <div class="legend-kicker" id="legendKicker">Interest (Index)</div>
-          <div class="legend-title" id="legendTitle">Motor sports (e.g. Formula 1): Follow</div>
-          <div class="legend-scale" aria-hidden="true">
-            <div class="legend-bar"></div>
-            <div class="legend-row">
-              <span id="scaleLo">—</span>
-              <span id="scaleMid">vs peers</span>
-              <span id="scaleHi">—</span>
-            </div>
-          </div>
-          <div class="legend-note" id="legendNote">Colour = Interest (Index) vs other Erste markets</div>
-          <div class="mode-legend" id="modeLegend" hidden></div>
-        </div>
-        <div class="dist-tip" id="distTip" aria-hidden="true"></div>
-        <div class="source" id="source">GWI Core · Erste markets</div>
+        <p class="deck-hint" id="mapHint">Click a country</p>
+        <div class="source" id="source">Placeholder deck · Import JSON to fill</div>
+      </div>
+    </main>
 
-        <div class="bubble-overlay" id="bubbleOverlay" aria-hidden="true">
-          <div class="bubble-head">
-            <div>
-              <div class="bubble-kicker" id="bubbleKicker">Bubble view</div>
-              <h2 class="bubble-title" id="bubbleTitle">—</h2>
-              <p class="bubble-sub" id="bubbleSub"></p>
-            </div>
-            <div class="bubble-head-actions">
-              <button class="ghostbtn" id="bubbleBack" type="button" hidden>Back</button>
-              <button class="ghostbtn" id="bubbleClose" type="button">Close</button>
-            </div>
-          </div>
-          <div class="bubble-body">
-            <aside class="bubble-side" id="bubbleSide"></aside>
-            <div class="bubble-pie-wrap">
-              <div class="bubble-pie" id="bubblePie" aria-hidden="true"></div>
-              <ul class="bubble-pie-legend" id="bubblePieLegend"></ul>
-            </div>
-            <div class="bubble-main">
-              <div class="bubble-stage" id="bubbleStage"></div>
-              <div class="bubble-foot" id="bubbleFoot"></div>
-            </div>
-          </div>
+    <!-- L2 Country: cards + focused map -->
+    <section class="country-layer" id="countryLayer" aria-hidden="true">
+      <button type="button" class="ghostbtn country-back" id="countryBack">Back</button>
+      <div class="country-split">
+        <div class="country-aside">
+          <p class="country-kicker">Sponsoring potentials</p>
+          <h2 class="country-title" id="countryTitle">—</h2>
+          <p class="country-teaser" id="countryTeaser"></p>
+          <div class="topic-cards" id="topicCards"></div>
+        </div>
+        <div class="country-map-panel">
+          <svg id="countryMap" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Selected country"></svg>
         </div>
       </div>
-      </main>
+    </section>
 
-  </div>
-
-  <div class="insights" id="insights" aria-hidden="true">
-    <div class="insights-sheet" role="dialog" aria-labelledby="insightsTitle">
-      <div class="sheet-handle" aria-hidden="true"></div>
-      <div class="insights-head">
-        <div>
-          <div class="insights-kicker">Optional deep dive</div>
-          <h2 class="insights-title" id="insightsTitle">Signals worth watching</h2>
-          <p class="insights-sub" id="insightsHeadline">Top signals from Erste markets · Affluent &amp; Gen Z</p>
-        </div>
-        <button class="ghostbtn insights-close" id="insightsClose" type="button">Close</button>
+    <!-- L3 Offer -->
+    <section class="offer-layer" id="offerLayer" aria-hidden="true">
+      <div class="offer-toolbar">
+        <button type="button" class="ghostbtn" id="offerBack">Back</button>
+        <button type="button" class="ghostbtn" id="offerRestart">Restart</button>
       </div>
-      <div id="insightsBody"></div>
-    </div>
+      <article class="offer-card" id="offerCard">
+        <p class="offer-kicker" id="offerKicker">Mastercard offer</p>
+        <h2 class="offer-title" id="offerTitle">—</h2>
+        <div class="offer-stats">
+          <div class="offer-stat">
+            <span class="offer-stat-label">Potential</span>
+            <span class="offer-stat-value" id="offerPotential">—</span>
+          </div>
+          <div class="offer-stat">
+            <span class="offer-stat-label">Statistic 1</span>
+            <span class="offer-stat-value" id="offerStat1">—</span>
+          </div>
+          <div class="offer-stat">
+            <span class="offer-stat-label">Statistic 2</span>
+            <span class="offer-stat-value" id="offerStat2">—</span>
+          </div>
+        </div>
+        <div class="offer-body">
+          <p id="offerDesc1"></p>
+          <p id="offerDesc2"></p>
+        </div>
+        <div class="offer-chart" id="offerChart">
+          <div class="offer-chart-head">
+            <p class="offer-chart-title" id="offerChartTitle"></p>
+            <p class="offer-chart-caption" id="offerChartCaption"></p>
+          </div>
+          <div class="offer-chart-bars" id="offerChartBars" role="img" aria-label="Schematic chart"></div>
+        </div>
+      </article>
+    </section>
   </div>
 
   <script src="js/vendor/d3.min.js"></script>
-  <script type="module" src="js/app.js?v=20260826a"></script>
+  <script type="module" src="js/app.js?v=20260827a"></script>
 </body>
 </html>

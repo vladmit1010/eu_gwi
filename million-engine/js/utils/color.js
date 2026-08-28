@@ -25,16 +25,16 @@ export function createHeat(colors) {
 export const COLORS = {
   red: "#EB001B",
   yellow: "#F79E1B",
-  land: "#1C1F27",
-  landMid: "#2A2E38",
-  landHi: "#3A3532",
-  cold: "#12141A",
-  live: "#3A3D48",
-  heat0: "#1B1D24",
-  heat1: "#3A322C",
-  heat2: "#8F4A16",
-  heat3: "#FF5F00",
-  heat4: "#FFC857",
+  land: "#D7E4FC",
+  landMid: "#5B8FF5",
+  landHi: "#2870ED",
+  cold: "#E8EEF5",
+  live: "#2870ED",
+  heat0: "#D7E4FC",
+  heat1: "#8EAFFA",
+  heat2: "#5B8FF5",
+  heat3: "#2870ED",
+  heat4: "#1A54C4",
 };
 
 function cssVar(name, fallback) {

@@ -1,41 +1,60 @@
-:root {
-  --font: "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-display: "Avenir Next Condensed", "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+/* Optional brand font: drop a file at fonts/brand.ttf
+   If missing, the browser skips it and uses the fallback stack. */
+@font-face {
+  font-family: "DeckBrand";
+  src: url("../fonts/brand.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
+:root {
+  --font: "DeckBrand", Inter, "Avenir Next", "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-display: "DeckBrand", Inter, "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  /* Partnership mark (Mastercard) kept for logo circles */
   --red: #EB001B;
   --yellow: #F79E1B;
-  --overlap: #FF5F00;
 
-  --bg: #0B0C0E;
-  --bg-soft: #101218;
-  --surface: #14161B;
-  --surface-2: #1A1D24;
+  /* Erste-inspired Bright Blue system (white UI like erstegroup.com) */
+  --blue: #2870ed;
+  --blue-soft: #5b8ff5;
+  --blue-deep: #1a54c4;
+  --blue-dark: #123f96;
+  --overlap: var(--blue);
 
-  --land: #1C1F27;
-  --land-mid: #2A2E38;
-  --land-hi: #3A3532;
-  --land-stroke: rgba(255, 255, 255, 0.045);
+  --bg: #ffffff;
+  --bg-soft: #f4f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef3f9;
 
-  --line: rgba(255, 255, 255, 0.07);
-  --line-2: rgba(255, 255, 255, 0.14);
+  --land: #d7e4fc;
+  --land-mid: var(--blue-soft);
+  --land-hi: var(--blue);
+  --land-stroke: rgba(40, 112, 237, 0.2);
 
-  --ink: #F4F5F7;
-  --ink-2: #A8ADB8;
-  --ink-3: #6B7280;
+  --line: rgba(18, 63, 150, 0.08);
+  --line-2: rgba(18, 63, 150, 0.16);
 
-  --scrim: rgba(11, 12, 14, 0.88);
-  --panel-glass: rgba(11, 12, 14, 0.78);
-  --hint-glass: rgba(20, 22, 27, 0.88);
-  --shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --ink: #0f1c2e;
+  --ink-2: #4a5d73;
+  --ink-3: #7a8ba0;
+
+  --scrim: rgba(255, 255, 255, 0.88);
+  --panel-glass: rgba(255, 255, 255, 0.94);
+  --hint-glass: rgba(255, 255, 255, 0.92);
+  --shadow: 0 18px 40px rgba(18, 63, 150, 0.12);
 
   /* Map fills (JS reads these) */
-  --map-cold: #12141a;
-  --map-live: #3a3d48;
-  --heat-0: #1b1d24;
-  --heat-1: #3a322c;
-  --heat-2: #8f4a16;
-  --heat-3: #ff5f00;
-  --heat-4: #ffc857;
+  --map-cold: #e8eef5;
+  --map-live: #2870ed;
+  --map-live-hover: #1a54c4;
+  --map-live-on: #123f96;
+  --heat-0: #d7e4fc;
+  --heat-1: #8eaffa;
+  --heat-2: #5b8ff5;
+  --heat-3: #2870ed;
+  --heat-4: #1a54c4;
 
   --radius: 10px;
   --radius-sm: 6px;

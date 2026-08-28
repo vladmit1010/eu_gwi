@@ -1,7 +1,6 @@
 /**
- * Smoke tests for Million Engine explore + country drill + splash click-through.
- * Run: node tests/smoke.mjs
- * Requires: server on http://127.0.0.1:8766 and playwright-core + Chrome.
+ * Smoke tests for 3-level presentation deck.
+ * Run: npm start (port 8766) then npm test
  */
 
 import { chromium } from "playwright-core";
@@ -23,8 +22,7 @@ try {
 const results = [];
 function ok(name, pass, detail = "") {
   results.push({ name, pass, detail });
-  const mark = pass ? "PASS" : "FAIL";
-  console.log(`${mark}  ${name}${detail ? ` — ${detail}` : ""}`);
+  console.log(`${pass ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 }
 
 async function main() {
@@ -46,104 +44,63 @@ async function main() {
   ok("boot loads", await page.title().then((t) => /Million Engine/i.test(t)));
 
   await page.click("#splashStart");
-  await page.waitForTimeout(1400);
+  await page.waitForTimeout(800);
   const afterSplash = await page.evaluate(() => ({
     splashOn: document.documentElement.classList.contains("splash-on"),
-    compare: document.documentElement.classList.contains("map-view-compare"),
+    levelMap: document.documentElement.classList.contains("level-map"),
+    lands: document.querySelectorAll("path.land.live").length,
     explore: !!document.getElementById("exploreBar"),
-    who: document.querySelectorAll("#audiences .aud-chip").length,
-    passions: document.querySelectorAll("#passions .passion-chip").length,
-    pies: document.querySelectorAll(".dist-pie").length,
   }));
   ok("splash dismissed", !afterSplash.splashOn);
-  ok("Compare mode default", afterSplash.compare === true);
-  ok("Explore Who + Sponsorships", afterSplash.explore && afterSplash.who >= 2 && afterSplash.passions >= 3, `who=${afterSplash.who} passions=${afterSplash.passions}`);
-  ok("No mix pies in Compare", afterSplash.pies === 0, `pies=${afterSplash.pies}`);
+  ok("L1 map level", afterSplash.levelMap === true);
+  ok("Erste markets on map", afterSplash.lands >= 8, `lands=${afterSplash.lands}`);
+  ok("No explore chrome", !afterSplash.explore);
 
-  await page.click('[data-view="mix"]');
+  await page.locator("#mapwrap").locator('path.land.live[data-code="RO"]').click({ force: true });
   await page.waitForTimeout(400);
-  const mix = await page.evaluate(() => ({
-    on: document.documentElement.classList.contains("map-view-mix"),
-    pies: document.querySelectorAll(".dist-pie").length,
+  const l2 = await page.evaluate(() => ({
+    country: document.documentElement.classList.contains("level-country"),
+    title: document.getElementById("countryTitle")?.textContent,
+    cards: document.querySelectorAll(".topic-card").length,
   }));
-  ok("Mix mode selectable", mix.on === true);
-  ok("Distribution pies on map", mix.pies >= 6, `pies=${mix.pies}`);
+  ok("L2 country opens", l2.country === true, l2.title);
+  ok("Three topic cards", l2.cards === 3, `n=${l2.cards}`);
 
-  await page.click('[data-lens="social"]');
+  await page.locator(".topic-card").first().click();
   await page.waitForTimeout(300);
-  const social = await page.evaluate(() => ({
-    on: document.querySelector('[data-lens="social"]')?.classList.contains("on"),
-    chips: document.getElementById("modeLegend")?.querySelectorAll(".mode-chip").length || 0,
+  const l3 = await page.evaluate(() => ({
+    offer: document.documentElement.classList.contains("level-offer"),
+    title: document.getElementById("offerTitle")?.textContent || "",
+    potential: document.getElementById("offerPotential")?.textContent || "",
+    bars: document.querySelectorAll("#offerChartBars .offer-chart-col").length,
+    chartHidden: document.getElementById("offerChart")?.hidden === true,
   }));
-  ok("Social lens selectable", social.on === true);
-  ok("Social legend chips", social.chips >= 4, `chips=${social.chips}`);
+  ok("L3 offer opens", l3.offer === true);
+  ok("Offer shows demo copy", /Romania|Formula|opportunity|Interest|M|k|%/i.test(l3.title + l3.potential));
+  ok("Schematic chart bars", l3.bars >= 6 && !l3.chartHidden, `bars=${l3.bars}`);
 
-  await page.click('[data-aud="genz"]');
-  await page.waitForTimeout(300);
+  await page.click("#offerBack");
+  await page.waitForTimeout(200);
   ok(
-    "Gen Z audience selectable",
-    await page.evaluate(() =>
-      document.querySelector('[data-aud="genz"]')?.classList.contains("on")
-    )
+    "Back to L2",
+    await page.evaluate(() => document.documentElement.classList.contains("level-country"))
   );
 
-  await page.click('[data-view="compare"]');
+  await page.click("#countryBack");
   await page.waitForTimeout(200);
-  await page.click('[data-passion="f1"]');
-  await page.waitForTimeout(200);
-
-  const lands = await page.locator("path.land.live").count();
-  ok("Map has live markets", lands >= 6, `lands=${lands}`);
-
-  await page.locator('path.land.live[data-code="RO"]').click({ force: true });
-  await page.waitForTimeout(600);
-  const landing = await page.evaluate(() => ({
-    open: document.getElementById("bubbleOverlay")?.classList.contains("open"),
-    title: document.getElementById("bubbleTitle")?.textContent,
-    audiences: document.querySelectorAll(".bubble-audience").length,
-    total: document.querySelector(".bubble-total-num")?.textContent || "",
-    piesHidden: document.querySelectorAll(".dist-pie").length === 0,
-  }));
-  ok("Country opens overlay", landing.open === true, landing.title);
-  ok("Affluent + Gen Z circles", landing.audiences === 2, `n=${landing.audiences}`);
-  ok("Total people shown", /^\d/.test(landing.total.replace(",", "")), landing.total);
-  ok("Pies hide while in country", landing.piesHidden === true);
-
-  await page.locator(".bubble-audience").filter({ hasText: "Gen Z" }).click();
-  await page.waitForTimeout(450);
-  const menu = await page.evaluate(() => ({
-    sponsors: document.querySelectorAll(".bubble-sponsor").length,
-    fields: document.querySelectorAll(".bubble-field").length,
-  }));
-  ok("Sponsorship circles open", menu.sponsors === 3, `n=${menu.sponsors}`);
-  ok("Field circles open", menu.fields >= 5, `n=${menu.fields}`);
-
-  await page.locator(".bubble-field", { hasText: "Interests" }).click();
-  await page.waitForTimeout(500);
-  const answers = await page.evaluate(
-    () => document.querySelectorAll("#bubbleStage .bubble-node").length
+  ok(
+    "Back to L1",
+    await page.evaluate(() => document.documentElement.classList.contains("level-map"))
   );
-  ok("Theme drills to answer bubbles", answers >= 3, `nodes=${answers}`);
-
-  await page.click("#bubbleClose");
-  await page.waitForTimeout(400);
-  await page.click('[data-view="mix"]');
-  await page.waitForTimeout(400);
-  const afterClose = await page.evaluate(
-    () => document.querySelectorAll(".dist-pie").length
-  );
-  ok("Pies return in Mix after close", afterClose >= 6, `pies=${afterClose}`);
 
   ok("No page JS errors", pageErrors.length === 0, pageErrors.slice(0, 3).join(" | "));
   ok(
     "No critical request failures",
-    failed.filter((f) => /gwi|markets|geojson|app\.js|distributions/i.test(f)).length ===
-      0,
+    failed.filter((f) => /presentation|geojson|app\.js/i.test(f)).length === 0,
     failed.slice(0, 3).join(" | ")
   );
 
   await browser.close();
-
   const failedCount = results.filter((r) => !r.pass).length;
   console.log("\n———");
   console.log(`${results.length - failedCount}/${results.length} passed`);

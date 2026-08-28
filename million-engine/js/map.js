@@ -35,9 +35,9 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
       </feMerge>
     </filter>
     <radialGradient id="oceanGlow" cx="50%" cy="42%" r="55%">
-      <stop offset="0%" stop-color="rgba(255,95,0,0.07)"/>
-      <stop offset="55%" stop-color="rgba(255,255,255,0.02)"/>
-      <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="0%" stop-color="rgba(91,163,224,0.16)"/>
+      <stop offset="55%" stop-color="rgba(244,247,251,0.5)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
     </radialGradient>
     <clipPath id="mapClip">
       <rect x="0" y="0" width="${VW}" height="${VH}" rx="0"/>
@@ -481,6 +481,34 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     return Boolean(featureByCode[code] && lands[code]);
   }
 
+  /** Refit projection to one country (L2 inset) or all Erste markets (L1). */
+  function focusCountry(code) {
+    const live = codes();
+    const features =
+      code && featureByCode[code]
+        ? [featureByCode[code]]
+        : live.map((c) => featureByCode[c]).filter(Boolean);
+    if (!features.length) return;
+    fitProjection(features);
+    Object.keys(centroids).forEach((k) => delete centroids[k]);
+    Object.keys(lands).forEach((c) => {
+      const f = featureByCode[c];
+      if (!f || !lands[c]) return;
+      try {
+        const d = pathGen(f);
+        if (d) lands[c].setAttribute("d", d);
+      } catch {
+        /* skip */
+      }
+      if (labels[c]) {
+        const [cx, cy] = centroidOf(c);
+        labels[c].setAttribute("x", cx);
+        labels[c].setAttribute("y", cy);
+      }
+    });
+    paint();
+  }
+
   return {
     setGeo,
     build,
@@ -497,6 +525,7 @@ export function createMap(svg, { onSelect, onPeek, onHidePeek, onPick }) {
     bubbleAt,
     highlightBubbles,
     hasShape,
+    focusCountry,
     centroidOf,
     get svg() {
       return svg;

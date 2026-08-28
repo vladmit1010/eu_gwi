@@ -16,8 +16,8 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(255, 95, 0, 0.07), transparent 62%),
-    radial-gradient(ellipse 90% 80% at 50% 100%, rgba(20, 22, 27, 0.9), transparent 55%),
+    radial-gradient(ellipse 70% 55% at 50% 42%, rgba(91, 163, 224, 0.14), transparent 62%),
+    radial-gradient(ellipse 90% 80% at 50% 100%, rgba(244, 247, 251, 0.95), transparent 55%),
     linear-gradient(180deg, transparent 0%, var(--bg) 100%);
   z-index: 0;
 }
@@ -37,13 +37,7 @@ svg#map {
 }
 
 .land-group.mute {
-  opacity: 0.22;
-}
-
-.land.on {
-  stroke: rgba(255, 255, 255, 0.45);
-  stroke-width: 0.38;
-  filter: url(#landSoft) brightness(1.1);
+  opacity: 0.28;
 }
 
 .land-group.inactive {
@@ -52,14 +46,14 @@ svg#map {
 
 .land {
   fill: var(--land);
-  stroke: rgba(11, 12, 14, 0.55);
+  stroke: rgba(0, 73, 123, 0.22);
   stroke-width: 0.16;
   stroke-linejoin: round;
   stroke-linecap: round;
   cursor: pointer;
-  transition: fill 0.55s var(--ease), filter 0.45s var(--ease), stroke 0.35s var(--ease);
+  transition: fill 0.35s var(--ease), filter 0.35s var(--ease), stroke 0.3s var(--ease);
   opacity: 0;
-  filter: url(#landSoft);
+  filter: none;
 }
 
 .land.cold {
@@ -71,19 +65,19 @@ svg#map {
 }
 
 .land.cold.drawn {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .land.cold:hover {
   filter: none;
-  stroke: rgba(255, 255, 255, 0.07);
+  stroke: rgba(0, 73, 123, 0.2);
   stroke-width: 0.12;
 }
 
 .land.live {
   cursor: pointer;
-  stroke: rgba(255, 255, 255, 0.1);
-  stroke-width: 0.22;
+  stroke: rgba(255, 255, 255, 0.65);
+  stroke-width: 0.28;
 }
 
 .land.drawn {
@@ -96,19 +90,27 @@ svg#map {
 }
 
 .land.live:hover {
-  filter: url(#landSoft) brightness(1.16);
-  stroke: rgba(255, 255, 255, 0.28);
-  stroke-width: 0.32;
+  fill: var(--map-live-hover) !important;
+  filter: none;
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 0.36;
 }
 
+.land.live.on,
 .land.on {
-  stroke: rgba(255, 255, 255, 0.5);
+  fill: var(--map-live-on) !important;
+  stroke: rgba(255, 255, 255, 0.9);
   stroke-width: 0.42;
-  filter: url(#landSoft) brightness(1.12);
+  filter: none;
+}
+
+.land.live.on:hover {
+  fill: var(--map-live-on) !important;
+  filter: brightness(0.92);
 }
 
 .code {
-  fill: rgba(244, 245, 247, 0.88);
+  fill: #ffffff;
   font-size: 2.6px;
   font-weight: 700;
   text-anchor: middle;
@@ -117,12 +119,12 @@ svg#map {
   letter-spacing: 0.06em;
   transition: fill 0.45s var(--ease), opacity 0.45s;
   paint-order: stroke;
-  stroke: rgba(11, 12, 14, 0.75);
-  stroke-width: 0.45px;
+  stroke: rgba(0, 51, 90, 0.35);
+  stroke-width: 0.35px;
 }
 
 .code.on {
-  fill: var(--ink);
+  fill: #ffffff;
 }
 
 .code.mute {
