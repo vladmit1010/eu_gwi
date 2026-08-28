@@ -4,8 +4,10 @@ node_modules/
 # Build / share artifact (regenerate: npm run build-standalone)
 Million-Engine.html
 
-# Local tooling (kept on disk, not in git)
+# Local tooling / samples (not for client delivery)
 tests/
+formeln.txt
+data/client/masterexcel.xlsx
 
 # Python leftovers
 .venv/

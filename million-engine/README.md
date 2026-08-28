@@ -20,9 +20,8 @@ css/deck-app.css           styles
 js/deck/                   app modules (see js/deck/README.md)
 js/excel-drop-standalone.js
 js/vendor/xlsx.full.min.js
-data/client/               ← client-editable (Excel + offerings)
+data/client/               offerings.json + Excel structure docs
 data/geo/                  map geometries
-formeln.txt                Excel formula reference
 scripts/serve.mjs
 scripts/build-standalone.mjs
 scripts/check_offerings.py
@@ -31,7 +30,10 @@ Million-Engine.html        single-file build (npm run build-standalone)
 
 ## Client data
 
-Edit `data/client/` — see `data/client/README.md`.
+See **`data/client/README.md`** — Excel sheet layout and formula logic live there.  
+Do **not** ship `masterexcel.xlsx` or `formeln.txt` (gitignored local samples).
+
+Ship / edit: `data/client/offerings.json`.
 
 ## Build for sharing
 

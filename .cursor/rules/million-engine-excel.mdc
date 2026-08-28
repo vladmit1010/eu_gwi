@@ -1,0 +1,12 @@
+---
+description: Million Engine Excel model — do not ship sample xlsx/formeln; structure lives in docs
+alwaysApply: true
+---
+
+# Million Engine — Excel / client data
+
+- **Do not ship** `data/client/masterexcel.xlsx` or `formeln.txt` (gitignored local samples).
+- **Canonical structure** is documented in `million-engine/data/client/README.md` — read that before changing Excel parse or suitability logic.
+- Client delivers their own Acquisition Potential workbook at splash drop; we only ship `offerings.json` + the deck.
+- Parser: `js/excel-drop-standalone.js`. Sheet blocks: market table → readiness → potentially acquired (10y Total) → proposition suitability (Yes/No per passion) → passion acquisition tables.
+- Passion ids: `RUN`, `F1`, `MUSLN`, `MUSOT`, `GAMMC`, `GAMOT`. Countries: `AT`, `PL`, `RO`, `CZ`, `SK`, `HU`, `HR`, `RS`.
